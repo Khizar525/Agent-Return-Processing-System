@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-system"
+version = "0.1.0"
+description = "Multi-agent system for customer return processing"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "openai-agents>=0.0.1",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
+    "redis>=4.0.0",
+    "stripe>=5.0.0",
+    "paypalrestsdk>=1.0.0",
+    "requests>=2.0.0",
+    "python-dotenv>=0.15.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-organization/agent-system"

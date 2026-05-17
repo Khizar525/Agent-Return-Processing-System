@@ -1,0 +1,8 @@
+fastapi>=0.100.0
+uvicorn>=0.20.0
+redis>=4.0.0
+stripe>=5.0.0
+paypalrestsdk>=1.0.0
+requests>=2.0.0
+python-dotenv>=0.15.0
+pytest>=7.0.0
