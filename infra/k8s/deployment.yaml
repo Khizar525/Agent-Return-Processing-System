@@ -1,0 +1,147 @@
+# deployment.yaml — Owner: Member 5
+# One Deployment per inbound channel (4 total).
+# Each pod runs a Kafka consumer that forwards messages to the FastAPI webhook.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent01-webchat
+  labels:
+    app: agent01
+    channel: web_chat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent01
+      channel: web_chat
+  template:
+    metadata:
+      labels:
+        app: agent01
+        channel: web_chat
+    spec:
+      containers:
+        - name: consumer
+          image: agent01-customer-support:latest
+          command: ["python", "-m", "infra.kafka_config", "--channel", "web_chat"]
+          envFrom:
+            - configMapRef:
+                name: agent01-config
+            - secretRef:
+                name: agent01-secrets
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent01-email
+  labels:
+    app: agent01
+    channel: email
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent01
+      channel: email
+  template:
+    metadata:
+      labels:
+        app: agent01
+        channel: email
+    spec:
+      containers:
+        - name: consumer
+          image: agent01-customer-support:latest
+          command: ["python", "-m", "infra.kafka_config", "--channel", "email"]
+          envFrom:
+            - configMapRef:
+                name: agent01-config
+            - secretRef:
+                name: agent01-secrets
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent01-whatsapp
+  labels:
+    app: agent01
+    channel: whatsapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent01
+      channel: whatsapp
+  template:
+    metadata:
+      labels:
+        app: agent01
+        channel: whatsapp
+    spec:
+      containers:
+        - name: consumer
+          image: agent01-customer-support:latest
+          command: ["python", "-m", "infra.kafka_config", "--channel", "whatsapp"]
+          envFrom:
+            - configMapRef:
+                name: agent01-config
+            - secretRef:
+                name: agent01-secrets
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent01-sms
+  labels:
+    app: agent01
+    channel: sms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent01
+      channel: sms
+  template:
+    metadata:
+      labels:
+        app: agent01
+        channel: sms
+    spec:
+      containers:
+        - name: consumer
+          image: agent01-customer-support:latest
+          command: ["python", "-m", "infra.kafka_config", "--channel", "sms"]
+          envFrom:
+            - configMapRef:
+                name: agent01-config
+            - secretRef:
+                name: agent01-secrets
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

@@ -1,0 +1,21 @@
+# configmap.yaml — Owner: Member 5
+# Non-sensitive environment configuration.
+# Sensitive keys go in secret.yaml (never committed with real values).
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent01-config
+data:
+  DD_SERVICE: "agent01-customer-support"
+  DD_ENV: "production"
+  KAFKA_TOPIC_WEB_CHAT: "agent01.webchat"
+  KAFKA_TOPIC_EMAIL: "agent01.email"
+  KAFKA_TOPIC_WHATSAPP: "agent01.whatsapp"
+  KAFKA_TOPIC_SMS: "agent01.sms"
+  REDIS_SESSION_TTL_SECONDS: "86400"
+  REDIS_ARCHIVE_TTL_SECONDS: "7776000"
+  RETURN_WINDOW_DAYS: "30"
+  REFUND_CAP_USD: "500"
+  SENTIMENT_ESCALATION_THRESHOLD: "0.8"
+  SENDGRID_FROM_NAME: "Your Store Support"
