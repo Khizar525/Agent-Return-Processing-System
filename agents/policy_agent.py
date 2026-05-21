@@ -23,14 +23,24 @@ Rules to enforce:
     4. Cross-reference request against fraud DB before approving
 """
 
-from agents import Agent
+from agents import Agent  # type: ignore[attr-defined]
+from tools.policy_tools import check_return_policy
 # from tools.crm_tools import get_customer_profile      # uncomment after M3 merges
-# from tools.policy_tools import check_return_policy    # implement this tool
 
-# TODO (Member 2): implement policy_agent below
-# policy_agent = Agent(
-#     name="PolicyAgent",
-#     instructions="...",
-#     model="gpt-4o-mini",
-#     tools=[check_return_policy, get_customer_profile],
-# )
+policy_agent = Agent(
+    name="PolicyAgent",
+    instructions="""
+    You validate return eligibility for customer orders.
+
+    Rules:
+    1. Call check_return_policy(order_id, customer_id) to evaluate eligibility.
+    2. If eligible is true and recommended_action is "refund" or "replacement", pass through to resolution.
+    3. If eligible is false, explain the reason clearly.
+    4. If recommended_action is "escalate", recommend human review.
+
+    Always include customer_id and session_id in context when handing off.
+    Output must be valid JSON: {{"eligible": bool, "reason": str, "recommended_action": str}}
+    """,
+    model="gemini-2.0-flash",
+    tools=[check_return_policy],
+)

@@ -13,7 +13,7 @@ Intents:
     - edge_case_escalate  → Handoff → EscalationAgent
 """
 
-from agents import Agent, Runner, handoff
+from agents import Agent, Runner
 # from agents.policy_agent import policy_agent           # uncomment after M2 merges
 # from agents.escalation_agent import escalation_agent   # uncomment after M4 merges
 # from tools.crm_tools import get_customer_profile       # uncomment after M3 merges

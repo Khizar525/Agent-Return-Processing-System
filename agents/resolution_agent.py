@@ -19,7 +19,6 @@ Dependencies:
     - guardrails/refund_cap.py                           — Member 2
 """
 
-from agents import Agent
 # from tools.payment_tools import process_refund
 # from tools.shipping_tools import create_return_label, create_replacement_order
 

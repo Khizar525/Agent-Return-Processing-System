@@ -13,14 +13,28 @@ Patterns to scrub (replace with [REDACTED]):
 
 Must be applied as an input_guardrail on the Triage Orchestrator.
 
-Usage (once implemented):
+Usage:
     from guardrails.pii_scrubber import pii_scrubber_guardrail
     triage_agent = Agent(..., input_guardrails=[pii_scrubber_guardrail])
 """
 
-# TODO (Member 2): implement pii_scrubber_guardrail below
-# from agents.guardrails import input_guardrail, GuardrailFunctionOutput
-#
-# @input_guardrail
-# async def pii_scrubber_guardrail(ctx, agent, message: str) -> GuardrailFunctionOutput:
-#     ...
+import re
+from typing import Any
+from agents import input_guardrail, GuardrailFunctionOutput  # type: ignore[attr-defined]
+
+CC_PATTERN = re.compile(r"\b(?:\d[ -]*?){13,16}\b")
+SSN_PATTERN = re.compile(r"\b\d{3}-\d{2}-\d{4}\b|\b\d{9}\b")
+BANK_PATTERN = re.compile(r"\b\d{8,17}\b")
+
+
+@input_guardrail  # type: ignore[untyped-decorator]
+async def pii_scrubber_guardrail(ctx: Any, agent: Any, message: str) -> GuardrailFunctionOutput:
+    scrubbed = message
+    scrubbed = CC_PATTERN.sub("[REDACTED]", scrubbed)
+    scrubbed = SSN_PATTERN.sub("[REDACTED]", scrubbed)
+    scrubbed = BANK_PATTERN.sub("[REDACTED]", scrubbed)
+    triggered = scrubbed != message
+    return GuardrailFunctionOutput(
+        tripwire_triggered=triggered,
+        output_dict={"scrubbed_message": scrubbed},
+    )

@@ -16,7 +16,6 @@ Dependencies:
     - guardrails/brand_voice.py                         — Member 4 (you)
 """
 
-from agents import Agent
 # from tools.notification_tools import send_notification
 # from guardrails.brand_voice import brand_voice_guardrail
 

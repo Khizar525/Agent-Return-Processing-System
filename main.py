@@ -3,7 +3,7 @@ Agent 01 — Customer Support & Returns Orchestrator
 FastAPI webhook receiver — entry point for all inbound channels.
 """
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from agents.triage_orchestrator import handle_customer_message

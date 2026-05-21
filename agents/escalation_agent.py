@@ -20,7 +20,6 @@ Dependencies:
     - tools/helpdesk_tools.py  (create_human_ticket, log_resolution) — Member 4 (you)
 """
 
-from agents import Agent
 # from tools.helpdesk_tools import create_human_ticket, log_resolution
 
 # TODO (Member 4): implement escalation_agent below
