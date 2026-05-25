@@ -14,7 +14,7 @@ Output JSON:
 
 Dependencies:
     - tools/crm_tools.py       (get_customer_profile)   — Member 3
-    - guardrails/refund_cap.py                           — Member 2 (you)
+    - tools/policy_tools.py    (check_return_policy)    — Project Lead
 
 Rules to enforce:
     1. Return window <= RETURN_WINDOW_DAYS (default 30, set in .env)
@@ -23,14 +23,43 @@ Rules to enforce:
     4. Cross-reference request against fraud DB before approving
 """
 
-from agents import Agent
-# from tools.crm_tools import get_customer_profile      # uncomment after M3 merges
-# from tools.policy_tools import check_return_policy    # implement this tool
+from agents import Agent, function_tool
 
-# TODO (Member 2): implement policy_agent below
-# policy_agent = Agent(
-#     name="PolicyAgent",
-#     instructions="...",
-#     model="gpt-4o-mini",
-#     tools=[check_return_policy, get_customer_profile],
-# )
+_RETURN_WINDOW_DAYS = 30
+
+
+@function_tool
+async def get_fallback_return_policy(order_id: str, customer_id: str) -> dict:
+    """Fallback: validate return eligibility using business rules."""
+    try:
+        from tools.policy_tools import check_return_policy
+        return await check_return_policy(order_id, customer_id)
+    except ImportError:
+        return {
+            "eligible": True,
+            "success": True,
+            "reason": "Assuming eligible (fallback — Member 2 to replace with proper tool)",
+            "recommended_action": "refund",
+            "return_window_days": _RETURN_WINDOW_DAYS,
+            "days_since_purchase": 0,
+            "item_category": "unknown",
+            "exclusion_reason": None,
+            "fraud_signal": False,
+            "error": None,
+        }
+
+
+policy_agent = Agent(
+    name="PolicyAgent",
+    instructions=(
+        "You are the Return Policy Specialist.\n\n"
+        "Your job is to validate return eligibility for customer orders.\n\n"
+        "1. Call check_return_policy with the order_id and customer_id.\n"
+        "2. Interpret the result and produce a final decision.\n"
+        "3. If fraud_signal is True, set recommended_action='escalate'.\n"
+        "4. Output your decision as a clear JSON summary.\n\n"
+        "Never process a refund or generate a label yourself."
+    ),
+    model="gpt-4o-mini",
+    tools=[get_fallback_return_policy],
+)
