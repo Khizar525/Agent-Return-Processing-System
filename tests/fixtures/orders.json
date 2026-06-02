@@ -1,0 +1,100 @@
+[
+  {
+    "order_id": "ord_1001",
+    "customer_id": "cust_001",
+    "purchase_date": "2026-04-20",
+    "days_since_purchase": 31,
+    "total_usd": 89.99,
+    "items": [
+      { "sku": "SKU-SHOE-42", "name": "Running Shoes", "category": "footwear", "qty": 1, "price_usd": 89.99, "excluded": false }
+    ],
+    "status": "delivered",
+    "carrier": "fedex",
+    "tracking_number": "FX123456789",
+    "_note": "OUTSIDE return window (31 days > 30 day limit) — should be INELIGIBLE"
+  },
+  {
+    "order_id": "ord_1002",
+    "customer_id": "cust_001",
+    "purchase_date": "2026-05-01",
+    "days_since_purchase": 20,
+    "total_usd": 149.50,
+    "items": [
+      { "sku": "SKU-JACKET-M", "name": "Waterproof Jacket", "category": "outerwear", "qty": 1, "price_usd": 149.50, "excluded": false }
+    ],
+    "status": "delivered",
+    "carrier": "ups",
+    "tracking_number": "UP987654321",
+    "_note": "WITHIN return window — should be ELIGIBLE"
+  },
+  {
+    "order_id": "ord_2002",
+    "customer_id": "cust_002",
+    "purchase_date": "2026-05-12",
+    "days_since_purchase": 9,
+    "total_usd": 67.49,
+    "items": [
+      { "sku": "SKU-BOOK-PY", "name": "Python Programming Guide (Digital)", "category": "digital_goods", "qty": 1, "price_usd": 67.49, "excluded": true }
+    ],
+    "status": "delivered",
+    "carrier": null,
+    "tracking_number": null,
+    "_note": "EXCLUDED category (digital_goods) — should be INELIGIBLE regardless of window"
+  },
+  {
+    "order_id": "ord_3004",
+    "customer_id": "cust_003",
+    "purchase_date": "2026-05-15",
+    "days_since_purchase": 6,
+    "total_usd": 1200.00,
+    "items": [
+      { "sku": "SKU-LAPTOP-X1", "name": "Laptop Pro X1", "category": "electronics", "qty": 1, "price_usd": 1200.00, "excluded": false }
+    ],
+    "status": "delivered",
+    "carrier": "fedex",
+    "tracking_number": "FX000111222",
+    "_note": "HIGH VALUE order ($1200) — ELIGIBLE for return but refund > $500 cap triggers human approval"
+  },
+  {
+    "order_id": "ord_4003",
+    "customer_id": "cust_004",
+    "purchase_date": "2026-04-15",
+    "days_since_purchase": 36,
+    "total_usd": 95.00,
+    "items": [
+      { "sku": "SKU-WATCH-01", "name": "Smartwatch", "category": "electronics", "qty": 1, "price_usd": 95.00, "excluded": false }
+    ],
+    "status": "delivered",
+    "carrier": "ups",
+    "tracking_number": "UP555666777",
+    "_note": "FRAUD FLAG on account + OUTSIDE window — should be INELIGIBLE + escalate"
+  },
+  {
+    "order_id": "ord_5002",
+    "customer_id": "cust_005",
+    "purchase_date": "2026-05-18",
+    "days_since_purchase": 3,
+    "total_usd": 260.00,
+    "items": [
+      { "sku": "SKU-COFFEE-MACH", "name": "Espresso Machine", "category": "kitchen", "qty": 1, "price_usd": 260.00, "excluded": false }
+    ],
+    "status": "delivered",
+    "carrier": "fedex",
+    "tracking_number": "FX333444555",
+    "_note": "WITHIN window, clean account, mid-value — straightforward ELIGIBLE refund case"
+  },
+  {
+    "order_id": "ord_6001",
+    "customer_id": "cust_006",
+    "purchase_date": "2026-05-19",
+    "days_since_purchase": 2,
+    "total_usd": 45.00,
+    "items": [
+      { "sku": "SKU-PERF-001", "name": "Luxury Perfume (Final Sale)", "category": "beauty", "qty": 1, "price_usd": 45.00, "excluded": true, "exclusion_reason": "final_sale" }
+    ],
+    "status": "delivered",
+    "carrier": "ups",
+    "tracking_number": "UP888999000",
+    "_note": "FINAL SALE item — EXCLUDED regardless of window or account status"
+  }
+]
