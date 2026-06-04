@@ -23,22 +23,10 @@ Dependencies:
 from agents import Agent
 # from tools.helpdesk_tools import create_human_ticket, log_resolution
 
-# TODO (Member 4): implement escalation_agent below with proper tools
-escalation_agent = Agent(
-    name="EscalationAgent",
-    instructions=(
-        "You handle escalated customer issues that cannot be resolved autonomously.\n\n"
-        "Reasons for escalation:\n"
-        "- Legal threats or extreme distress\n"
-        "- High-value orders exceeding the refund cap\n"
-        "- Repeat fraud signals on account\n"
-        "- Sentiment Monitor score > 0.8\n\n"
-        "Your job:\n"
-        "1. Compile a full context bundle with all available data.\n"
-        "2. Create a human ticket (once create_human_ticket is available).\n"
-        "3. Log the resolution outcome.\n\n"
-        "Be thorough — include every detail the human agent will need."
-    ),
-    model="gpt-4o",
-    # tools=[create_human_ticket, log_resolution],  # uncomment after M4 merges
-)
+# TODO (Member 4): implement escalation_agent below
+# escalation_agent = Agent(
+#     name="EscalationAgent",
+#     instructions="...",
+#     model="gpt-4o",
+#     tools=[create_human_ticket, log_resolution],
+# )

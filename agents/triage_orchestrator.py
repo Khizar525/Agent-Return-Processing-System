@@ -13,109 +13,11 @@ Intents:
     - edge_case_escalate  → Handoff → EscalationAgent
 """
 
-import json
-import os
-from datetime import datetime, timezone
-
-from agents import Agent, Runner, function_tool
-
-from agents.billing_agent import billing_agent
-from agents.escalation_agent import escalation_agent
-from agents.policy_agent import policy_agent
+from agents import Agent, Runner, handoff
+# from agents.policy_agent import policy_agent           # uncomment after M2 merges
+# from agents.escalation_agent import escalation_agent   # uncomment after M4 merges
+# from tools.crm_tools import get_customer_profile       # uncomment after M3 merges
 from infra.redis_config import get_session, save_session
-
-# ---------------------------------------------------------------------------
-# Tools
-# ---------------------------------------------------------------------------
-
-_FIXTURE_BASE = os.path.join(os.path.dirname(__file__), "..", "tests", "fixtures")
-
-
-async def tracking_lookup_impl(order_id: str) -> dict:
-    """Implementation of tracking lookup — callable from tests directly."""
-    try:
-        path = os.path.join(_FIXTURE_BASE, "orders.json")
-        with open(path) as f:
-            orders: list[dict] = json.load(f)
-    except Exception as exc:
-        return {
-            "success": False,
-            "found": False,
-            "status": "",
-            "carrier": None,
-            "tracking_number": None,
-            "estimated_delivery": None,
-            "error": f"Failed to load order data: {exc}",
-        }
-
-    order = next((o for o in orders if o["order_id"] == order_id), None)
-    if not order:
-        return {
-            "success": False,
-            "found": False,
-            "status": "",
-            "carrier": None,
-            "tracking_number": None,
-            "estimated_delivery": None,
-            "error": f"Order {order_id} not found",
-        }
-
-    return {
-        "success": True,
-        "found": True,
-        "status": order.get("status", "unknown"),
-        "carrier": order.get("carrier"),
-        "tracking_number": order.get("tracking_number"),
-        "estimated_delivery": None,
-        "error": None,
-    }
-
-
-@function_tool
-async def tracking_lookup(order_id: str) -> dict:
-    """Look up the shipping status and tracking info for a given order."""
-    return await tracking_lookup_impl(order_id)
-
-
-async def faq_lookup_impl(question: str) -> dict:
-    """Implementation of FAQ lookup — callable from tests directly."""
-    faq: dict[str, str] = {
-        "return policy": "You have 30 days from the date of purchase to return most items. "
-        "Items must be unworn, unwashed, and in original packaging. "
-        "Digital goods, perishables, and final-sale items are excluded.",
-        "return window": "The standard return window is 30 days from purchase.",
-        "store hours": "Our online support is available 24/7. "
-        "Physical store hours vary by location — please check our store locator.",
-        "shipping": "Standard shipping takes 5–7 business days. "
-        "Expedited shipping (2–3 business days) is available for an additional fee.",
-        "refund": "Refunds are processed within 5–7 business days after we receive your return. "
-        "The refund will be issued to your original payment method.",
-    }
-
-    q_lower = question.lower()
-    for keyword, answer in faq.items():
-        if keyword in q_lower:
-            return {
-                "success": True,
-                "answer": answer,
-                "matched_keyword": keyword,
-                "error": None,
-            }
-
-    return {
-        "success": False,
-        "answer": "I'm sorry, I don't have information on that topic. "
-        "Please contact our support team for further assistance.",
-        "matched_keyword": None,
-        "error": "No matching FAQ entry found",
-    }
-
-
-@function_tool
-async def faq_lookup(question: str) -> dict:
-    """Answer common customer questions about store policies."""
-    return await faq_lookup_impl(question)
-
 
 # ---------------------------------------------------------------------------
 # Triage Orchestrator definition
@@ -146,8 +48,14 @@ triage_agent = Agent(
     Never attempt to process a refund or generate a label yourself.
     """,
     model="gpt-4o",
-    handoffs=[policy_agent, escalation_agent, billing_agent],
-    tools=[tracking_lookup, faq_lookup],
+    # handoffs=[policy_agent, escalation_agent],   # re-enable after teammates merge
+    tools=[
+        # policy_agent.as_tool(
+        #     tool_name="validate_return",
+        #     tool_description="Validate return eligibility for a customer order",
+        # ),
+        # get_customer_profile,
+    ],
 )
 
 
@@ -166,15 +74,11 @@ async def handle_customer_message(
     Loads existing session from Redis (if any), runs the triage agent,
     and persists updated session state.
     """
+    # Load or initialise session
     session = await get_session(session_id) if session_id else {}
     session.setdefault("customer_id", customer_id)
     session.setdefault("channel", channel)
     session.setdefault("agent_chain", [])
-    session.setdefault("timestamps", {
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-        "resolved_at": None,
-    })
 
     context = {
         "customer_id": customer_id,
@@ -182,8 +86,10 @@ async def handle_customer_message(
         "session": session,
     }
 
+    # Run triage agent
     result = await Runner.run(triage_agent, input=message, context=context)
 
+    # Update session
     session["agent_chain"].append("TriageOrchestrator")
     session["last_output"] = result.final_output
     new_session_id = await save_session(session, existing_id=session_id)
