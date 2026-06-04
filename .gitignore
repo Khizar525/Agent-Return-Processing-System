@@ -44,3 +44,11 @@ credentials/
 # ── Logs ─────────────────────────────────────────────────────────────────────
 *.log
 logs/
+
+# ── Confidential / internal docs (do not commit — see CONTRIBUTING.md) ────────
+# Team-lead blueprints and per-team assignment guides are kept outside the repo.
+# Pull them from the shared drive or the team lead directly.
+Leader_Blueprint_*.docx
+Team_Assignments_*.docx
+*_Blueprint_*.docx
+*_Assignments_*.docx

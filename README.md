@@ -12,28 +12,49 @@ A production-grade multi-agent system that autonomously handles the full lifecyc
 ## Architecture
 
 ```
-Customer Message
-       │
-       ▼
-[Triage Orchestrator]  ◄── Sentiment Monitor (guardrail)
-       │
-  Intent Classification
-       │
-  ┌────┴────┬──────────┬──────────┐
-  ▼         ▼          ▼          ▼
-[Policy  [Tracking  [Billing  [General
- Agent]   Lookup]    Agent]   FAQ Agent]
-  │
-  ▼
-[Resolution Agent]
-  │
-  ▼
-[Communication Agent] ──► Email / SMS / Chat
-  │
-  (edge case)
-  ▼
-[Escalation Agent] ──► Human Queue + Context Bundle
+                  Customer Message
+                         │
+                         ▼
+        ┌────────────────────────────────┐
+        │     Triage Orchestrator        │ ◄── Sentiment Monitor
+        │  (intent classification,       │     (passive guardrail)
+        │   gpt-4o)                      │
+        └────────┬───────────────┬───────┘
+                 │               │
+   tool call     │    handoff    │         handoff
+   (stays in     │               │         (full context)
+    triage)      ▼               ▼
+            ┌────────┐    ┌────────────┐    ┌──────────────┐
+            │tracking│    │Policy Agent│    │Billing Agent │
+            │  /faq  │    │ (gpt-4o-   │    │  (handoff)   │
+            │ (tools)│    │  mini)     │    │              │
+            └────────┘    └─────┬──────┘    └──────────────┘
+                                │ handoff
+                                ▼
+                       ┌────────────────┐
+                       │ Resolution     │
+                       │ Agent          │ ◄── refund_cap guardrail
+                       │ (gpt-4o-mini)  │
+                       └────────┬───────┘
+                                │ handoff
+                                ▼
+                       ┌────────────────┐
+                       │ Communication  │ ──► Email / SMS / Chat
+                       │ Agent          │     (brand_voice guardrail)
+                       └────────┬───────┘
+                                │
+                  (edge case)   │
+                                ▼
+                       ┌────────────────┐
+                       │ Escalation     │ ──► Human Queue
+                       │ Agent          │     + Context Bundle
+                       │ (gpt-4o)       │
+                       └────────────────┘
 ```
+
+**Pattern:** Manager + Handoff hybrid (see `docs/ADR-001.md`).
+- *Tool calls* (tracking, FAQ) keep context with the Triage Orchestrator.
+- *Handoffs* (Policy, Billing, Escalation) give full specialist ownership.
 
 ## Team
 
@@ -72,9 +93,11 @@ See `.env.example` for all required keys. Never commit a populated `.env` to Git
 
 ## Branch Strategy
 
-- `main` — protected, production-ready only. PRs require 1 review.
+- `main` — protected, production-ready only. PRs require 1 review, linear history, no force-push, admins enforced.
 - `develop` — integration branch. All feature branches merge here first.
-- `feature/*` — one branch per team member (see table above).
+- `feature/*` — one branch per team member (see table above). Always target `develop`, never `main`.
+
+> **Rule:** PRs target `develop`. Direct merges to `main` are blocked by branch protection. If you need a hotfix, open a PR from a `hotfix/*` branch into `main` and request Lead review.
 
 ## Phases
 
