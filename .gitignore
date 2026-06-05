@@ -52,3 +52,9 @@ Leader_Blueprint_*.docx
 Team_Assignments_*.docx
 *_Blueprint_*.docx
 *_Assignments_*.docx
+
+# ── Lead's working notes (personal tracking, never commit) ───────────────────
+LEAD_TODO.md
+LEAD_NOTES.md
+*_TODO.md
+*_NOTES.md
