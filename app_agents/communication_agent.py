@@ -23,7 +23,7 @@ Dependencies:
 # communication_agent = Agent(
 #     name="CommunicationAgent",
 #     instructions="...",
-#     model="gpt-4o-mini",
+#     model="gemini-2.0-flash",
 #     tools=[send_notification],
 #     output_guardrails=[brand_voice_guardrail],
 # )

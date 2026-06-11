@@ -24,11 +24,12 @@ Environment variables required:
     CRM_API_KEY
 """
 
-from agents import function_tool
+from typing import Any
+from agents import function_tool  # type: ignore[attr-defined]
 
 
 # TODO (Member 3): implement get_customer_profile below
-@function_tool
-async def get_customer_profile(customer_id: str) -> dict:
+@function_tool  # type: ignore[untyped-decorator]
+async def get_customer_profile(customer_id: str) -> dict[str, Any]:
     """Fetch full customer profile including order history and fraud flags."""
     raise NotImplementedError("Member 3: implement get_customer_profile")

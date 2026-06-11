@@ -31,11 +31,12 @@ Environment variables required:
     PAYPAL_BASE_URL
 """
 
-from agents import function_tool
+from typing import Any
+from agents import function_tool  # type: ignore[attr-defined]
 
 
 # TODO (Member 3): implement process_refund below
-@function_tool
-async def process_refund(order_id: str, amount_usd: float, method: str) -> dict:
+@function_tool  # type: ignore[untyped-decorator]
+async def process_refund(order_id: str, amount_usd: float, method: str) -> dict[str, Any]:
     """Issue a refund to the customer's original payment method."""
     raise NotImplementedError("Member 3: implement process_refund")

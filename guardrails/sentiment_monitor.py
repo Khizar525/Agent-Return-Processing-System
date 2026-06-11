@@ -22,7 +22,7 @@ Usage:
 import os
 import re
 from typing import Any
-from agents import input_guardrail, GuardrailFunctionOutput  # type: ignore[attr-defined]
+from agents import input_guardrail, GuardrailFunctionOutput
 
 THRESHOLD = float(os.environ.get("SENTIMENT_ESCALATION_THRESHOLD", "0.8"))
 
@@ -32,8 +32,12 @@ PROFANITY_PATTERN = re.compile(r"\b(fuck|shit|crap|damn|bastard|asshole)\b", re.
 EXCLAMATION_PATTERN = re.compile(r"[!?]{2,}")
 
 
-@input_guardrail  # type: ignore[untyped-decorator]
-async def sentiment_monitor_guardrail(ctx: Any, agent: Any, message: str) -> GuardrailFunctionOutput:
+async def _sentiment_monitor_impl(ctx: Any, agent: Any, message: Any) -> GuardrailFunctionOutput:
+    if not isinstance(message, str):
+        return GuardrailFunctionOutput(
+            tripwire_triggered=False,
+            output_info={"score": 0.0, "escalate": False},
+        )
     score = 0.0
     lower = message.lower()
 
@@ -58,5 +62,9 @@ async def sentiment_monitor_guardrail(ctx: Any, agent: Any, message: str) -> Gua
 
     return GuardrailFunctionOutput(
         tripwire_triggered=escalate,
-        output_dict={"score": score, "escalate": escalate},
+        output_info={"score": score, "escalate": escalate},
     )
+
+
+RAW_SENTIMENT_MONITOR = _sentiment_monitor_impl
+sentiment_monitor_guardrail: Any = input_guardrail()(_sentiment_monitor_impl)

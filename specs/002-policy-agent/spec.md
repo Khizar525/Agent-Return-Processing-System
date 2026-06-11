@@ -11,7 +11,7 @@
 | File | Type | Description |
 |------|------|-------------|
 | `tools/policy_tools.py` | Create | `check_return_policy` tool per `docs/tool_interface_spec.md` |
-| `agents/policy_agent.py` | Modify | Policy agent using `Agent(name=..., model="gpt-4o-mini", tools=[...])` |
+| `agents/policy_agent.py` | Modify | Policy agent using `Agent(name=..., model="gemini-2.0-flash", tools=[...])` |
 | `guardrails/pii_scrubber.py` | Modify | PII redaction input guardrail via `@input_guardrail` |
 | `guardrails/sentiment_monitor.py` | Modify | CSAT risk scoring input guardrail via `@input_guardrail` |
 | `guardrails/refund_cap.py` | Modify | Refund limit output guardrail via `@output_guardrail` |

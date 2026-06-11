@@ -20,18 +20,20 @@ Usage:
 
 import os
 from typing import Any
-from agents import output_guardrail, GuardrailFunctionOutput  # type: ignore[attr-defined]
+from agents import output_guardrail, GuardrailFunctionOutput
 
 CAP = float(os.environ.get("REFUND_CAP_USD", "500.0"))
 
 
-@output_guardrail  # type: ignore[untyped-decorator]
-async def refund_cap_guardrail(ctx: Any, agent: Any, output: Any) -> GuardrailFunctionOutput:
-    amount = output.get("refund_amount", 0) if isinstance(output, dict) else 0
+async def _refund_cap_impl(ctx: Any, agent: Any, output: Any) -> GuardrailFunctionOutput:
+    try:
+        amount = float(output.get("refund_amount", 0)) if isinstance(output, dict) else 0.0
+    except (TypeError, ValueError):
+        amount = 0.0
     if amount > CAP:
         return GuardrailFunctionOutput(
             tripwire_triggered=True,
-            output_dict={
+            output_info={
                 "human_approval_required": True,
                 "amount": amount,
                 "reason": "exceeds_cap",
@@ -39,5 +41,9 @@ async def refund_cap_guardrail(ctx: Any, agent: Any, output: Any) -> GuardrailFu
         )
     return GuardrailFunctionOutput(
         tripwire_triggered=False,
-        output_dict=output if isinstance(output, dict) else {},
+        output_info=output if isinstance(output, dict) else {},
     )
+
+
+RAW_REFUND_CAP = _refund_cap_impl
+refund_cap_guardrail: Any = output_guardrail()(_refund_cap_impl)

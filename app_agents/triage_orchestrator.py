@@ -14,10 +14,33 @@ Intents:
 """
 
 from agents import Agent, Runner
-# from agents.policy_agent import policy_agent           # uncomment after M2 merges
-# from agents.escalation_agent import escalation_agent   # uncomment after M4 merges
+# from app_agents.policy_agent import policy_agent           # uncomment after M2 merges
+# from app_agents.escalation_agent import escalation_agent   # uncomment after M4 merges
 # from tools.crm_tools import get_customer_profile       # uncomment after M3 merges
-from infra.redis_config import get_session, save_session
+from typing import Any
+
+try:
+    from infra.redis_config import get_session as _redis_get, save_session as _redis_save
+    _redis_available = True
+except Exception:
+    _redis_available = False
+
+async def get_session(session_id: str) -> dict[str, Any]:
+    if _redis_available:
+        try:
+            return await _redis_get(session_id)
+        except Exception:
+            pass
+    return {}
+
+async def save_session(session: dict[str, Any], existing_id: str | None = None) -> str:
+    if _redis_available:
+        try:
+            return await _redis_save(session, existing_id)
+        except Exception:
+            pass
+    import uuid
+    return existing_id or str(uuid.uuid4())
 
 # ---------------------------------------------------------------------------
 # Triage Orchestrator definition
@@ -47,7 +70,7 @@ triage_agent = Agent(
     Always pass customer_id and session_id in every handoff context.
     Never attempt to process a refund or generate a label yourself.
     """,
-    model="gpt-4o",
+    model="deepseek-v4-flash-free",
     # handoffs=[policy_agent, escalation_agent],   # re-enable after teammates merge
     tools=[
         # policy_agent.as_tool(
@@ -68,7 +91,7 @@ async def handle_customer_message(
     customer_id: str,
     channel: str = "web_chat",
     session_id: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """
     Main entry point called by the FastAPI webhook receiver.
     Loads existing session from Redis (if any), runs the triage agent,

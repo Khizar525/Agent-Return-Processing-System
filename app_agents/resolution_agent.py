@@ -26,6 +26,6 @@ Dependencies:
 # resolution_agent = Agent(
 #     name="ResolutionAgent",
 #     instructions="...",
-#     model="gpt-4o-mini",
+#     model="gemini-2.0-flash",
 #     tools=[process_refund, create_return_label, create_replacement_order],
 # )

@@ -14,7 +14,7 @@ import os
 
 import pytest
 
-from tools.policy_tools import check_return_policy_impl as check_return_policy
+from tools.policy_tools import RAW_CHECK_RETURN_POLICY as check_return_policy
 
 _FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
 

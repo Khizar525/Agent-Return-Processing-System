@@ -23,7 +23,7 @@ Rules to enforce:
     4. Cross-reference request against fraud DB before approving
 """
 
-from agents import Agent  # type: ignore[attr-defined]
+from agents import Agent
 from tools.policy_tools import check_return_policy
 # from tools.crm_tools import get_customer_profile      # uncomment after M3 merges
 
@@ -41,6 +41,6 @@ policy_agent = Agent(
     Always include customer_id and session_id in context when handing off.
     Output must be valid JSON: {{"eligible": bool, "reason": str, "recommended_action": str}}
     """,
-    model="gemini-2.0-flash",
+    model="deepseek-v4-flash-free",
     tools=[check_return_policy],
 )

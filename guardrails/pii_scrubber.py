@@ -20,15 +20,19 @@ Usage:
 
 import re
 from typing import Any
-from agents import input_guardrail, GuardrailFunctionOutput  # type: ignore[attr-defined]
+from agents import input_guardrail, GuardrailFunctionOutput
 
 CC_PATTERN = re.compile(r"\b(?:\d[ -]*?){13,16}\b")
 SSN_PATTERN = re.compile(r"\b\d{3}-\d{2}-\d{4}\b|\b\d{9}\b")
 BANK_PATTERN = re.compile(r"\b\d{8,17}\b")
 
 
-@input_guardrail  # type: ignore[untyped-decorator]
-async def pii_scrubber_guardrail(ctx: Any, agent: Any, message: str) -> GuardrailFunctionOutput:
+async def _pii_scrubber_impl(ctx: Any, agent: Any, message: Any) -> GuardrailFunctionOutput:
+    if not isinstance(message, str):
+        return GuardrailFunctionOutput(
+            tripwire_triggered=False,
+            output_info={"scrubbed_message": message},
+        )
     scrubbed = message
     scrubbed = CC_PATTERN.sub("[REDACTED]", scrubbed)
     scrubbed = SSN_PATTERN.sub("[REDACTED]", scrubbed)
@@ -36,5 +40,9 @@ async def pii_scrubber_guardrail(ctx: Any, agent: Any, message: str) -> Guardrai
     triggered = scrubbed != message
     return GuardrailFunctionOutput(
         tripwire_triggered=triggered,
-        output_dict={"scrubbed_message": scrubbed},
+        output_info={"scrubbed_message": scrubbed},
     )
+
+
+RAW_PII_SCRUBBER = _pii_scrubber_impl
+pii_scrubber_guardrail: Any = input_guardrail()(_pii_scrubber_impl)

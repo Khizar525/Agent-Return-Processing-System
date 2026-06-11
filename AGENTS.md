@@ -27,8 +27,8 @@ PHRs are auto-created under `history/prompts/<feature>/` after every user prompt
 
 - **Pattern**: Manager + Handoff Hybrid (see `docs/ADR-001.md`). Handoff for multi-step specialist flows (`return_request`), tool-call for single-step lookups (`order_status`).
 - **Entry**: `main.py` → FastAPI `POST /webhook/message` → `triage_orchestrator.handle_customer_message()`.
-- **Entry agent**: `agents/triage_orchestrator.py` — `gpt-4o`, classifies intent, hands off.
-- **Policy agent**: `agents/policy_agent.py` — validated by you. Uses `gpt-4o-mini`. Enforces: return window (30d), exclusion list, fraud flag check, fraud DB cross-reference.
+- **Entry agent**: `app_agents/triage_orchestrator.py` — `gemini-2.0-flash`, classifies intent, hands off.
+- **Policy agent**: `app_agents/policy_agent.py` — validated by you. Uses `gemini-2.0-flash`. Enforces: return window (30d), exclusion list, fraud flag check, fraud DB cross-reference.
 
 ## Code Conventions
 

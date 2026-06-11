@@ -38,18 +38,19 @@ Environment variables required:
     OMS_BASE_URL, OMS_API_KEY
 """
 
-from agents import function_tool
+from typing import Any
+from agents import function_tool  # type: ignore[attr-defined]
 
 
 # TODO (Member 3): implement create_return_label below
-@function_tool
-async def create_return_label(order_id: str, carrier: str) -> dict:
+@function_tool  # type: ignore[untyped-decorator]
+async def create_return_label(order_id: str, carrier: str) -> dict[str, Any]:
     """Generate a prepaid return shipping label via FedEx or UPS."""
     raise NotImplementedError("Member 3: implement create_return_label")
 
 
 # TODO (Member 3): implement create_replacement_order below
-@function_tool
-async def create_replacement_order(order_id: str) -> dict:
+@function_tool  # type: ignore[untyped-decorator]
+async def create_replacement_order(order_id: str) -> dict[str, Any]:
     """Clone an order and flag it for expedited fulfillment in the OMS."""
     raise NotImplementedError("Member 3: implement create_replacement_order")
