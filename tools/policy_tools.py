@@ -136,7 +136,6 @@ def _result(
 ) -> dict:
     return {
         "eligible": eligible,
-        "success": False if not eligible else True,
         "reason": reason,
         "recommended_action": recommended_action,
         "return_window_days": _RETURN_WINDOW_DAYS,
@@ -151,7 +150,6 @@ def _result(
 def _error_result(error_msg: str) -> dict:
     return {
         "eligible": False,
-        "success": False,
         "reason": "",
         "recommended_action": "reject",
         "return_window_days": _RETURN_WINDOW_DAYS,

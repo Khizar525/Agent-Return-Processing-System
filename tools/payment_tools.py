@@ -20,9 +20,9 @@ Interface Spec (do not change signatures without Lead approval):
                 "error": str | None,
             }
 
-IMPORTANT: This tool must check the refund cap guardrail before calling
-           the payment API. If amount_usd > REFUND_CAP_USD, raise a
-           ValueError with message "human_approval_required".
+IMPORTANT: This tool enforces an execution safety boundary (defense-in-depth).
+           If amount_usd > REFUND_CAP_USD, it raises a ValueError with
+           message "human_approval_required" to prevent execution.
 
 Environment variables required:
     STRIPE_SECRET_KEY
@@ -31,6 +31,7 @@ Environment variables required:
     PAYPAL_BASE_URL
 """
 
+import json
 import os
 import logging
 import time
@@ -91,9 +92,11 @@ async def _refund_stripe(order_id: str, amount_usd: float) -> dict:
         return _error_response(f"Payment intent not found: {order_id}")
 
     response.raise_for_status()
-    data = response.json()
-
-    transaction_id = data["id"]
+    try:
+        data = response.json()
+        transaction_id = data["id"]
+    except (json.JSONDecodeError, KeyError, TypeError) as e:
+        return _error_response(f"Invalid Stripe response format: {e}")
 
     return _success_response(transaction_id, amount_usd)
 
@@ -118,7 +121,10 @@ async def _refund_paypal(order_id: str, amount_usd: float) -> dict:
                       "Accept": "application/json"},
         )
         token_resp.raise_for_status()
-        access_token = token_resp.json()["access_token"]
+        try:
+            access_token = token_resp.json()["access_token"]
+        except (json.JSONDecodeError, KeyError, TypeError) as e:
+            return _error_response(f"Invalid PayPal token response format: {e}")
 
         refund_resp = await client.post(
             f"{base_url}/v2/payments/captures/{order_id}/refund",
@@ -139,9 +145,11 @@ async def _refund_paypal(order_id: str, amount_usd: float) -> dict:
         return _error_response(f"Capture not found: {order_id}")
 
     refund_resp.raise_for_status()
-    data = refund_resp.json()
-
-    transaction_id = data["id"]
+    try:
+        data = refund_resp.json()
+        transaction_id = data["id"]
+    except (json.JSONDecodeError, KeyError, TypeError) as e:
+        return _error_response(f"Invalid PayPal refund response format: {e}")
 
     return _success_response(transaction_id, amount_usd)
 
@@ -182,9 +190,16 @@ async def process_refund(order_id: str, amount_usd: float, method: str) -> dict:
         return _error_response(
             "REFUND_CAP_USD environment variable must be a valid number")
 
-    # ── CRITICAL: Refund cap guardrail ──────────────────────────────────
-    # The ValueError MUST propagate uncaught to the SDK runtime.
+    # ── Adapter Execution Safety Boundary (Defense in Depth) ───────────
+    # The ResolutionAgent is the primary decision-maker and must autonomously
+    # block refunds > $500. The refund_cap_guardrail is the primary enforcement
+    # layer. This check is a low-level adapter safeguard to prevent execution of
+    # unauthorized amounts in case of agent hallucination.
     if amount_usd > refund_cap:
+        logger.error("tool_safety_block", extra={
+            "tool": "process_refund", "amount_usd": amount_usd, "refund_cap": refund_cap,
+            "reason": "Execution blocked by adapter safety boundary."
+        })
         raise ValueError("human_approval_required")
 
     # ── Execute refund ──────────────────────────────────────────────────
@@ -234,8 +249,17 @@ async def process_refund(order_id: str, amount_usd: float, method: str) -> dict:
         return _error_response(
             f"Invalid {normalised_method.title()} response format: {str(e)}")
 
-    except ValueError:
-        raise
+    except ValueError as e:
+        # Guardrail ValueError (human_approval_required) must propagate
+        # unmodified to the SDK runtime. Other ValueErrors are unexpected
+        # and treated as tool errors.
+        if "human_approval_required" in str(e):
+            raise
+        duration = int((time.monotonic() - start) * 1000)
+        logger.error("tool_unexpected_error", extra={
+            "tool": "process_refund", "duration_ms": duration,
+            "method": normalised_method})
+        return _error_response(f"Unexpected {normalised_method.title()} API error: {str(e)}")
 
     except Exception as e:
         duration = int((time.monotonic() - start) * 1000)

@@ -573,7 +573,7 @@ async def test_process_refund_paypal_timeout():
 
 @pytest.mark.asyncio
 async def test_process_refund_stripe_malformed_response():
-    """Non-JSON Stripe response propagates ValueError (JSONDecodeError)."""
+    """Non-JSON Stripe response returns an error response (was ValueError)."""
     monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_abc123")
     monkeypatch.setenv("REFUND_CAP_USD", "500")
@@ -582,16 +582,18 @@ async def test_process_refund_stripe_malformed_response():
         respx.post(_STRIPE_REFUND_URL).respond(
             text="not-json", status_code=200,
         )
-        with pytest.raises(ValueError):
-            await _invoke_process_refund(
-                order_id="ORD-001", amount_usd=50.0, method="stripe")
+        result = await _invoke_process_refund(
+            order_id="ORD-001", amount_usd=50.0, method="stripe")
+
+    assert result["success"] is False
+    assert "Invalid Stripe response format" in result["error"]
 
     monkeypatch.undo()
 
 
 @pytest.mark.asyncio
 async def test_process_refund_paypal_malformed_response():
-    """Non-JSON PayPal refund response propagates ValueError (JSONDecodeError)."""
+    """Non-JSON PayPal refund response returns an error response (was ValueError)."""
     monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setenv("PAYPAL_CLIENT_ID", "paypal_client")
     monkeypatch.setenv("PAYPAL_CLIENT_SECRET", "paypal_secret")
@@ -607,9 +609,11 @@ async def test_process_refund_paypal_malformed_response():
         ).respond(
             text="not-json", status_code=200,
         )
-        with pytest.raises(ValueError):
-            await _invoke_process_refund(
-                order_id="ORD-001", amount_usd=25.0, method="paypal")
+        result = await _invoke_process_refund(
+            order_id="ORD-001", amount_usd=25.0, method="paypal")
+
+    assert result["success"] is False
+    assert "Invalid PayPal refund response format" in result["error"]
 
     monkeypatch.undo()
 
