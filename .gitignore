@@ -44,3 +44,23 @@ credentials/
 # ── Logs ─────────────────────────────────────────────────────────────────────
 *.log
 logs/
+
+# ── Confidential / internal docs (do not commit — see CONTRIBUTING.md) ────────
+# Team-lead blueprints and per-team assignment guides are kept outside the repo.
+# Pull them from the shared drive or the team lead directly.
+Leader_Blueprint_*.docx
+Team_Assignments_*.docx
+*_Blueprint_*.docx
+*_Assignments_*.docx
+
+# ── Lead's working notes (personal tracking, never commit) ───────────────────
+LEAD_TODO.md
+LEAD_NOTES.md
+*_TODO.md
+*_NOTES.md
+
+# ── Project context brief (shareable, but kept out of repo until promoted) ───
+# The brief is for AIs / onboarding. Living copy stays local until it's polished
+# enough to commit as docs/PROJECT_BRIEF.md.
+PROJECT_BRIEF.md
+*_BRIEF.md
