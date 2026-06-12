@@ -17,36 +17,36 @@ import sys
 
 import pytest
 
-# ── Step 1: Load local agents package FIRST ──
-# This triggers the re-export strategy in agents/__init__.py, which makes
-# the local package a superset of the SDK's agents module (with __path__
-# including both the SDK directory and the local directory).  Submodules
-# like triage_orchestrator are then discoverable regardless of sys.path
-# ordering later.
-import agents
+from tools.policy_tools import RAW_CHECK_RETURN_POLICY as check_return_policy
 
-# ── Step 2: Put site-packages first ──
-# So any subsequent direct SDK module lookups favour the installed SDK.
-site_packages = [p for p in site.getsitepackages() if "site-packages" in p]
-for sp in site_packages:
-    if sp in sys.path:
-        sys.path.remove(sp)
-        sys.path.insert(0, sp)
+from collections.abc import Generator
+from database.repository import MemoryBackend
+from tools.policy_tools import set_repo_for_testing, reset_repo_for_testing
 
-# ── Step 3: Load resolution_agent via importlib ──
-# Imports the SDK Agent object. The custom resolve_return() orchestrator was
-# removed per architecture compliance — tool execution is SDK-driven.
-_project_root = os.path.dirname(os.path.dirname(__file__))
-_spec = importlib.util.spec_from_file_location(
-    "resolution_agent",
-    os.path.join(_project_root, "agents", "resolution_agent.py"),
-)
-ra = importlib.util.module_from_spec(_spec)
-sys.modules["resolution_agent"] = ra
-_spec.loader.exec_module(ra)
-resolution_agent = ra.resolution_agent
-
-from tools.policy_tools import check_return_policy_impl as check_return_policy
+@pytest.fixture(autouse=True)
+def _setup_integration_test_repo(orders, customers, fraud_signals) -> Generator[None, None, None]:
+    data = {
+        "orders": {o["order_id"]: {
+            "order_id": o["order_id"],
+            "customer_id": o["customer_id"],
+            "item_category": o.get("item_category") or (o["items"][0]["category"] if o.get("items") else "electronics"),
+            "days_since_purchase": o["days_since_purchase"],
+            "price": float(o.get("total") or (sum(i["price"] * i["quantity"] for i in o["items"]) if o.get("items") else 100.0)),
+            "damaged": any(i.get("damaged", False) for i in o.get("items", [])) or o.get("damaged", False),
+        } for o in orders},
+        "customers": {c["customer_id"]: {
+            "customer_id": c["customer_id"],
+            "fraud_flag": c["fraud_flag"],
+            "fraud_reason": c.get("fraud_reason"),
+        } for c in customers},
+        "fraud_db_matches": {s["customer_id"]: {
+            "customer_id": s["customer_id"],
+            "match_reason": s["reason"],
+        } for s in fraud_signals},
+    }
+    set_repo_for_testing(MemoryBackend(data))
+    yield
+    reset_repo_for_testing()
 
 _FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
 
@@ -614,7 +614,7 @@ class TestCheckReturnPolicy:
 
 @pytest.mark.asyncio
 async def test_tracking_lookup_found() -> None:
-    from agents.triage_orchestrator import tracking_lookup_impl as tracking_lookup
+    from app_agents.triage_orchestrator import tracking_lookup_impl as tracking_lookup
 
     result = await tracking_lookup("ord_1001")
     assert result["success"] is True
@@ -625,7 +625,7 @@ async def test_tracking_lookup_found() -> None:
 
 @pytest.mark.asyncio
 async def test_tracking_lookup_not_found() -> None:
-    from agents.triage_orchestrator import tracking_lookup_impl as tracking_lookup
+    from app_agents.triage_orchestrator import tracking_lookup_impl as tracking_lookup
 
     result = await tracking_lookup("ord_does_not_exist")
     assert result["success"] is False
@@ -640,7 +640,7 @@ async def test_tracking_lookup_not_found() -> None:
 
 @pytest.mark.asyncio
 async def test_faq_lookup_matches_keyword() -> None:
-    from agents.triage_orchestrator import faq_lookup_impl as faq_lookup
+    from app_agents.triage_orchestrator import faq_lookup_impl as faq_lookup
 
     result = await faq_lookup("What is your return window?")
     assert result["success"] is True
@@ -650,7 +650,7 @@ async def test_faq_lookup_matches_keyword() -> None:
 
 @pytest.mark.asyncio
 async def test_faq_lookup_no_match() -> None:
-    from agents.triage_orchestrator import faq_lookup_impl as faq_lookup
+    from app_agents.triage_orchestrator import faq_lookup_impl as faq_lookup
 
     result = await faq_lookup("How do I reset my password?")
     assert result["success"] is False
@@ -711,6 +711,7 @@ class TestIntentMapping:
                 f"Message {msg['message_id']}: expected route {expected_route} "
                 f"does not match mapping for intent {intent} ({route_map[intent]})"
             )
+
 
 
 

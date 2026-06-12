@@ -25,7 +25,7 @@ Usage (once implemented):
 """
 
 # TODO (Member 4): implement brand_voice_guardrail below
-# from agents.guardrails import output_guardrail, GuardrailFunctionOutput
+# from app_agents.guardrails import output_guardrail, GuardrailFunctionOutput
 #
 # @output_guardrail
 # async def brand_voice_guardrail(ctx, agent, output) -> GuardrailFunctionOutput:

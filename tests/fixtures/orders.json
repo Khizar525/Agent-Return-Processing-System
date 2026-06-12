@@ -11,7 +11,7 @@
     "status": "delivered",
     "carrier": "fedex",
     "tracking_number": "FX123456789",
-    "_note": "OUTSIDE return window (31 days > 30 day limit) — should be INELIGIBLE"
+    "_note": "OUTSIDE return window (31 days > 30 day limit) \u2014 should be INELIGIBLE"
   },
   {
     "order_id": "ord_1002",
@@ -25,7 +25,7 @@
     "status": "delivered",
     "carrier": "ups",
     "tracking_number": "UP987654321",
-    "_note": "WITHIN return window — should be ELIGIBLE"
+    "_note": "WITHIN return window \u2014 should be ELIGIBLE"
   },
   {
     "order_id": "ord_2002",
@@ -39,7 +39,7 @@
     "status": "delivered",
     "carrier": null,
     "tracking_number": null,
-    "_note": "EXCLUDED category (digital_goods) — should be INELIGIBLE regardless of window"
+    "_note": "EXCLUDED category (digital_goods) \u2014 should be INELIGIBLE regardless of window"
   },
   {
     "order_id": "ord_3004",
@@ -53,7 +53,7 @@
     "status": "delivered",
     "carrier": "fedex",
     "tracking_number": "FX000111222",
-    "_note": "HIGH VALUE order ($1200) — ELIGIBLE for return but refund > $500 cap triggers human approval"
+    "_note": "HIGH VALUE order ($1200) \u2014 ELIGIBLE for return but refund > $500 cap triggers human approval"
   },
   {
     "order_id": "ord_4003",
@@ -67,7 +67,7 @@
     "status": "delivered",
     "carrier": "ups",
     "tracking_number": "UP555666777",
-    "_note": "FRAUD FLAG on account + OUTSIDE window — should be INELIGIBLE + escalate"
+    "_note": "FRAUD FLAG on account + OUTSIDE window \u2014 should be INELIGIBLE + escalate"
   },
   {
     "order_id": "ord_5002",
@@ -81,7 +81,7 @@
     "status": "delivered",
     "carrier": "fedex",
     "tracking_number": "FX333444555",
-    "_note": "WITHIN window, clean account, mid-value — straightforward ELIGIBLE refund case"
+    "_note": "WITHIN window, clean account, mid-value \u2014 straightforward ELIGIBLE refund case"
   },
   {
     "order_id": "ord_6001",
@@ -95,6 +95,132 @@
     "status": "delivered",
     "carrier": "ups",
     "tracking_number": "UP888999000",
-    "_note": "FINAL SALE item — EXCLUDED regardless of window or account status"
+    "_note": "FINAL SALE item \u2014 EXCLUDED regardless of window or account status"
+  },
+  {
+    "order_id": "ord_7001",
+    "customer_id": "cust_001",
+    "purchase_date": "2026-05-29",
+    "days_since_purchase": 2,
+    "total_usd": 12.99,
+    "items": [
+      { "sku": "SKU-ORG-001", "name": "Organic Strawberries", "category": "perishables", "qty": 1, "price_usd": 12.99, "excluded": true, "exclusion_reason": "perishables" }
+    ],
+    "status": "delivered",
+    "carrier": "fedex",
+    "tracking_number": "FX555000111",
+    "_note": "PERISHABLE item \u2014 EXCLUDED regardless of window"
+  },
+  {
+    "order_id": "ord_7002",
+    "customer_id": "cust_003",
+    "purchase_date": "2026-05-31",
+    "days_since_purchase": 0,
+    "total_usd": 549.00,
+    "items": [
+      { "sku": "SKU-GAMING-MOUSE", "name": "Gaming Mouse Pro", "category": "electronics", "qty": 1, "price_usd": 549.00, "excluded": false }
+    ],
+    "status": "just_purchased",
+    "carrier": null,
+    "tracking_number": null,
+    "_note": "SAME DAY purchase (\u2264 $500) \u2014 ELIGIBLE for refund"
+  },
+  {
+    "order_id": "ord_7003",
+    "customer_id": "cust_003",
+    "purchase_date": "2026-05-01",
+    "days_since_purchase": 30,
+    "total_usd": 29.99,
+    "items": [
+      { "sku": "SKU-USB-CABLE", "name": "USB-C Cable 2m", "category": "electronics", "qty": 1, "price_usd": 29.99, "excluded": false }
+    ],
+    "status": "delivered",
+    "carrier": "ups",
+    "tracking_number": "UP111222333",
+    "_note": "EXACTLY 30 days \u2014 ELIGIBLE (30-day window, not exceeded)"
+  },
+  {
+    "order_id": "ord_7004",
+    "customer_id": "cust_006",
+    "purchase_date": "2026-05-19",
+    "days_since_purchase": 12,
+    "total_usd": 89.99,
+    "items": [
+      { "sku": "SKU-TOWEL-SET", "name": "Bath Towel Set", "category": "home_goods", "qty": 1, "price_usd": 89.99, "excluded": false }
+    ],
+    "status": "delivered",
+    "carrier": "fedex",
+    "tracking_number": "FX777888999",
+    "_note": "WITHIN window, clean account \u2014 ELIGIBLE refund"
+  },
+  {
+    "order_id": "ord_7005",
+    "customer_id": "cust_002",
+    "purchase_date": "2026-05-23",
+    "days_since_purchase": 8,
+    "total_usd": 45.00,
+    "items": [
+      { "sku": "SKU-HDMI", "name": "HDMI Cable 3m", "category": "electronics", "qty": 1, "price_usd": 45.00, "excluded": false }
+    ],
+    "status": "delivered",
+    "carrier": "ups",
+    "tracking_number": "UP444555666",
+    "_note": "WITHIN window, clean account \u2014 ELIGIBLE refund"
+  },
+  {
+    "order_id": "ord_7006",
+    "customer_id": "cust_001",
+    "purchase_date": "2026-05-06",
+    "days_since_purchase": 25,
+    "total_usd": 34.99,
+    "items": [
+      { "sku": "SKU-FACE-CREAM", "name": "Moisturizing Face Cream", "category": "beauty", "qty": 1, "price_usd": 34.99, "excluded": false }
+    ],
+    "status": "delivered",
+    "carrier": "fedex",
+    "tracking_number": "FX000999888",
+    "_note": "WITHIN window, DAMAGED \u2014 replacement"
+  },
+  {
+    "order_id": "ord_7007",
+    "customer_id": "cust_007",
+    "purchase_date": "2026-05-26",
+    "days_since_purchase": 5,
+    "total_usd": 999.99,
+    "items": [
+      { "sku": "SKU-PHONE-X", "name": "Phone X Ultra", "category": "electronics", "qty": 1, "price_usd": 999.99, "excluded": false }
+    ],
+    "status": "delivered",
+    "carrier": "fedex",
+    "tracking_number": "FX777000111",
+    "_note": "FRAUD FLAG on account \u2014 INELIGIBLE + reject"
+  },
+  {
+    "order_id": "ord_7008",
+    "customer_id": "cust_006",
+    "purchase_date": "2026-05-30",
+    "days_since_purchase": 1,
+    "total_usd": 199.00,
+    "items": [
+      { "sku": "SKU-RUG-DECO", "name": "Decorative Rug (Final Sale)", "category": "home_goods", "qty": 1, "price_usd": 199.00, "excluded": true, "exclusion_reason": "final_sale" }
+    ],
+    "status": "delivered",
+    "carrier": "ups",
+    "tracking_number": "UP777000888",
+    "_note": "FINAL SALE item \u2014 EXCLUDED regardless of window"
+  },
+  {
+    "order_id": "ord_7009",
+    "customer_id": "cust_008",
+    "purchase_date": "2026-05-24",
+    "days_since_purchase": 7,
+    "total_usd": 250.00,
+    "items": [
+      { "sku": "SKU-KEYBOARD", "name": "Mechanical Keyboard", "category": "electronics", "qty": 1, "price_usd": 250.00, "excluded": false }
+    ],
+    "status": "delivered",
+    "carrier": "fedex",
+    "tracking_number": "FX333000777",
+    "_note": "FRAUD DB match (velocity check) \u2014 escalate for human review"
   }
 ]

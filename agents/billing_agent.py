@@ -9,7 +9,7 @@ Dependencies:
     - tools/payment_tools.py  (process_refund)          — Member 3
     - guardrails/refund_cap.py                          — Member 2
 
-Model: gpt-4o-mini
+Model: deepseek-v4-flash-free
 """
 
 from agents import Agent
@@ -30,6 +30,6 @@ billing_agent = Agent(
         "4. Never process a refund over $500 without human approval.\n\n"
         "Output a clear summary of the dispute and resolution."
     ),
-    model="gpt-4o-mini",
+    model="deepseek-v4-flash-free",
     # tools=[process_refund],  # uncomment after M3 merges
 )

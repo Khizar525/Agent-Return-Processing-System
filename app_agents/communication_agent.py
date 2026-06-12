@@ -16,7 +16,6 @@ Dependencies:
     - guardrails/brand_voice.py                         — Member 4 (you)
 """
 
-from agents import Agent
 # from tools.notification_tools import send_notification
 # from guardrails.brand_voice import brand_voice_guardrail
 
@@ -24,7 +23,7 @@ from agents import Agent
 # communication_agent = Agent(
 #     name="CommunicationAgent",
 #     instructions="...",
-#     model="gpt-4o-mini",
+#     model="gemini-2.0-flash",
 #     tools=[send_notification],
 #     output_guardrails=[brand_voice_guardrail],
 # )

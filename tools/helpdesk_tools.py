@@ -40,18 +40,19 @@ Environment variables required:
     ZENDESK_SUBDOMAIN, ZENDESK_API_TOKEN, ZENDESK_EMAIL
 """
 
-from agents import function_tool
+from typing import Any
+from agents import function_tool  # type: ignore[attr-defined]
 
 
 # TODO (Member 4): implement create_human_ticket below
-@function_tool
-async def create_human_ticket(context_bundle: dict) -> dict:
+@function_tool  # type: ignore[untyped-decorator]
+async def create_human_ticket(context_bundle: dict[str, Any]) -> dict[str, Any]:
     """Open a Zendesk ticket with full conversation context."""
     raise NotImplementedError("Member 4: implement create_human_ticket")
 
 
 # TODO (Member 4): implement log_resolution below
-@function_tool
-async def log_resolution(session_id: str, outcome: dict) -> dict:
+@function_tool  # type: ignore[untyped-decorator]
+async def log_resolution(session_id: str, outcome: dict[str, Any]) -> dict[str, Any]:
     """Record resolution outcome in the data warehouse."""
     raise NotImplementedError("Member 4: implement log_resolution")

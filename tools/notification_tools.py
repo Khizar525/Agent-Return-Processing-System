@@ -26,16 +26,17 @@ Environment variables required:
     TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
 """
 
-from agents import function_tool
+from typing import Any
+from agents import function_tool  # type: ignore[attr-defined]
 
 
 # TODO (Member 4): implement send_notification below
-@function_tool
+@function_tool  # type: ignore[untyped-decorator]
 async def send_notification(
     customer_id: str,
     channel: str,
     subject: str,
     body: str,
-) -> dict:
+) -> dict[str, Any]:
     """Send an email or SMS notification to the customer."""
     raise NotImplementedError("Member 4: implement send_notification")

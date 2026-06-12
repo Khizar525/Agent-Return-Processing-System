@@ -31,6 +31,7 @@ import json
 import os
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
 import redis.asyncio as aioredis
 
@@ -51,14 +52,14 @@ SESSION_TTL = int(os.environ.get("REDIS_SESSION_TTL_SECONDS", 86400))
 ARCHIVE_TTL = int(os.environ.get("REDIS_ARCHIVE_TTL_SECONDS", 7_776_000))
 
 
-async def get_session(session_id: str) -> dict:
+async def get_session(session_id: str) -> dict[str, Any]:
     """Load session from Redis. Returns empty dict if not found."""
     client = _get_client()
     raw = await client.get(f"session:{session_id}")
     return json.loads(raw) if raw else {}
 
 
-async def save_session(session: dict, existing_id: str | None = None) -> str:
+async def save_session(session: dict[str, Any], existing_id: str | None = None) -> str:
     """
     Persist session to Redis and return the session_id.
     Creates a new session_id if none provided.

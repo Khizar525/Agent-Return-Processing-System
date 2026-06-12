@@ -11,47 +11,75 @@ Behaviour:
       { "human_approval_required": true, "amount": float, "reason": "exceeds_cap" }
 
 Must be applied as an output_guardrail on the Resolution Agent.
-
-Usage:
-    from guardrails.refund_cap import refund_cap_guardrail
-    resolution_agent = Agent(..., output_guardrails=[refund_cap_guardrail])
 """
 
 import os
 import re
+from typing import Any
+from agents import output_guardrail, GuardrailFunctionOutput
 
-from agents import GuardrailFunctionOutput, output_guardrail
+CAP = float(os.environ.get("REFUND_CAP_USD", "500.0"))
+REFUND_CAP_USD = CAP
 
-REFUND_CAP_USD = float(os.environ.get("REFUND_CAP_USD", "500"))
 
-
-@output_guardrail
-async def refund_cap_guardrail(ctx, agent, output) -> GuardrailFunctionOutput:
+async def _refund_cap_impl(ctx: Any, agent: Any, output: Any) -> GuardrailFunctionOutput:
     """
     Inspect the Resolution Agent's output for refund amounts.
     If any amount exceeds REFUND_CAP_USD, trip the guardrail so the
     flow escalates to a human agent for approval.
     """
-    output_text = str(output)
-    amounts = re.findall(r"\$?(\d+(?:\.\d{2})?)", output_text)
+    amount = 0.0
+    if output is not None:
+        if isinstance(output, dict):
+            try:
+                amount = float(output.get("refund_amount", 0) or output.get("amount", 0))
+            except (ValueError, TypeError):
+                amount = 0.0
+        elif hasattr(output, "refund_amount") and getattr(output, "refund_amount") is not None:
+            try:
+                amount = float(getattr(output, "refund_amount"))
+            except (ValueError, TypeError):
+                amount = 0.0
+        elif hasattr(output, "amount") and getattr(output, "amount") is not None:
+            try:
+                amount = float(getattr(output, "amount"))
+            except (ValueError, TypeError):
+                amount = 0.0
+        else:
+            # Fallback to regex on string representation
+            output_text = str(output)
+            amounts = re.findall(r"\$?(\d+(?:\.\d{2})?)", output_text)
+            for amount_str in amounts:
+                try:
+                    val = float(amount_str)
+                    if val > amount:
+                        amount = val
+                except ValueError:
+                    continue
 
-    for amount_str in amounts:
-        try:
-            amount = float(amount_str)
-            if amount > REFUND_CAP_USD:
-                return GuardrailFunctionOutput(
-                    output_info={
-                        "human_approval_required": True,
-                        "amount": amount,
-                        "reason": "exceeds_cap",
-                        "cap": REFUND_CAP_USD,
-                    },
-                    tripwire_triggered=True,
-                )
-        except ValueError:
-            continue
+    if amount > CAP:
+        return GuardrailFunctionOutput(
+            tripwire_triggered=True,
+            output_info={
+                "human_approval_required": True,
+                "amount": amount,
+                "reason": "exceeds_cap",
+                "cap": CAP,
+            },
+        )
+
+    # Prepare output info
+    output_info = {"allowed": True}
+    if isinstance(output, dict):
+        output_info.update(output)
+    elif hasattr(output, "model_dump"):
+        output_info.update(output.model_dump())
 
     return GuardrailFunctionOutput(
-        output_info={"allowed": True},
         tripwire_triggered=False,
+        output_info=output_info,
     )
+
+
+RAW_REFUND_CAP = _refund_cap_impl
+refund_cap_guardrail: Any = output_guardrail()(_refund_cap_impl)
