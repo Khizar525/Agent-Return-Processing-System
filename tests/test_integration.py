@@ -48,6 +48,7 @@ def _setup_integration_test_repo(orders, customers, fraud_signals) -> Generator[
     yield
     reset_repo_for_testing()
 
+
 _FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
 
 

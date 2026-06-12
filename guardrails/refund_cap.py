@@ -11,6 +11,10 @@ Behaviour:
       { "human_approval_required": true, "amount": float, "reason": "exceeds_cap" }
 
 Must be applied as an output_guardrail on the Resolution Agent.
+
+Usage:
+    from guardrails.refund_cap import refund_cap_guardrail
+    resolution_agent = Agent(..., output_guardrails=[refund_cap_guardrail])
 """
 
 import os
