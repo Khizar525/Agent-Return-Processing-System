@@ -23,7 +23,7 @@ Dependencies:
 # communication_agent = Agent(
 #     name="CommunicationAgent",
 #     instructions="...",
-#     model="gemini-2.0-flash",
+#     model="deepseek-v4-flash-free",
 #     tools=[send_notification],
 #     output_guardrails=[brand_voice_guardrail],
 # )

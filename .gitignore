@@ -48,10 +48,8 @@ logs/
 # ── Confidential / internal docs (do not commit — see CONTRIBUTING.md) ────────
 # Team-lead blueprints and per-team assignment guides are kept outside the repo.
 # Pull them from the shared drive or the team lead directly.
-Leader_Blueprint_*.docx
-Team_Assignments_*.docx
-*_Blueprint_*.docx
-*_Assignments_*.docx
+*.docx
+document/
 
 # ── Lead's working notes (personal tracking, never commit) ───────────────────
 LEAD_TODO.md
@@ -64,3 +62,9 @@ LEAD_NOTES.md
 # enough to commit as docs/PROJECT_BRIEF.md.
 PROJECT_BRIEF.md
 *_BRIEF.md
+
+# ── Duplicate SDD tooling accidentally committed by M3 ───────────────────────
+here/
+
+# ── OpenWork workspace config (local, not for repo) ──────────────────────────
+.opencode/openwork.json

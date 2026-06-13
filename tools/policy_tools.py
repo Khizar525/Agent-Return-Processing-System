@@ -125,6 +125,7 @@ async def _check_return_policy_impl(order_id: str, customer_id: str) -> dict[str
         recommended_action = "refund"
 
     return {
+        "success": True,
         "eligible": eligible,
         "reason": reason,
         "recommended_action": recommended_action,

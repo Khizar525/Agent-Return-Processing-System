@@ -14,7 +14,7 @@ Responsibilities:
     2. Open ticket in Zendesk via create_human_ticket
     3. Log resolution outcome via log_resolution
 
-Model: gemini-2.0-flash (free tier via Google Gemini OpenAI-compatible endpoint)
+Model: deepseek-v4-flash-free (free tier, all agents unified on this model)
 
 Dependencies:
     - tools/helpdesk_tools.py  (create_human_ticket, log_resolution) — Member 4 (you)
@@ -26,6 +26,6 @@ Dependencies:
 # escalation_agent = Agent(
 #     name="EscalationAgent",
 #     instructions="...",
-#     model="gemini-2.0-flash",
+#     model="deepseek-v4-flash-free",
 #     tools=[create_human_ticket, log_resolution],
 # )
