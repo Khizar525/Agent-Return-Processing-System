@@ -50,7 +50,7 @@ def test_agent_name():
 
 
 def test_agent_has_correct_model():
-    assert resolution_agent.model == "gpt-4o-mini"
+    assert resolution_agent.model == "deepseek-v4-flash-free"
 
 
 def test_agent_has_all_three_tools():

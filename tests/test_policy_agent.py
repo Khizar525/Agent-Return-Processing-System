@@ -112,12 +112,12 @@ class TestNominalPaths:
         assert "digital_goods" in r["exclusion_reason"]
 
     @pytest.mark.asyncio
-    async def test_fraud_flag_reject(self) -> None:
-        """ORD-005 / CUST-004: fraud_flag=True → reject."""
+    async def test_fraud_flag_escalate(self) -> None:
+        """ORD-005 / CUST-004: fraud_flag=True → escalate (needs human review)."""
         r = await check_return_policy(order_id="ORD-005", customer_id="CUST-004")
         assert r["eligible"] is False
         assert r["fraud_signal"] is True
-        assert r["recommended_action"] == "reject"
+        assert r["recommended_action"] == "escalate"
 
     @pytest.mark.asyncio
     async def test_fraud_db_match_escalate(self) -> None:
@@ -276,10 +276,11 @@ class TestErrorPaths:
         assert r["success"] is False
 
     @pytest.mark.asyncio
-    async def test_success_dict_has_no_success_field(self) -> None:
-        """Success responses must NOT contain a 'success' field per plan.md."""
+    async def test_success_dict_has_success_field(self) -> None:
+        """Success responses must contain a 'success': True field per error contract."""
         r = await check_return_policy(order_id="ORD-001", customer_id="CUST-001")
-        assert "success" not in r, "Success dict should not carry 'success' key"
+        assert "success" in r, "Success dict must carry 'success' key"
+        assert r["success"] is True
 
 
 # ============================================================================
@@ -312,7 +313,7 @@ class TestCompoundViolations:
         r = await check_return_policy(order_id="ORD-005", customer_id="CUST-004")
         assert r["eligible"] is False
         assert r["fraud_signal"] is True
-        assert r["recommended_action"] == "reject"
+        assert r["recommended_action"] == "escalate"
 
     @pytest.mark.asyncio
     async def test_excluded_and_fraud_db_match(self) -> None:
@@ -337,7 +338,7 @@ class TestCompoundViolations:
         assert r["fraud_signal"] is True
         assert r["exclusion_reason"] is not None
         assert r["days_since_purchase"] == 60
-        assert r["recommended_action"] == "reject"
+        assert r["recommended_action"] == "escalate"
 
 
 # ============================================================================
@@ -927,11 +928,11 @@ class TestDemoIntegration:
 
     @pytest.mark.asyncio
     async def test_demo_scenario_4_dave_fraud(self) -> None:
-        """Dave (ORD-005): fraud flag → reject."""
+        """Dave (ORD-005): fraud flag → escalate (needs human review)."""
         r = await check_return_policy(order_id="ORD-005", customer_id="CUST-004")
         assert r["eligible"] is False
         assert r["fraud_signal"] is True
-        assert r["recommended_action"] == "reject"
+        assert r["recommended_action"] == "escalate"
 
     @pytest.mark.asyncio
     async def test_demo_scenario_5_eve_escalate(self) -> None:

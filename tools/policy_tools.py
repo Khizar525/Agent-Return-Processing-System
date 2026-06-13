@@ -113,9 +113,7 @@ async def _check_return_policy_impl(order_id: str, customer_id: str) -> dict[str
     eligible = window_ok and not_excluded and not fraud_flag and fraud_db_match is None
     reason = "; ".join(reasons) if reasons else "Return eligible"
 
-    if fraud_flag:
-        recommended_action = "reject"
-    elif fraud_db_match and not fraud_flag:
+    if fraud_flag or fraud_db_match:
         recommended_action = "escalate"
     elif not eligible:
         recommended_action = "reject"

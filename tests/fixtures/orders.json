@@ -90,7 +90,7 @@
     "days_since_purchase": 2,
     "total_usd": 45.00,
     "items": [
-      { "sku": "SKU-PERF-001", "name": "Luxury Perfume (Final Sale)", "category": "beauty", "qty": 1, "price_usd": 45.00, "excluded": true, "exclusion_reason": "final_sale" }
+      { "sku": "SKU-PERF-001", "name": "Luxury Perfume (Final Sale)", "category": "final_sale", "qty": 1, "price_usd": 45.00, "excluded": true, "exclusion_reason": "final_sale" }
     ],
     "status": "delivered",
     "carrier": "ups",
