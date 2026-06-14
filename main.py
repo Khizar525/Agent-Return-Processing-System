@@ -14,6 +14,13 @@ try:
 except ImportError:
     pass
 
+# ── Datadog APM instrumentation ───────────────────────────────────────────
+try:
+    from infra.datadog_setup import configure_datadog
+    configure_datadog()
+except ImportError:
+    pass
+
 try:
     from agents import set_default_openai_api, set_default_openai_client
     from openai import AsyncOpenAI

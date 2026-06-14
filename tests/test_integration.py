@@ -9,11 +9,8 @@ Run:
     pytest tests/test_integration.py -v
 """
 
-import importlib.util
 import json
 import os
-import site
-import sys
 
 import pytest
 

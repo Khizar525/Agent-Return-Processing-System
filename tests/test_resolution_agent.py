@@ -10,16 +10,14 @@ Run:
 """
 
 import json
-import os
 import pytest
 import respx
 
-from agents import Agent, Runner
+from agents import Runner
 from agents.tool import ToolContext
 from agents.exceptions import OutputGuardrailTripwireTriggered
 from app_agents.resolution_agent import resolution_agent, ResolutionSummary
 from tools.payment_tools import process_refund
-from tools.shipping_tools import create_return_label, create_replacement_order
 from guardrails.refund_cap import refund_cap_guardrail
 
 _STRIPE_REFUND_URL = "https://api.stripe.com/v1/refunds"

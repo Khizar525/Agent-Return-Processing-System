@@ -1,35 +1,98 @@
 # deployment.yaml — Owner: Member 5
-# One Deployment per inbound channel (4 total).
-# Each pod runs a Kafka consumer that forwards messages to the FastAPI webhook.
+# One Deployment per inbound channel (4 consumers) + 1 webhook deployment for FastAPI.
+# Each consumer pod forwards Kafka messages to the webhook via HTTP POST.
 
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent01-webchat
+  name: agent01-webhook
+  labels:
+    app: agent01
+    component: webhook
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: agent01
+      component: webhook
+  template:
+    metadata:
+      labels:
+        app: agent01
+        component: webhook
+    spec:
+      containers:
+        - name: webhook
+          image: agent01-customer-support:latest
+          command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: agent01-config
+            - secretRef:
+                name: agent01-secrets
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent01-webchat-consumer
   labels:
     app: agent01
     channel: web_chat
+    component: consumer
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: agent01
       channel: web_chat
+      component: consumer
   template:
     metadata:
       labels:
         app: agent01
         channel: web_chat
+        component: consumer
     spec:
       containers:
         - name: consumer
           image: agent01-customer-support:latest
           command: ["python", "-m", "infra.kafka_config", "--channel", "web_chat"]
+          ports:
+            - containerPort: 8000
+              protocol: TCP
           envFrom:
             - configMapRef:
                 name: agent01-config
             - secretRef:
                 name: agent01-secrets
+          livenessProbe:
+            exec:
+              command: ["python", "-c", "import os; assert os.environ.get('KAFKA_BOOTSTRAP_SERVERS')"]
+            initialDelaySeconds: 15
+            periodSeconds: 30
           resources:
             requests:
               cpu: "250m"
@@ -41,31 +104,42 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent01-email
+  name: agent01-email-consumer
   labels:
     app: agent01
     channel: email
+    component: consumer
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: agent01
       channel: email
+      component: consumer
   template:
     metadata:
       labels:
         app: agent01
         channel: email
+        component: consumer
     spec:
       containers:
         - name: consumer
           image: agent01-customer-support:latest
           command: ["python", "-m", "infra.kafka_config", "--channel", "email"]
+          ports:
+            - containerPort: 8000
+              protocol: TCP
           envFrom:
             - configMapRef:
                 name: agent01-config
             - secretRef:
                 name: agent01-secrets
+          livenessProbe:
+            exec:
+              command: ["python", "-c", "import os; assert os.environ.get('KAFKA_BOOTSTRAP_SERVERS')"]
+            initialDelaySeconds: 15
+            periodSeconds: 30
           resources:
             requests:
               cpu: "250m"
@@ -77,31 +151,42 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent01-whatsapp
+  name: agent01-whatsapp-consumer
   labels:
     app: agent01
     channel: whatsapp
+    component: consumer
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: agent01
       channel: whatsapp
+      component: consumer
   template:
     metadata:
       labels:
         app: agent01
         channel: whatsapp
+        component: consumer
     spec:
       containers:
         - name: consumer
           image: agent01-customer-support:latest
           command: ["python", "-m", "infra.kafka_config", "--channel", "whatsapp"]
+          ports:
+            - containerPort: 8000
+              protocol: TCP
           envFrom:
             - configMapRef:
                 name: agent01-config
             - secretRef:
                 name: agent01-secrets
+          livenessProbe:
+            exec:
+              command: ["python", "-c", "import os; assert os.environ.get('KAFKA_BOOTSTRAP_SERVERS')"]
+            initialDelaySeconds: 15
+            periodSeconds: 30
           resources:
             requests:
               cpu: "250m"
@@ -113,31 +198,42 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent01-sms
+  name: agent01-sms-consumer
   labels:
     app: agent01
     channel: sms
+    component: consumer
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: agent01
       channel: sms
+      component: consumer
   template:
     metadata:
       labels:
         app: agent01
         channel: sms
+        component: consumer
     spec:
       containers:
         - name: consumer
           image: agent01-customer-support:latest
           command: ["python", "-m", "infra.kafka_config", "--channel", "sms"]
+          ports:
+            - containerPort: 8000
+              protocol: TCP
           envFrom:
             - configMapRef:
                 name: agent01-config
             - secretRef:
                 name: agent01-secrets
+          livenessProbe:
+            exec:
+              command: ["python", "-c", "import os; assert os.environ.get('KAFKA_BOOTSTRAP_SERVERS')"]
+            initialDelaySeconds: 15
+            periodSeconds: 30
           resources:
             requests:
               cpu: "250m"

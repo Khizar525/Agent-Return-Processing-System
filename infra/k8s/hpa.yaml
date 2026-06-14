@@ -1,7 +1,27 @@
 # hpa.yaml — Owner: Member 5
-# Horizontal Pod Autoscaler — scales each channel deployment based on
+# Horizontal Pod Autoscaler — scales each channel consumer deployment based on
 # Kafka consumer lag (queue depth). Target: < 100 messages per pod.
+# Also scales the webhook deployment on CPU utilization.
 
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agent01-webhook-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agent01-webhook
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -10,7 +30,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: agent01-webchat
+    name: agent01-webchat-consumer
   minReplicas: 1
   maxReplicas: 10
   metrics:
@@ -33,7 +53,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: agent01-email
+    name: agent01-email-consumer
   minReplicas: 1
   maxReplicas: 10
   metrics:
@@ -56,7 +76,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: agent01-whatsapp
+    name: agent01-whatsapp-consumer
   minReplicas: 1
   maxReplicas: 10
   metrics:
@@ -79,7 +99,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: agent01-sms
+    name: agent01-sms-consumer
   minReplicas: 1
   maxReplicas: 10
   metrics:

@@ -1,0 +1,92 @@
+# service.yaml — Owner: Member 5
+# ClusterIP services for internal routing between agents and channel consumers.
+# Each channel has its own service for targeted scaling and observability.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent01-webhook
+  labels:
+    app: agent01
+    component: webhook
+spec:
+  selector:
+    app: agent01
+    component: webhook
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent01-webchat-consumer
+  labels:
+    app: agent01
+    channel: web_chat
+    component: consumer
+spec:
+  selector:
+    app: agent01
+    channel: web_chat
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent01-email-consumer
+  labels:
+    app: agent01
+    channel: email
+    component: consumer
+spec:
+  selector:
+    app: agent01
+    channel: email
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent01-whatsapp-consumer
+  labels:
+    app: agent01
+    channel: whatsapp
+    component: consumer
+spec:
+  selector:
+    app: agent01
+    channel: whatsapp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent01-sms-consumer
+  labels:
+    app: agent01
+    channel: sms
+    component: consumer
+spec:
+  selector:
+    app: agent01
+    channel: sms
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP
