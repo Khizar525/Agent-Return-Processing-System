@@ -40,19 +40,203 @@ Environment variables required:
     ZENDESK_SUBDOMAIN, ZENDESK_API_TOKEN, ZENDESK_EMAIL
 """
 
-from typing import Any
-from agents import function_tool  # type: ignore[attr-defined]
+import json
+import os
+import uuid
+import datetime
+from agents import function_tool
+
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
 
 
-# TODO (Member 4): implement create_human_ticket below
-@function_tool  # type: ignore[untyped-decorator]
-async def create_human_ticket(context_bundle: dict[str, Any]) -> dict[str, Any]:
+@function_tool
+async def create_human_ticket(context_bundle: dict) -> dict:
     """Open a Zendesk ticket with full conversation context."""
-    raise NotImplementedError("Member 4: implement create_human_ticket")
+    # Initialize return values
+    ticket_id = None
+    ticket_url = None
+    priority = "normal"
+    error = None
+    success = False
+
+    # Check if requests library is available
+    if not REQUESTS_AVAILABLE:
+        error = "requests library not installed"
+        return {
+            "success": False,
+            "ticket_id": ticket_id,
+            "ticket_url": ticket_url,
+            "priority": priority,
+            "error": error,
+        }
+
+    try:
+        # Get environment variables
+        zendesk_subdomain = os.environ.get('ZENDESK_SUBDOMAIN')
+        zendesk_email = os.environ.get('ZENDESK_EMAIL')
+        zendesk_api_token = os.environ.get('ZENDESK_API_TOKEN')
+
+        if not zendesk_subdomain:
+            error = "ZENDESK_SUBDOMAIN environment variable not set"
+            raise ValueError(error)
+        if not zendesk_email:
+            error = "ZENDESK_EMAIL environment variable not set"
+            raise ValueError(error)
+        if not zendesk_api_token:
+            error = "ZENDESK_API_TOKEN environment variable not set"
+            raise ValueError(error)
+
+        # Construct Zendesk API URL
+        url = f"https://{zendesk_subdomain}.zendesk.com/api/v2/tickets.json"
+
+        # Set up authentication (email/token format)
+        # The email needs to be in the format: "email/token"
+        auth_email = f"{zendesk_email}/token"
+
+        # Prepare ticket data from context_bundle
+        # Extract relevant information
+        customer_id = context_bundle.get("customer_id", "unknown")
+        session_id = context_bundle.get("session_id", "unknown")
+        agent_chain = context_bundle.get("agent_chain", [])
+        intent = context_bundle.get("intent", "unknown")
+        policy_decision = context_bundle.get("policy_decision")
+        resolution_action = context_bundle.get("resolution_action")
+        escalation_reason = context_bundle.get("escalation_reason", "unknown")
+        order_history = context_bundle.get("order_history", [])
+        timestamps = context_bundle.get("timestamps", {})
+        raw_conversation = context_bundle.get("raw_conversation", [])
+
+        # Determine priority based on context (simple heuristic)
+        # In a real implementation, this would be more sophisticated
+        priority = "normal"  # default
+        if escalation_reason in ["legal_threats", "high_value_order"]:
+            priority = "high"
+        elif escalation_reason == "repeat_fraud":
+            priority = "urgent"
+
+        # Create ticket payload
+        ticket_data = {
+            "ticket": {
+                "subject": f"Customer Support Escalation: {intent}",
+                "comment": {
+                    "body": f"""Customer Support Escalation Ticket
+
+Customer ID: {customer_id}
+Session ID: {session_id}
+Intent: {intent}
+Escalation Reason: {escalation_reason}
+
+Agent Chain: {', '.join(agent_chain) if agent_chain else 'None'}
+
+Policy Decision: {json.dumps(policy_decision) if policy_decision else 'None'}
+Resolution Action: {resolution_action or 'None'}
+
+Order History: {json.dumps(order_history, indent=2) if order_history else 'None'}
+
+Timestamps: {json.dumps(timestamps, indent=2) if timestamps else 'None'}
+
+Raw Conversation:
+{json.dumps(raw_conversation, indent=2) if raw_conversation else 'None'}
+
+---
+This ticket was automatically created by the Agent01 Customer Support System.
+""",
+                },
+                "priority": priority,
+                "tags": ["automated", "escalation", "agent01"],
+            }
+        }
+
+        # Make the API request
+        response = requests.post(
+            url,
+            json=ticket_data,
+            auth=(auth_email, zendesk_api_token),
+            headers={"Content-Type": "application/json"}
+        )
+
+        # Check if successful
+        if response.status_code == 201:
+            ticket_data = response.json()
+            ticket = ticket_data.get("ticket", {})
+            ticket_id = str(ticket.get("id", ""))
+            ticket_url = ticket.get("url", "")
+            success = True
+        else:
+            error = f"Zendesk API returned status code {response.status_code}: {response.text}"
+
+    except Exception as e:
+        error = str(e)
+
+    # Return result
+    return {
+        "success": success,
+        "ticket_id": ticket_id,
+        "ticket_url": ticket_url,
+        "priority": priority,
+        "error": error,
+    }
 
 
-# TODO (Member 4): implement log_resolution below
-@function_tool  # type: ignore[untyped-decorator]
-async def log_resolution(session_id: str, outcome: dict[str, Any]) -> dict[str, Any]:
+@function_tool
+async def log_resolution(session_id: str, outcome: dict) -> dict:
     """Record resolution outcome in the data warehouse."""
-    raise NotImplementedError("Member 4: implement log_resolution")
+    # Initialize return values
+    record_id = None
+    error = None
+    success = False
+
+    try:
+        # Generate a unique ID for this log entry
+        record_id = str(uuid.uuid4())
+
+        # Get current timestamp
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+        # Extract information from outcome dict
+        # The outcome dict should contain resolution information
+        customer_id = outcome.get("customer_id", "unknown")
+        resolution_data = outcome.get("resolution_data", {})
+        escalation_bundle = outcome.get("escalation_bundle")
+        notifications_sent = outcome.get("notifications_sent", [])
+        final_outcome = outcome.get("final_outcome", "pending")
+        resolution_time_seconds = outcome.get("resolution_time_seconds")
+
+        # Validate final_outcome
+        valid_outcomes = ["resolved", "pending", "escalated"]
+        if final_outcome not in valid_outcomes:
+            final_outcome = "pending"  # default to pending if invalid
+
+        # Create the log entry following ResolutionLogEntry structure from data-model.md
+        log_entry = {
+            "log_id": record_id,
+            "customer_id": customer_id,
+            "resolution_data": resolution_data,
+            "escalation_bundle": escalation_bundle,
+            "notifications_sent": notifications_sent,
+            "final_outcome": final_outcome,
+            "resolution_time_seconds": resolution_time_seconds,
+            "timestamp": timestamp
+        }
+
+        # Write to resolution_log.jsonl file (append one JSON line per entry)
+        log_file_path = "resolution_log.jsonl"
+
+        with open(log_file_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry) + "\n")
+
+        success = True
+
+    except Exception as e:
+        error = str(e)
+
+    # Return result
+    return {
+        "success": success,
+        "record_id": record_id,
+        "error": error,
+    }
