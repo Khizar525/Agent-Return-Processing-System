@@ -80,9 +80,6 @@ spec:
         - name: consumer
           image: agent01-customer-support:latest
           command: ["python", "-m", "infra.kafka_config", "--channel", "web_chat"]
-          ports:
-            - containerPort: 8000
-              protocol: TCP
           envFrom:
             - configMapRef:
                 name: agent01-config
@@ -127,9 +124,6 @@ spec:
         - name: consumer
           image: agent01-customer-support:latest
           command: ["python", "-m", "infra.kafka_config", "--channel", "email"]
-          ports:
-            - containerPort: 8000
-              protocol: TCP
           envFrom:
             - configMapRef:
                 name: agent01-config
@@ -174,9 +168,6 @@ spec:
         - name: consumer
           image: agent01-customer-support:latest
           command: ["python", "-m", "infra.kafka_config", "--channel", "whatsapp"]
-          ports:
-            - containerPort: 8000
-              protocol: TCP
           envFrom:
             - configMapRef:
                 name: agent01-config
@@ -221,9 +212,6 @@ spec:
         - name: consumer
           image: agent01-customer-support:latest
           command: ["python", "-m", "infra.kafka_config", "--channel", "sms"]
-          ports:
-            - containerPort: 8000
-              protocol: TCP
           envFrom:
             - configMapRef:
                 name: agent01-config

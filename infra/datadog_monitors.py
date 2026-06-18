@@ -48,13 +48,13 @@ def build_queue_depth_monitor() -> dict[str, Any]:
         "name": "Agent 01 — Queue Depth > 500",
         "type": "query alert",
         "query": (
-            "max(last_1m):max:kafka.consumer_lag{topic:agent01.webchat} "
+            "max(last_1m):max:kafka.consumer_lag{topic:agent01.{webchat,email,whatsapp,sms}} "
             "> 500"
         ),
         "message": (
             "{{#is_alert}}"
             "Kafka queue depth is {{value}} — threshold is 500.\n"
-            "Channel: web_chat\n"
+            "Topic: {{topic.name}}\n"
             "@pagerduty-agent01"
             "{{/is_alert}}"
             "{{#is_recovery}}"
