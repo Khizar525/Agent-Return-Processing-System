@@ -1,0 +1,24 @@
+# CODEOWNERS — auto-assign reviewers on PRs
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Lead reviews everything
+*                       @Khizar525
+
+# Agent files — Lead + owning member
+app_agents/             @Khizar525
+agents/                 @Khizar525
+
+# Tools — Lead + M3 (resolution) or M2 (policy)
+tools/                  @Khizar525
+
+# Guardrails — Lead + M2
+guardrails/             @Khizar525
+
+# Infrastructure — Lead + M5
+infra/                  @Khizar525
+
+# CI/CD — Lead only
+.github/                @Khizar525
+
+# Tests — Lead reviews all
+tests/                  @Khizar525

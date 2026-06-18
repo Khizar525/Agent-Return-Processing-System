@@ -13,11 +13,36 @@ Intents:
     - edge_case_escalate  → Handoff → EscalationAgent
 """
 
+from __future__ import annotations
+
+from typing import Literal
+
 from agents import Agent, Runner
+from pydantic import BaseModel
+
 # from app_agents.policy_agent import policy_agent           # uncomment after M2 merges
 # from app_agents.escalation_agent import escalation_agent   # uncomment after M4 merges
 # from tools.crm_tools import get_customer_profile       # uncomment after M3 merges
-from typing import Any
+
+
+# ---------------------------------------------------------------------------
+# Output schema — enforces structured intent classification
+# ---------------------------------------------------------------------------
+
+class TriageDecision(BaseModel):
+    """Structured output from the TriageOrchestrator agent."""
+
+    intent: Literal[
+        "return_request",
+        "order_status",
+        "billing_dispute",
+        "general_inquiry",
+        "edge_case_escalate",
+    ]
+    reasoning: str
+    customer_id: str
+    channel: str
+    suggested_action: str
 
 try:
     from infra.redis_config import get_session as _redis_get, save_session as _redis_save
@@ -39,8 +64,8 @@ async def save_session(session: dict[str, Any], existing_id: str | None = None) 
             return await _redis_save(session, existing_id)
         except Exception:
             pass
-    import uuid
-    return existing_id or str(uuid.uuid4())
+    import uuid as _uuid
+    return existing_id or str(_uuid.uuid4())
 
 # ---------------------------------------------------------------------------
 # Triage Orchestrator definition
@@ -71,6 +96,7 @@ triage_agent = Agent(
     Never attempt to process a refund or generate a label yourself.
     """,
     model="deepseek-v4-flash-free",
+    output_type=TriageDecision,
     # handoffs=[policy_agent, escalation_agent],   # re-enable after teammates merge
     tools=[
         # policy_agent.as_tool(
@@ -97,6 +123,8 @@ async def handle_customer_message(
     Loads existing session from Redis (if any), runs the triage agent,
     and persists updated session state.
     """
+    import uuid
+
     # Load or initialise session
     session = await get_session(session_id) if session_id else {}
     session.setdefault("customer_id", customer_id)
@@ -109,16 +137,21 @@ async def handle_customer_message(
         "session": session,
     }
 
-    # Run triage agent
+    # Run triage agent — output is a typed TriageDecision
     result = await Runner.run(triage_agent, input=message, context=context)
+    decision: TriageDecision = result.final_output_as(TriageDecision)
 
     # Update session
     session["agent_chain"].append("TriageOrchestrator")
-    session["last_output"] = result.final_output
+    session["last_intent"] = decision.intent
+    session["last_output"] = decision.model_dump()
     new_session_id = await save_session(session, existing_id=session_id)
 
     return {
         "session_id": new_session_id,
-        "resolution": result.final_output,
+        "intent": decision.intent,
+        "reasoning": decision.reasoning,
+        "suggested_action": decision.suggested_action,
+        "resolution": decision.model_dump(),
         "agent_chain": session["agent_chain"],
     }
