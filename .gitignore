@@ -66,5 +66,11 @@ PROJECT_BRIEF.md
 # ── Duplicate SDD tooling accidentally committed by M3 ───────────────────────
 here/
 
+# ── Test suite report (generated, not for repo) ─────────────────────────────
+TEST_SUITE_REPORT.md
+
+# ── K8s secrets (real values never committed) ───────────────────────────────
+infra/k8s/secret.yaml
+
 # ── OpenWork workspace config (local, not for repo) ──────────────────────────
 .opencode/openwork.json
