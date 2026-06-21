@@ -23,7 +23,8 @@ from pydantic import BaseModel
 from guardrails.pii_scrubber import pii_scrubber_guardrail
 from guardrails.sentiment_monitor import sentiment_monitor_guardrail
 
-# from app_agents.policy_agent import policy_agent           # uncomment after M2 merges
+from app_agents.policy_agent import policy_agent
+from app_agents.billing_agent import billing_agent
 # from app_agents.escalation_agent import escalation_agent   # uncomment after M4 merges
 # from tools.crm_tools import get_customer_profile       # uncomment after M3 merges
 
@@ -101,7 +102,7 @@ triage_agent = Agent(
     model="deepseek-v4-flash-free",
     output_type=TriageDecision,
     input_guardrails=[pii_scrubber_guardrail, sentiment_monitor_guardrail],
-    # handoffs=[policy_agent, escalation_agent],   # re-enable after teammates merge
+    handoffs=[policy_agent, billing_agent],  # re-enable escalation_agent after M4 merges
     tools=[
         # policy_agent.as_tool(
         #     tool_name="validate_return",
