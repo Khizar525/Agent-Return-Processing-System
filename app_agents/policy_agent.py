@@ -23,9 +23,19 @@ Rules to enforce:
     4. Cross-reference request against fraud DB before approving
 """
 
+from typing import Literal
+
+from pydantic import BaseModel
 from agents import Agent
 from tools.policy_tools import check_return_policy
 # from tools.crm_tools import get_customer_profile      # uncomment after M3 merges
+
+
+class PolicyDecision(BaseModel):
+    eligible: bool
+    reason: str
+    recommended_action: Literal["refund", "replacement", "reject", "escalate"]
+
 
 policy_agent = Agent(
     name="PolicyAgent",
@@ -43,4 +53,5 @@ policy_agent = Agent(
     """,
     model="deepseek-v4-flash-free",
     tools=[check_return_policy],
+    output_type=PolicyDecision,
 )
