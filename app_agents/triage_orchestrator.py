@@ -26,7 +26,7 @@ from guardrails.sentiment_monitor import sentiment_monitor_guardrail
 from app_agents.policy_agent import policy_agent
 from app_agents.billing_agent import billing_agent
 # from app_agents.escalation_agent import escalation_agent   # uncomment after M4 merges
-# from tools.crm_tools import get_customer_profile       # uncomment after M3 merges
+from tools.crm_tools import get_customer_profile
 
 
 # ---------------------------------------------------------------------------
@@ -104,11 +104,7 @@ triage_agent = Agent(
     input_guardrails=[pii_scrubber_guardrail, sentiment_monitor_guardrail],
     handoffs=[policy_agent, billing_agent],  # re-enable escalation_agent after M4 merges
     tools=[
-        # policy_agent.as_tool(
-        #     tool_name="validate_return",
-        #     tool_description="Validate return eligibility for a customer order",
-        # ),
-        # get_customer_profile,
+        get_customer_profile,
     ],
 )
 
