@@ -28,7 +28,7 @@ from typing import Literal
 from pydantic import BaseModel
 from agents import Agent
 from tools.policy_tools import check_return_policy
-# from tools.crm_tools import get_customer_profile      # uncomment after M3 merges
+from tools.crm_tools import get_customer_profile
 
 
 class PolicyDecision(BaseModel):
@@ -52,6 +52,6 @@ policy_agent = Agent(
     Output must be valid JSON: {{"eligible": bool, "reason": str, "recommended_action": str}}
     """,
     model="deepseek-v4-flash-free",
-    tools=[check_return_policy],
+    tools=[check_return_policy, get_customer_profile],
     output_type=PolicyDecision,
 )
