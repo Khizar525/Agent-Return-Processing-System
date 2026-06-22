@@ -25,7 +25,7 @@ from guardrails.sentiment_monitor import sentiment_monitor_guardrail
 
 from app_agents.policy_agent import policy_agent
 from app_agents.billing_agent import billing_agent
-# from app_agents.escalation_agent import escalation_agent   # uncomment after M4 merges
+from app_agents.escalation_agent import escalation_agent
 from tools.crm_tools import get_customer_profile
 
 
@@ -102,7 +102,7 @@ triage_agent = Agent(
     model="deepseek-v4-flash-free",
     output_type=TriageDecision,
     input_guardrails=[pii_scrubber_guardrail, sentiment_monitor_guardrail],
-    handoffs=[policy_agent, billing_agent],  # re-enable escalation_agent after M4 merges
+    handoffs=[policy_agent, billing_agent, escalation_agent],
     tools=[
         get_customer_profile,
     ],
