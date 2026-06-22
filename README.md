@@ -18,7 +18,7 @@ A production-grade multi-agent system that autonomously handles the full lifecyc
         ┌────────────────────────────────┐
         │     Triage Orchestrator        │ ◄── Sentiment Monitor
         │  (intent classification,       │     (passive guardrail)
-        │   gpt-4o)                      │
+        │   deepseek-v4-flash-free)      │
         └────────┬───────────────┬───────┘
                  │               │
    tool call     │    handoff    │         handoff
@@ -26,15 +26,16 @@ A production-grade multi-agent system that autonomously handles the full lifecyc
     triage)      ▼               ▼
             ┌────────┐    ┌────────────┐    ┌──────────────┐
             │tracking│    │Policy Agent│    │Billing Agent │
-            │  /faq  │    │ (gpt-4o-   │    │  (handoff)   │
-            │ (tools)│    │  mini)     │    │              │
+            │  /faq  │    │(deepseek-  │    │  (handoff)   │
+            │ (tools)│    │ v4-flash)   │    │              │
             └────────┘    └─────┬──────┘    └──────────────┘
                                 │ handoff
                                 ▼
                        ┌────────────────┐
                        │ Resolution     │
                        │ Agent          │ ◄── refund_cap guardrail
-                       │ (gpt-4o-mini)  │
+                       │ (deepseek-v4-  │
+                       │  flash-free)   │
                        └────────┬───────┘
                                 │ handoff
                                 ▼
@@ -48,7 +49,8 @@ A production-grade multi-agent system that autonomously handles the full lifecyc
                        ┌────────────────┐
                        │ Escalation     │ ──► Human Queue
                        │ Agent          │     + Context Bundle
-                       │ (gpt-4o)       │
+                       │ (deepseek-v4-  │
+                       │  flash-free)   │
                        └────────────────┘
 ```
 
@@ -58,13 +60,22 @@ A production-grade multi-agent system that autonomously handles the full lifecyc
 
 ## Team
 
-| Member     | Role                                  | Branch                          |
-|------------|---------------------------------------|---------------------------------|
-| Lead       | Architect, Triage Orchestrator, Infra | `feature/triage-orchestrator`   |
-| Member 2   | Policy Agent & Guardrails             | `feature/policy-agent`          |
-| Member 3   | Resolution Agent & Tool Integrations  | `feature/resolution-agent`      |
-| Member 4   | Communication & Escalation Agents     | `feature/communication-escalation` |
-| Member 5   | Infrastructure & Observability        | `feature/infra-observability`   |
+| Member     | Role                                  | Branch                          | Status |
+|------------|---------------------------------------|---------------------------------|--------|
+| Lead       | Architect, Triage Orchestrator, Infra | `feature/triage-orchestrator`   | Done   |
+| Member 2   | Policy Agent & Guardrails             | `feature/policy-agent`          | Done   |
+| Member 3   | Resolution Agent & Tool Integrations  | `feature/resolution-agent`      | Done   |
+| Member 4   | Communication & Escalation Agents     | `feature/communication-escalation` | Done (PR #7 merged) |
+| Member 5   | Infrastructure & Observability        | `feature/infra-observability`   | Done   |
+
+## Test Suite
+
+| Metric | Count |
+|--------|-------|
+| Tests Passed | 312 |
+| Tests Skipped | 4 (tracking/faq lookup — not yet implemented) |
+| Test Files | 8 |
+| Coverage Scope | Policy, Resolution, Billing, Communication, Escalation, Database, Infra, Integration |
 
 ## Quick Start
 
