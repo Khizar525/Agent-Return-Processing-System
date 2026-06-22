@@ -16,12 +16,10 @@ Dependencies:
     - guardrails/brand_voice.py                         — Member 4 (you)
 """
 
-import os
-import json
-from typing import Dict, Any, Optional
+from typing import Optional
 from agents import Agent, Runner
 from pydantic import BaseModel, Field
-from tools.notification_tools import send_notification, _send_notification_tool as send_notification_tool
+from tools.notification_tools import _send_notification_tool as send_notification_tool
 from guardrails.brand_voice import brand_voice_guardrail
 
 

@@ -196,9 +196,7 @@ async def respond(text: str) -> str:
     if "pii" in text_lower or "scrub" in text_lower:
         return await run_pii_scrubber(text)
     elif "demo" in text_lower:
-        from tests.test_policy_agent import DEMO_SCENARIOS
-        lines = [f"  {k}: {v['description']}" for k, v in DEMO_SCENARIOS.items()]
-        return "Demo scenarios:\n" + "\n".join(lines)
+        return "Run: python demo.py for full demo with 17 return scenarios."
     elif "sentiment" in text_lower:
         return await run_sentiment(text)
     elif "refund cap" in text_lower or "refund limit" in text_lower:

@@ -20,8 +20,6 @@ Dependencies:
     - tools/helpdesk_tools.py  (create_human_ticket, log_resolution) — Member 4 (you)
 """
 
-import os
-import json
 from typing import Dict, Any, Optional
 from agents import Agent, Runner
 from pydantic import BaseModel, Field

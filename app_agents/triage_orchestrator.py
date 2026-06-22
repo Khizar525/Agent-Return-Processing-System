@@ -124,7 +124,6 @@ async def handle_customer_message(
     Loads existing session from Redis (if any), runs the triage agent,
     and persists updated session state.
     """
-    import uuid
 
     # Load or initialise session
     session = await get_session(session_id) if session_id else {}

@@ -73,7 +73,7 @@ async def brand_voice_guardrail(ctx, agent, output) -> GuardrailFunctionOutput:
     for pattern, replacement in PROHIBITED_PATTERNS:
         if pattern.search(modified_text):
             modified_text = pattern.sub(replacement, modified_text)
-            modifications_made.append(f"Replaced prohibited language")
+            modifications_made.append("Replaced prohibited language")
 
     # 2. Enforce word limit (under 150 words)
     words = modified_text.split()

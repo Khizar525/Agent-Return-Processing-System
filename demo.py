@@ -11,6 +11,26 @@ from guardrails.pii_scrubber import RAW_PII_SCRUBBER as scrub_pii
 from guardrails.sentiment_monitor import RAW_SENTIMENT_MONITOR as score_sentiment
 from guardrails.refund_cap import RAW_REFUND_CAP as check_refund_cap
 
+DEMO_SCENARIOS: dict[str, dict[str, str]] = {
+    "1": {"description": "Alice — eligible refund (ORD-001, CUST-001)"},
+    "2": {"description": "Bob — excluded digital goods (ORD-003, CUST-002)"},
+    "3": {"description": "Charlie — damaged item → replacement (ORD-004, CUST-003)"},
+    "4": {"description": "Dave — fraud flag → escalate (ORD-005, CUST-004)"},
+    "5": {"description": "Eve — fraud DB match → escalate (ORD-006, CUST-005)"},
+    "6": {"description": "Too late — return window exceeded (ORD-002, CUST-001)"},
+    "7": {"description": "Order not found (ORD-999, CUST-001)"},
+    "8": {"description": "Customer not found (ORD-001, CUST-999)"},
+    "9": {"description": "Order-customer mismatch (ORD-001, CUST-002)"},
+    "10": {"description": "Excluded perishables (ORD-007, CUST-001)"},
+    "11": {"description": "Same day — 0 days since purchase (ORD-008, CUST-003)"},
+    "12": {"description": "Exactly 30 days — boundary (ORD-009, CUST-003)"},
+    "13": {"description": "New customer — clean return (ORD-010, CUST-006)"},
+    "14": {"description": "Damaged item — replacement (ORD-012, CUST-001)"},
+    "15": {"description": "New fraud account — blocked (ORD-013, CUST-007)"},
+    "16": {"description": "Final sale — excluded (ORD-014, CUST-006)"},
+    "17": {"description": "Fraud DB match — escalate (ORD-015, CUST-008)"},
+}
+
 
 def p(msg):
     print(f"  {msg}")

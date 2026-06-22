@@ -70,7 +70,6 @@ def configure_datadog() -> bool:
     try:
         from ddtrace import config as ddconfig
         from ddtrace import patch_all
-        from ddtrace.trace import tracer as _tracer
 
         service = os.environ.get("DD_SERVICE", "agent01-customer-support")
         env = os.environ.get("DD_ENV", "production")

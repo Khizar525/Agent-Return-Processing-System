@@ -9,8 +9,7 @@ Run:
 import os
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, mock_open
-import json
+from unittest.mock import Mock, patch, AsyncMock, mock_open
 
 from tools.notification_tools import send_notification
 from guardrails.brand_voice import brand_voice_guardrail, PROHIBITED_LANGUAGE
@@ -46,7 +45,7 @@ async def test_send_notification_email_success():
             )
 
             # Assertions
-            assert result["success"] == True
+            assert result["success"]
             assert result["channel"] == "email"
             assert result["message_id"] == "test-message-id"
             assert result["error"] is None
@@ -82,7 +81,7 @@ async def test_send_notification_sms_success():
             )
 
             # Assertions
-            assert result["success"] == True
+            assert result["success"]
             assert result["channel"] == "sms"
             assert result["message_id"] == message_id
             assert result["error"] is None
@@ -126,7 +125,7 @@ async def test_send_notification_email_to_sms_fallback():
             )
 
             # Assertions - should have fallen back to SMS
-            assert result["success"] == True
+            assert result["success"]
             assert result["channel"] == "sms"  # Fell back to SMS
             assert result["message_id"] == message_id
             assert result["error"] is None
@@ -147,14 +146,13 @@ def test_brand_voice_blocks_prohibited_language():
             def __str__(self):
                 return self.text
 
-        output = MockOutput(f"This is a {word} idea.")
+        MockOutput(f"This is a {word} idea.")
 
         # For now, we'll test the core logic by importing the helper functions
         # But since the guardrail is async, we'll need to handle that in the test
         # Let's skip the actual async call for now and test the replacement logic directly
 
         # Instead, let's test the PROHIBITED_LANGUAGE mapping and replacement logic
-        from guardrails.brand_voice import PROHIBITED_LANGUAGE, PROHIBITED_PATTERNS
 
         # Check that the word is in our prohibited list
         assert word in PROHIBITED_LANGUAGE
@@ -188,13 +186,12 @@ def test_brand_voice_allows_clean_messages():
             def __str__(self):
                 return self.text
 
-        output = MockOutput(message)
+        MockOutput(message)
 
         # For now, we'll verify that our PROHIBITED_LANGUAGE doesn't contain words from clean messages
         # In a full test, we would call the guardrail and verify it returns the message unchanged
         # But since the guardrail is async and requires ctx/agent mocking, we'll do a simplified test
 
-        from guardrails.brand_voice import PROHIBITED_LANGUAGE
 
         # Check that none of the prohibited words are in the clean message
         message_lower = message.lower()
@@ -215,7 +212,7 @@ def test_brand_voice_enforces_150_word_limit():
         def __str__(self):
             return self.text
 
-    output = MockOutput(long_message)
+    MockOutput(long_message)
 
     # Test that our word counting logic works
     word_count = len(long_message.split())
@@ -240,7 +237,6 @@ async def test_communication_agent_uses_correct_model():
     assert communication_agent.tools[0].name == "send_notification"
     assert len(communication_agent.output_guardrails) == 1
     # Check that the guardrail is the brand_voice_guardrail function
-    from guardrails.brand_voice import brand_voice_guardrail
     assert communication_agent.output_guardrails[0] is brand_voice_guardrail
 
 
@@ -429,7 +425,7 @@ async def test_handle_escalation_function():
         }
 
         # Verify the function correctly processes the result
-        assert result["success"] == True
+        assert result["success"]
         assert result["ticket_id"] == "12345"
         assert result["ticket_url"] == "https://example.zendesk.com/api/v2/tickets/12345.json"
         assert result["priority"] == "high"
@@ -505,7 +501,7 @@ async def test_handle_escalation_with_hybrid_llm_function():
         }
 
         # Verify the function correctly processes the result
-        assert result["success"] == True
+        assert result["success"]
         assert result["ticket_id"] == "67890"
         assert result["ticket_url"] == "https://example.zendesk.com/api/v2/tickets/67890.json"
         assert result["priority"] == "urgent"
@@ -568,7 +564,7 @@ async def test_create_human_ticket():
             result = await create_human_ticket(context_bundle)
 
             # Assertions
-            assert result["success"] == True
+            assert result["success"]
             assert result["ticket_id"] == "12345"
             assert result["priority"] == "high"  # Based on escalation_reason
             assert result["ticket_url"] == "https://example.zendesk.com/api/v2/tickets/12345.json"
@@ -594,7 +590,7 @@ async def test_log_resolution():
         )
 
         # Assertions
-        assert result["success"] == True
+        assert result["success"]
         assert result["record_id"] is not None
         assert result["error"] is None
         assert mock_file.called
