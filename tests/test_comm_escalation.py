@@ -7,24 +7,11 @@ Run:
 """
 
 import os
-import sys
-
-# Add the project root to the path FIRST so we can import our local agents
-project_root = os.path.dirname(os.path.abspath(__file__)) + '/..'
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-
-# Add the virtual environment's site-packages to the path so we can import the openai-agents SDK
-venv_site_packages = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'venv', 'Lib', 'site-packages')
-if os.path.exists(venv_site_packages) and venv_site_packages not in sys.path:
-    sys.path.insert(0, venv_site_packages)
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import Mock, patch, AsyncMock, MagicMock, mock_open
 import json
 
-
-# Import the modules we need to test
 from tools.notification_tools import send_notification
 from guardrails.brand_voice import brand_voice_guardrail, PROHIBITED_LANGUAGE
 from app_agents.communication_agent import communication_agent, draft_and_send, draft_and_send_with_hybrid_llm
@@ -48,7 +35,7 @@ async def test_send_notification_email_success():
         # Set environment variables
         with patch.dict(os.environ, {
             'SENDGRID_API_KEY': 'test-key',
-            'FROM_EMAIL': 'test@example.com'
+            'SENDGRID_FROM_EMAIL': 'test@example.com'
         }):
             # Call the function
             result = await send_notification(
@@ -542,19 +529,23 @@ def test_escalation_agent_instructions():
 @pytest.mark.asyncio
 async def test_create_human_ticket():
     """Test create_human_ticket function."""
-    # Mock requests.post
-    with patch('tools.helpdesk_tools.requests.post') as mock_post:
-        # Setup mock response
-        mock_response = Mock()
-        mock_response.status_code = 201
-        mock_response.json.return_value = {
-            "ticket": {
-                "id": 12345,
-                "url": "https://example.zendesk.com/api/v2/tickets/12345.json"
-            }
+    # Mock httpx.AsyncClient
+    mock_response = Mock()
+    mock_response.status_code = 201
+    mock_response.json.return_value = {
+        "ticket": {
+            "id": 12345,
+            "url": "https://example.zendesk.com/api/v2/tickets/12345.json"
         }
-        mock_post.return_value = mock_response
+    }
+    mock_response.text = ""
 
+    mock_client = AsyncMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+    mock_client.post.return_value = mock_response
+
+    with patch('tools.helpdesk_tools.httpx.AsyncClient', return_value=mock_client):
         # Set environment variables
         with patch.dict(os.environ, {
             'ZENDESK_SUBDOMAIN': 'example',
@@ -581,7 +572,7 @@ async def test_create_human_ticket():
             assert result["ticket_id"] == "12345"
             assert result["priority"] == "high"  # Based on escalation_reason
             assert result["ticket_url"] == "https://example.zendesk.com/api/v2/tickets/12345.json"
-            assert mock_post.called
+            assert mock_client.post.called
 
 
 @pytest.mark.asyncio
@@ -608,7 +599,3 @@ async def test_log_resolution():
         assert result["error"] is None
         assert mock_file.called
         assert mock_json_dump.called
-
-
-# Helper function for mocking open in tests
-from unittest.mock import mock_open

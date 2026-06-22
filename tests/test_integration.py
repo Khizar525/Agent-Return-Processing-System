@@ -228,7 +228,7 @@ class TestCheckReturnPolicy:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="tracking_lookup_impl not yet in triage_orchestrator — M4/M3 task")
+@pytest.mark.skip(reason="tracking_lookup_impl not yet implemented in triage_orchestrator")
 @pytest.mark.asyncio
 async def test_tracking_lookup_found() -> None:
     from app_agents.triage_orchestrator import tracking_lookup_impl as tracking_lookup
@@ -240,7 +240,7 @@ async def test_tracking_lookup_found() -> None:
     assert result["carrier"] == "fedex"
 
 
-@pytest.mark.skip(reason="tracking_lookup_impl not yet in triage_orchestrator — M4/M3 task")
+@pytest.mark.skip(reason="tracking_lookup_impl not yet implemented in triage_orchestrator")
 @pytest.mark.asyncio
 async def test_tracking_lookup_not_found() -> None:
     from app_agents.triage_orchestrator import tracking_lookup_impl as tracking_lookup
@@ -256,7 +256,7 @@ async def test_tracking_lookup_not_found() -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="faq_lookup_impl not yet in triage_orchestrator — M4/M3 task")
+@pytest.mark.skip(reason="faq_lookup_impl not yet implemented in triage_orchestrator")
 @pytest.mark.asyncio
 async def test_faq_lookup_matches_keyword() -> None:
     from app_agents.triage_orchestrator import faq_lookup_impl as faq_lookup
@@ -267,7 +267,7 @@ async def test_faq_lookup_matches_keyword() -> None:
     assert result["error"] is None
 
 
-@pytest.mark.skip(reason="faq_lookup_impl not yet in triage_orchestrator — M4/M3 task")
+@pytest.mark.skip(reason="faq_lookup_impl not yet implemented in triage_orchestrator")
 @pytest.mark.asyncio
 async def test_faq_lookup_no_match() -> None:
     from app_agents.triage_orchestrator import faq_lookup_impl as faq_lookup
@@ -343,7 +343,6 @@ class TestIntentMapping:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skip("Teammate PRs not yet merged — activate after feature/policy-agent + feature/resolution-agent land")
 class TestPipelineSkeletons:
     """Skeleton integration tests for every resolution scenario.
 
@@ -369,7 +368,6 @@ class TestPipelineSkeletons:
         # to verify the triage agent hands off through the full chain.
         # Assert final agent_chain == expected_chain.
         # Assert check_return_policy output matches res["expected_policy_output"].
-        pytest.skip("Implement when PolicyAgent handoff is merged")
 
     # ── res_002: Rejection (expired return window) ──
 
@@ -390,7 +388,6 @@ class TestPipelineSkeletons:
 
         # TODO: mock Runner.run to return a rejected policy decision.
         # Assert the pipeline skips ResolutionAgent and goes to CommunicationAgent.
-        pytest.skip("Implement when PolicyAgent handoff is merged")
 
     # ── res_003: Escalation (legal threat) ──
 
@@ -411,7 +408,6 @@ class TestPipelineSkeletons:
 
         # TODO: mock Runner.run to return an escalation intent.
         # Assert the triage agent hands off directly to EscalationAgent.
-        pytest.skip("Implement when EscalationAgent handoff is merged")
 
     # ── res_004: Refund cap (eligible but > $500) ──
 
@@ -433,7 +429,6 @@ class TestPipelineSkeletons:
 
         # TODO: mock Runner.run through Triage → Policy → Resolution.
         # Assert refund_cap_guardrail trips and the flow escalates.
-        pytest.skip("Implement when ResolutionAgent + guardrail are merged")
 
     # ── res_005: Fraud flag on account ──
 
@@ -460,7 +455,6 @@ class TestPipelineSkeletons:
         assert escalation_exp["priority"] == "high"
 
         # TODO: mock Runner.run to return fraud flag → escalate decision.
-        pytest.skip("Implement when PolicyAgent handoff is merged")
 
     # ── res_006: PII scrubbing ──
 
@@ -479,7 +473,6 @@ class TestPipelineSkeletons:
         # TODO: call pii_scrubber guardrail on raw_message.
         # Assert the scrubbed message does not contain card digits or SSN.
         # Assert the scrubbed pattern matches [REDACTED].
-        pytest.skip("Implement when PII guardrail module is merged")
 
     # ── res_007: Exclusion (digital goods) ──
 
@@ -499,7 +492,6 @@ class TestPipelineSkeletons:
         assert policy_exp["recommended_action"] == "reject"
 
         # TODO: mock Runner.run to return exclusion decision.
-        pytest.skip("Implement when PolicyAgent handoff is merged")
 
     # ── Session persistence ──
 
@@ -516,7 +508,6 @@ class TestPipelineSkeletons:
         # Call handle_customer_message(), then load session from (mocked) Redis.
         # Assert session["agent_chain"] == expected_chain.
         # Assert session["timestamps"]["resolved_at"] is not None.
-        pytest.skip("Implement when Redis session integration is tested")
 
     # ── Full end-to-end ──
 
@@ -538,4 +529,3 @@ class TestPipelineSkeletons:
         # TODO: mock all tool calls and run handle_customer_message().
         # Assert the final output contains a transaction_id and label_url.
         # Assert the communication message is under 150 words.
-        pytest.skip("Implement when all agents + tools are merged")

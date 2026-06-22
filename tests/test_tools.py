@@ -10,16 +10,6 @@ Run:
 """
 
 import json
-import sys
-import site
-
-# Ensure site-packages takes priority over the local agents/ package
-# so the openai-agents SDK's `agents` module is found first.
-site_packages = [p for p in site.getsitepackages() if "site-packages" in p]
-for sp in site_packages:
-    if sp in sys.path:
-        sys.path.remove(sp)
-        sys.path.insert(0, sp)
 
 import httpx
 import pytest
