@@ -45,6 +45,7 @@ import os
 import uuid
 import datetime
 from agents import function_tool
+from typing import List, Union, Dict, Any
 
 try:
     import requests
@@ -53,8 +54,11 @@ except ImportError:
     REQUESTS_AVAILABLE = False
 
 
-@function_tool
-async def create_human_ticket(context_bundle: dict) -> dict:
+# Internal FunctionTool instances (not to be called directly)
+@function_tool(strict_mode=False, name_override="create_human_ticket")
+async def _create_human_ticket_tool(
+    context_bundle: dict
+) -> dict:
     """Open a Zendesk ticket with full conversation context."""
     # Initialize return values
     ticket_id = None
@@ -99,16 +103,16 @@ async def create_human_ticket(context_bundle: dict) -> dict:
 
         # Prepare ticket data from context_bundle
         # Extract relevant information
-        customer_id = context_bundle.get("customer_id", "unknown")
-        session_id = context_bundle.get("session_id", "unknown")
-        agent_chain = context_bundle.get("agent_chain", [])
-        intent = context_bundle.get("intent", "unknown")
+        customer_id = context_bundle["customer_id"]
+        session_id = context_bundle["session_id"]
+        agent_chain = context_bundle["agent_chain"]
+        intent = context_bundle["intent"]
         policy_decision = context_bundle.get("policy_decision")
         resolution_action = context_bundle.get("resolution_action")
-        escalation_reason = context_bundle.get("escalation_reason", "unknown")
-        order_history = context_bundle.get("order_history", [])
-        timestamps = context_bundle.get("timestamps", {})
-        raw_conversation = context_bundle.get("raw_conversation", [])
+        escalation_reason = context_bundle["escalation_reason"]
+        order_history = context_bundle["order_history"]
+        timestamps = context_bundle["timestamps"]
+        raw_conversation = context_bundle["raw_conversation"]
 
         # Determine priority based on context (simple heuristic)
         # In a real implementation, this would be more sophisticated
@@ -182,8 +186,11 @@ This ticket was automatically created by the Agent01 Customer Support System.
     }
 
 
-@function_tool
-async def log_resolution(session_id: str, outcome: dict) -> dict:
+@function_tool(strict_mode=False, name_override="log_resolution")
+async def _log_resolution_tool(
+    session_id: str,
+    outcome: dict
+) -> dict:
     """Record resolution outcome in the data warehouse."""
     # Initialize return values
     record_id = None
@@ -227,7 +234,8 @@ async def log_resolution(session_id: str, outcome: dict) -> dict:
         log_file_path = "resolution_log.jsonl"
 
         with open(log_file_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(log_entry) + "\n")
+            json.dump(log_entry, f)
+            f.write("\n")
 
         success = True
 
@@ -240,3 +248,30 @@ async def log_resolution(session_id: str, outcome: dict) -> dict:
         "record_id": record_id,
         "error": error,
     }
+
+
+# A mock ToolContext class for direct tool invocation
+class _MockToolContext:
+    def __init__(self, tool_name: str):
+        self.tool_name = tool_name
+
+
+# Public wrapper functions that can be called directly (for testing, etc.)
+async def create_human_ticket(context_bundle: dict) -> dict:
+    """Open a Zendesk ticket with full conversation context (public wrapper)."""
+    # Create a mock tool context
+    ctx = _MockToolContext(tool_name="create_human_ticket")
+    # Convert the input to JSON string: wrap the context_bundle in an object with key "context_bundle"
+    input_json = json.dumps({"context_bundle": context_bundle})
+    # Invoke the internal tool
+    return await _create_human_ticket_tool.on_invoke_tool(ctx, input_json)
+
+
+async def log_resolution(session_id: str, outcome: dict) -> dict:
+    """Record resolution outcome in the data warehouse (public wrapper)."""
+    # Create a mock tool context
+    ctx = _MockToolContext(tool_name="log_resolution")
+    # Convert the input to JSON string
+    input_json = json.dumps({"session_id": session_id, "outcome": outcome})
+    # Invoke the internal tool
+    return await _log_resolution_tool.on_invoke_tool(ctx, input_json)

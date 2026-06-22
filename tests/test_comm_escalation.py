@@ -27,8 +27,8 @@ import json
 # Import the modules we need to test
 from tools.notification_tools import send_notification
 from guardrails.brand_voice import brand_voice_guardrail, PROHIBITED_LANGUAGE
-from agents.communication_agent import communication_agent, draft_and_send, draft_and_send_with_hybrid_llm
-from agents.escalation_agent import escalation_agent
+from app_agents.communication_agent import communication_agent, draft_and_send, draft_and_send_with_hybrid_llm
+from app_agents.escalation_agent import escalation_agent, handle_escalation, handle_escalation_with_hybrid_llm
 from tools.helpdesk_tools import create_human_ticket, log_resolution
 
 
@@ -45,21 +45,26 @@ async def test_send_notification_email_success():
         mock_response.headers = {'X-Message-Id': 'test-message-id'}
         mock_sg_instance.send.return_value = mock_response
 
-        # Call the function
-        result = await send_notification(
-            notification_type="email",
-            recipient="test@example.com",
-            subject="Test Subject",
-            body="Test Body"
-        )
+        # Set environment variables
+        with patch.dict(os.environ, {
+            'SENDGRID_API_KEY': 'test-key',
+            'FROM_EMAIL': 'test@example.com'
+        }):
+            # Call the function
+            result = await send_notification(
+                customer_id="CUST123",
+                channel="email",
+                subject="Test Subject",
+                body="Test Body"
+            )
 
-        # Assertions
-        assert result["success"] == True
-        assert result["channel"] == "email"
-        assert result["message_id"] == "test-message-id"
-        assert result["error"] is None
-        assert "delivered_at" in result
-        assert result["delivered_at"] is not None
+            # Assertions
+            assert result["success"] == True
+            assert result["channel"] == "email"
+            assert result["message_id"] == "test-message-id"
+            assert result["error"] is None
+            assert "delivered_at" in result
+            assert result["delivered_at"] is not None
 
 
 @pytest.mark.asyncio
@@ -75,21 +80,27 @@ async def test_send_notification_sms_success():
         mock_message.sid = message_id
         mock_twilio_instance.messages.create.return_value = mock_message
 
-        # Call the function
-        result = await send_notification(
-            notification_type="sms",
-            recipient="+1234567890",
-            subject="Test Subject",  # Ignored for SMS
-            body="Test SMS Body"
-        )
+        # Set environment variables
+        with patch.dict(os.environ, {
+            'TWILIO_ACCOUNT_SID': 'test-sid',
+            'TWILIO_AUTH_TOKEN': 'test-token',
+            'TWILIO_FROM_NUMBER': '+1234567890'
+        }):
+            # Call the function
+            result = await send_notification(
+                customer_id="CUST123",
+                channel="sms",
+                subject="",  # Ignored for SMS
+                body="Test SMS Body"
+            )
 
-        # Assertions
-        assert result["success"] == True
-        assert result["channel"] == "sms"
-        assert result["message_id"] == message_id
-        assert result["error"] is None
-        assert "delivered_at" in result
-        assert result["delivered_at"] is not None
+            # Assertions
+            assert result["success"] == True
+            assert result["channel"] == "sms"
+            assert result["message_id"] == message_id
+            assert result["error"] is None
+            assert "delivered_at" in result
+            assert result["delivered_at"] is not None
 
 
 @pytest.mark.asyncio
@@ -111,21 +122,29 @@ async def test_send_notification_email_to_sms_fallback():
         mock_message.sid = message_id
         mock_twilio_instance.messages.create.return_value = mock_message
 
-        # Call the function
-        result = await send_notification(
-            notification_type="email",
-            recipient="test@example.com",
-            subject="Test Subject",
-            body="Test Body"
-        )
+        # Set environment variables
+        with patch.dict(os.environ, {
+            'SENDGRID_API_KEY': 'test-key',
+            'FROM_EMAIL': 'test@example.com',
+            'TWILIO_ACCOUNT_SID': 'test-sid',
+            'TWILIO_AUTH_TOKEN': 'test-token',
+            'TWILIO_FROM_NUMBER': '+1234567890'
+        }):
+            # Call the function
+            result = await send_notification(
+                customer_id="CUST123",
+                channel="email",
+                subject="Test Subject",
+                body="Test Body"
+            )
 
-        # Assertions - should have fallen back to SMS
-        assert result["success"] == True
-        assert result["channel"] == "sms"  # Fell back to SMS
-        assert result["message_id"] == message_id
-        assert result["error"] is None
-        assert "delivered_at" in result
-        assert result["delivered_at"] is not None
+            # Assertions - should have fallen back to SMS
+            assert result["success"] == True
+            assert result["channel"] == "sms"  # Fell back to SMS
+            assert result["message_id"] == message_id
+            assert result["error"] is None
+            assert "delivered_at" in result
+            assert result["delivered_at"] is not None
 
 
 def test_brand_voice_blocks_prohibited_language():
@@ -225,36 +244,37 @@ def test_brand_voice_enforces_150_word_limit():
 
 # Tests for User Story 4: Hybrid AI Model Usage with Fallback
 @pytest.mark.asyncio
-async def test_communication_agent_uses_cloud_model_when_available():
-    """Test communication_agent uses cloud model (llama-3-70b-super-free) when available."""
-    # Mock the Agent's run method to check which model is being used
-    with patch.object(communication_agent, 'run') as mock_run:
-        mock_run.return_value = {"success": True}
-
-        # Call the communication agent
-        result = await communication_agent.run(
-            task="Test task",
-            context={"test": "data"}
-        )
-
-        # Verify the agent was called (this test will be enhanced after implementation)
-        mock_run.assert_called_once()
+async def test_communication_agent_uses_correct_model():
+    """Test communication_agent uses the correct model (deepseek-v4-flash-free) per ADR-001."""
+    # Verify the agent is properly configured with the correct model
+    assert communication_agent.model == "deepseek-v4-flash-free"
+    assert communication_agent.name == "CommunicationAgent"
+    assert len(communication_agent.tools) == 1
+    assert communication_agent.tools[0].name == "send_notification"
+    assert len(communication_agent.output_guardrails) == 1
+    # Check that the guardrail is the brand_voice_guardrail function
+    from guardrails.brand_voice import brand_voice_guardrail
+    assert communication_agent.output_guardrails[0] is brand_voice_guardrail
 
 
 # Test the draft_and_send function
 @pytest.mark.asyncio
 async def test_draft_and_send_function():
     """Test the draft_and_send function in communication_agent."""
-    # Mock the send_notification function
-    with patch('agents.communication_agent.send_notification') as mock_send_notification:
-        # Setup mock to return success
-        mock_send_notification.return_value = {
-            "success": True,
-            "channel": "email",
-            "message_id": "test-123",
-            "delivered_at": "2023-01-01T00:00:00Z",
-            "error": None
-        }
+    # Mock the Runner.run to avoid model initialization and external API calls
+    with patch('app_agents.communication_agent.Runner.run') as mock_runner_run:
+        # Setup mock to return a successful result
+        from app_agents.communication_agent import CommunicationAgentOutput
+        mock_result = Mock()
+        mock_result.final_output_as.return_value = CommunicationAgentOutput(
+            ticket_number="REF-ST123",
+            resolution_summary="We have processed a refund of USD 50.00 for you. We have processed your refund.",
+            next_steps="Please check your email for confirmation. If you have any further questions, don't hesitate to reach out.",
+            message_sent="Hello John,\n\nWe have processed a refund of USD 50.00 for you. We have processed your refund.\n\nPlease check your email for confirmation. If you have any further questions, don't hesitate to reach out.\n\nReference: REF-ST123\n\nThank you for choosing our service.",
+            channel_used="email",
+            llm_used="deepseek-v4-flash-free"
+        )
+        mock_runner_run.return_value = mock_result
 
         # Call the function
         result = await draft_and_send(
@@ -270,32 +290,50 @@ async def test_draft_and_send_function():
             }
         )
 
-        # Assertions
-        assert result["ticket_number"] == "REF-ST123"  # Based on customer_id
+        # Verify Runner.run was called with correct parameters
+        mock_runner_run.assert_called_once()
+        call_args = mock_runner_run.call_args
+        assert call_args[0][0].name == "CommunicationAgent"  # First arg is the agent
+        assert "Draft and send a customer message based on the provided resolution data." in call_args[0][1]  # Second arg is the prompt
+        assert call_args[1]['context'] == {  # Third arg is the context (keyword argument)
+            "customer_id": "CUST123",
+            "customer_name": "John Doe",
+            "customer_email": "john@example.com",
+            "customer_phone": "+1234567890",
+            "resolution_data": {
+                "resolution_type": "refund",
+                "description": "We have processed your refund.",
+                "amount": 50.0,
+                "currency": "USD"
+            }
+        }
+
+        # Verify the function correctly processes the result
+        assert result["ticket_number"] == "REF-ST123"
         assert result["resolution_summary"] == "We have processed a refund of USD 50.00 for you. We have processed your refund."
         assert result["next_steps"] == "Please check your email for confirmation. If you have any further questions, don't hesitate to reach out."
         assert "Hello John" in result["message_sent"]
         assert result["channel_used"] == "email"
-        assert mock_send_notification.called
 
 
 # Test the draft_and_send_with_hybrid_llm function
 @pytest.mark.asyncio
 async def test_draft_and_send_with_hybrid_llm_function():
     """Test the draft_and_send_with_hybrid_llm function in communication_agent."""
-    # Mock the hybrid agent's _generate_response_with_fallback method
-    with patch.object(communication_agent.__class__, '_generate_response_with_fallback') as mock_generate, \
-         patch('agents.communication_agent.send_notification') as mock_send_notification:
-
-        # Setup mocks
-        mock_generate.return_value = "Hello John,\n\nYour issue has been resolved.\n\nPlease let us know if you need further assistance.\n\nReference: REF-ST123\n\nThank you for choosing our service."
-        mock_send_notification.return_value = {
-            "success": True,
-            "channel": "email",
-            "message_id": "test-123",
-            "delivered_at": "2023-01-01T00:00:00Z",
-            "error": None
-        }
+    # Mock the Runner.run to avoid model initialization and external API calls
+    with patch('app_agents.communication_agent.Runner.run') as mock_runner_run:
+        # Setup mock to return a successful result
+        from app_agents.communication_agent import CommunicationAgentOutput
+        mock_result = Mock()
+        mock_result.final_output_as.return_value = CommunicationAgentOutput(
+            ticket_number="REF-ST123",
+            resolution_summary="We have processed a refund of USD 50.00 for you. We have processed your refund.",
+            next_steps="Please check your email for confirmation. If you have any further questions, don't hesitate to reach out.",
+            message_sent="Hello John,\n\nWe have processed a refund of USD 50.00 for you. We have processed your refund.\n\nPlease check your email for confirmation. If you have any further questions, don't hesitate to reach out.\n\nReference: REF-ST123\n\nThank you for choosing our service.",
+            channel_used="email",
+            llm_used="llama-3-70b-super-free"
+        )
+        mock_runner_run.return_value = mock_result
 
         # Call the function
         result = await draft_and_send_with_hybrid_llm(
@@ -308,26 +346,196 @@ async def test_draft_and_send_with_hybrid_llm_function():
                 "description": "We have processed your refund.",
                 "amount": 50.0,
                 "currency": "USD"
-            }
+            },
+            force_local=True
         )
 
-        # Assertions
+        # Verify Runner.run was called with correct parameters
+        mock_runner_run.assert_called_once()
+        call_args = mock_runner_run.call_args
+        assert call_args[0][0].name == "CommunicationAgent"  # First arg is the agent
+        assert "Draft and send a customer message using hybrid LLM orchestration based on the provided resolution data." in call_args[0][1]  # Second arg is the prompt
+        assert call_args[1]['context'] == {  # Third arg is the context (keyword argument)
+            "customer_id": "CUST123",
+            "customer_name": "John Doe",
+            "customer_email": "john@example.com",
+            "customer_phone": "+1234567890",
+            "resolution_data": {
+                "resolution_type": "refund",
+                "description": "We have processed your refund.",
+                "amount": 50.0,
+                "currency": "USD"
+            },
+            "force_local": True
+        }
+
+        # Verify the function correctly processes the result
         assert result["ticket_number"] == "REF-ST123"
         assert result["resolution_summary"] == "We have processed a refund of USD 50.00 for you. We have processed your refund."
         assert result["next_steps"] == "Please check your email for confirmation. If you have any further questions, don't hesitate to reach out."
+        assert "Hello John" in result["message_sent"]
         assert result["channel_used"] == "email"
-        assert result["llm_used"] == "llama-3-70b-super-free"  # This would be set by the hybrid agent
-        assert mock_send_notification.called
-        assert mock_generate.called
+        assert result["llm_used"] == "llama-3-70b-super-free"
+
+
+# Tests for User Story 4: Escalation Agent Functions
+@pytest.mark.asyncio
+async def test_handle_escalation_function():
+    """Test the handle_escalation function in escalation_agent."""
+    # Mock the Runner.run to avoid model initialization and external API calls
+    with patch('app_agents.escalation_agent.Runner.run') as mock_runner_run:
+        # Setup mock to return a successful result
+        from app_agents.escalation_agent import EscalationSummary
+        mock_result = Mock()
+        mock_result.final_output_as.return_value = EscalationSummary(
+            success=True,
+            ticket_id="12345",
+            ticket_url="https://example.zendesk.com/api/v2/tickets/12345.json",
+            priority="high",
+            context_bundle={
+                "customer_id": "CUST123",
+                "session_id": "SESS123",
+                "agent_chain": ["TriageAgent", "ResolutionAgent"],
+                "intent": "refund_request",
+                "policy_decision": {"approved": True},
+                "resolution_action": "refund_issued",
+                "escalation_reason": "high_value_order",
+                "order_history": [{"amount": 1000, "date": "2023-01-01"}],
+                "timestamps": {"start": "2023-01-01T10:00:00Z"},
+                "raw_conversation": [{"speaker": "customer", "message": "Hello"}]
+            },
+            escalation_reason="high_value_order",
+            error=None
+        )
+        mock_runner_run.return_value = mock_result
+
+        # Call the function
+        result = await handle_escalation(
+            customer_id="CUST123",
+            session_id="SESS123",
+            agent_chain=["TriageAgent", "ResolutionAgent"],
+            intent="refund_request",
+            policy_decision={"approved": True},
+            resolution_action="refund_issued",
+            escalation_reason="high_value_order",
+            order_history=[{"amount": 1000, "date": "2023-01-01"}],
+            timestamps={"start": "2023-01-01T10:00:00Z"},
+            raw_conversation=[{"speaker": "customer", "message": "Hello"}]
+        )
+
+        # Verify Runner.run was called with correct parameters
+        mock_runner_run.assert_called_once()
+        call_args = mock_runner_run.call_args
+        assert call_args[0][0].name == "EscalationAgent"  # First arg is the agent
+        assert "Handle the escalation case based on the provided context." in call_args[0][1]  # Second arg is the prompt
+        assert call_args[1]['context'] == {  # Third arg is the context (keyword argument)
+            "customer_id": "CUST123",
+            "session_id": "SESS123",
+            "agent_chain": ["TriageAgent", "ResolutionAgent"],
+            "intent": "refund_request",
+            "policy_decision": {"approved": True},
+            "resolution_action": "refund_issued",
+            "escalation_reason": "high_value_order",
+            "order_history": [{"amount": 1000, "date": "2023-01-01"}],
+            "timestamps": {"start": "2023-01-01T10:00:00Z"},
+            "raw_conversation": [{"speaker": "customer", "message": "Hello"}]
+        }
+
+        # Verify the function correctly processes the result
+        assert result["success"] == True
+        assert result["ticket_id"] == "12345"
+        assert result["ticket_url"] == "https://example.zendesk.com/api/v2/tickets/12345.json"
+        assert result["priority"] == "high"
+        assert result["context_bundle"] is not None
+        assert result["context_bundle"]["customer_id"] == "CUST123"
+        assert result["escalation_reason"] == "high_value_order"
+        assert result["error"] is None
+
+
+@pytest.mark.asyncio
+async def test_handle_escalation_with_hybrid_llm_function():
+    """Test the handle_escalation_with_hybrid_llm function in escalation_agent."""
+    # Mock the Runner.run to avoid model initialization and external API calls
+    with patch('app_agents.escalation_agent.Runner.run') as mock_runner_run:
+        # Setup mock to return a successful result
+        from app_agents.escalation_agent import EscalationSummary
+        mock_result = Mock()
+        mock_result.final_output_as.return_value = EscalationSummary(
+            success=True,
+            ticket_id="67890",
+            ticket_url="https://example.zendesk.com/api/v2/tickets/67890.json",
+            priority="urgent",
+            context_bundle={
+                "customer_id": "CUST456",
+                "session_id": "SESS456",
+                "agent_chain": ["TriageAgent"],
+                "intent": "fraud_investigation",
+                "policy_decision": {"flagged": True},
+                "resolution_action": None,
+                "escalation_reason": "repeat_fraud",
+                "order_history": [{"amount": 50, "date": "2023-01-01"}, {"amount": 75, "date": "2023-01-02"}],
+                "timestamps": {"start": "2023-01-01T09:00:00Z"},
+                "raw_conversation": [{"speaker": "customer", "message": "I didn't make this purchase"}]
+            },
+            escalation_reason="repeat_fraud",
+            error=None,
+            llm_used="phi4-mini:3.8b"
+        )
+        mock_runner_run.return_value = mock_result
+
+        # Call the function
+        result = await handle_escalation_with_hybrid_llm(
+            customer_id="CUST456",
+            session_id="SESS456",
+            agent_chain=["TriageAgent"],
+            intent="fraud_investigation",
+            policy_decision={"flagged": True},
+            resolution_action=None,
+            escalation_reason="repeat_fraud",
+            order_history=[{"amount": 50, "date": "2023-01-01"}, {"amount": 75, "date": "2023-01-02"}],
+            timestamps={"start": "2023-01-01T09:00:00Z"},
+            raw_conversation=[{"speaker": "customer", "message": "I didn't make this purchase"}],
+            force_local=True
+        )
+
+        # Verify Runner.run was called with correct parameters
+        mock_runner_run.assert_called_once()
+        call_args = mock_runner_run.call_args
+        assert call_args[0][0].name == "EscalationAgent"  # First arg is the agent
+        assert "Handle the escalation case using hybrid LLM orchestration based on the provided context." in call_args[0][1]  # Second arg is the prompt
+        assert call_args[1]['context'] == {  # Third arg is the context (keyword argument)
+            "customer_id": "CUST456",
+            "session_id": "SESS456",
+            "agent_chain": ["TriageAgent"],
+            "intent": "fraud_investigation",
+            "policy_decision": {"flagged": True},
+            "resolution_action": None,
+            "escalation_reason": "repeat_fraud",
+            "order_history": [{"amount": 50, "date": "2023-01-01"}, {"amount": 75, "date": "2023-01-02"}],
+            "timestamps": {"start": "2023-01-01T09:00:00Z"},
+            "raw_conversation": [{"speaker": "customer", "message": "I didn't make this purchase"}],
+            "force_local": True
+        }
+
+        # Verify the function correctly processes the result
+        assert result["success"] == True
+        assert result["ticket_id"] == "67890"
+        assert result["ticket_url"] == "https://example.zendesk.com/api/v2/tickets/67890.json"
+        assert result["priority"] == "urgent"
+        assert result["context_bundle"] is not None
+        assert result["context_bundle"]["customer_id"] == "CUST456"
+        assert result["escalation_reason"] == "repeat_fraud"
+        assert result["error"] is None
+        assert result["llm_used"] == "phi4-mini:3.8b"
 
 
 # Test escalation agent should_escalate logic (we'll test this by checking the agent's instructions)
 def test_escalation_agent_instructions():
     """Test that escalation agent has correct instructions."""
-    assert "Legal threats or extreme distress" in escalation_agent.instructions
-    assert "High-value orders exceeding the refund cap" in escalation_agent.instructions
-    assert "Repeat fraud signals on account" in escalation_agent.instructions
-    assert "Sentiment Monitor score > 0.8" in escalation_agent.instructions
+    assert "Legal threats or explicit escalation demands" in escalation_agent.instructions
+    assert "High-value orders (> $500 refund cap)" in escalation_agent.instructions
+    assert "Repeat fraud flags on account" in escalation_agent.instructions
+    assert "Sentiment Monitor score > 0.8 (indicating customer distress)" in escalation_agent.instructions
 
 
 # Test helpdesk tools
@@ -353,8 +561,8 @@ async def test_create_human_ticket():
             'ZENDESK_EMAIL': 'test@example.com',
             'ZENDESK_API_TOKEN': 'test-token'
         }):
-            # Call the function
-            result = await create_human_ticket({
+            # Call the function with a context_bundle dict
+            context_bundle = {
                 "customer_id": "CUST123",
                 "session_id": "SESS123",
                 "agent_chain": ["CommunicationAgent"],
@@ -365,7 +573,8 @@ async def test_create_human_ticket():
                 "order_history": [{"amount": 1000, "date": "2023-01-01"}],
                 "timestamps": {"start": "2023-01-01T10:00:00Z"},
                 "raw_conversation": [{"speaker": "customer", "message": "Hello"}]
-            })
+            }
+            result = await create_human_ticket(context_bundle)
 
             # Assertions
             assert result["success"] == True

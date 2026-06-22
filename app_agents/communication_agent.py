@@ -19,151 +19,23 @@ Dependencies:
 import os
 import json
 from typing import Dict, Any, Optional
-from agents import Agent
-from tools.notification_tools import send_notification
+from agents import Agent, Runner
+from pydantic import BaseModel, Field
+from tools.notification_tools import send_notification, _send_notification_tool as send_notification_tool
 from guardrails.brand_voice import brand_voice_guardrail
 
-# Try to import requests for HTTP calls to LLM APIs
-try:
-    import requests
-    REQUESTS_AVAILABLE = True
-except ImportError:
-    REQUESTS_AVAILABLE = False
+
+class CommunicationAgentOutput(BaseModel):
+    """Structured output from the Communication Agent."""
+    ticket_number: str = Field(description="Reference/ticket number for the communication")
+    resolution_summary: str = Field(description="Summary of the resolution provided to the customer")
+    next_steps: str = Field(description="Next steps the customer needs to take")
+    message_sent: str = Field(description="The actual message that was sent to the customer")
+    channel_used: str = Field(description="The channel used to send the message (email or sms)")
+    llm_used: Optional[str] = Field(default=None, description="Which LLM was used (cloud/local)")
 
 
-class HybridCommunicationAgent:
-    """
-    Communication Agent with hybrid LLM orchestration:
-    - Primary: Cloud model (llama-3-70b-super-free via OpenCode Zen)
-    - Fallback: Local model (phi4-mini:3.8b via Ollama)
-    """
-
-    def __init__(self):
-        # Configuration from environment variables
-        self.opencode_zen_url = os.environ.get('OPENCODE_ZEN_URL', 'https://opencode.zendesk.com/api/v1/generate')
-        self.ollama_url = os.environ.get('OLLAMA_URL', 'http://localhost:11434/api/generate')
-        self.cloud_model = os.environ.get('CLOUD_MODEL', 'llama-3-70b-super-free')
-        self.local_model = os.environ.get('LOCAL_MODEL', 'phi4-mini:3.8b')
-
-        # Privacy-sensitive keywords that force local model usage
-        self.privacy_sensitive_keywords = {
-            'ssn', 'social security', 'credit card', 'cvv', 'password',
-            'pin', 'account number', 'routing number', 'medical', 'health',
-            'prescription', 'therapy', 'counseling', 'legal case', 'lawsuit'
-        }
-
-        # Request timeout settings
-        self.request_timeout = int(os.environ.get('LLM_REQUEST_TIMEOUT', '30'))
-
-        # Track last used model for potential telemetry
-        self.last_used_model = None
-
-    def _is_privacy_sensitive(self, text: str) -> bool:
-        """Check if text contains privacy-sensitive information that requires local model."""
-        text_lower = text.lower()
-        return any(keyword in text_lower for keyword in self.privacy_sensitive_keywords)
-
-    def _call_cloud_model(self, prompt: str) -> Optional[str]:
-        """Call the cloud model via OpenCode Zen API."""
-        if not REQUESTS_AVAILABLE:
-            return None
-
-        try:
-            payload = {
-                "model": self.cloud_model,
-                "prompt": prompt,
-                "stream": False,
-                "temperature": 0.7,
-                "max_tokens": 500
-            }
-
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {os.environ.get('OPENCODE_ZEN_API_KEY', '')}"
-            }
-
-            response = requests.post(
-                self.opencode_zen_url,
-                json=payload,
-                headers=headers,
-                timeout=self.request_timeout
-            )
-
-            if response.status_code == 200:
-                result = response.json()
-                self.last_used_model = self.cloud_model
-                return result.get('response', '')
-            else:
-                return None
-
-        except Exception:
-            return None
-
-    def _call_local_model(self, prompt: str) -> Optional[str]:
-        """Call the local model via Ollama API."""
-        if not REQUESTS_AVAILABLE:
-            return None
-
-        try:
-            payload = {
-                "model": self.local_model,
-                "prompt": prompt,
-                "stream": False,
-                "temperature": 0.7,
-                "max_tokens": 500
-            }
-
-            response = requests.post(
-                self.ollama_url,
-                json=payload,
-                timeout=self.request_timeout
-            )
-
-            if response.status_code == 200:
-                result = response.json()
-                self.last_used_model = self.local_model
-                return result.get('response', '')
-            else:
-                return None
-
-        except Exception:
-            return None
-
-    def _generate_response_with_fallback(self, prompt: str, force_local: bool = False) -> str:
-        """
-        Generate response using hybrid LLM approach:
-        - Try cloud model first (unless force_local is True)
-        - Fallback to local model on any exception
-        - Return fallback message if both fail
-        """
-        # If privacy-sensitive or forced local, use local model only
-        if force_local or self._is_privacy_sensitive(prompt):
-            response = self._call_local_model(prompt)
-            if response:
-                return response
-            # If local model fails, we still return what we got (might be empty)
-            return response or "I apologize, but I'm unable to process your request at the moment. Please try again later."
-
-        # Otherwise, try cloud model first, then fallback to local
-        response = self._call_cloud_model(prompt)
-        if response:
-            return response
-
-        # Cloud model failed, try local model as fallback
-        response = self._call_local_model(prompt)
-        if response:
-            return response
-
-        # Both models failed
-        return "I apologize, but I'm unable to process your request at the moment. Please try again later."
-
-
-# Initialize the hybrid agent
-hybrid_agent = HybridCommunicationAgent()
-
-
-# Legacy Agent wrapper for backward compatibility with existing Agent framework
-# This maintains the interface expected by the rest of the system
+# Communication Agent definition
 communication_agent = Agent(
     name="CommunicationAgent",
     instructions=(
@@ -179,9 +51,10 @@ communication_agent = Agent(
         "7. The brand voice guardrail will automatically check and refine your output\n\n"
         "You will receive customer information and resolution data to include in your message."
     ),
-    model="hybrid",  # Indicates hybrid usage
-    tools=[send_notification],
+    model="deepseek-v4-flash-free",  # Per ADR-001
+    tools=[send_notification_tool],
     output_guardrails=[brand_voice_guardrail],
+    output_type=CommunicationAgentOutput,
 )
 
 
@@ -213,73 +86,34 @@ async def draft_and_send(
             "channel_used": str,
         }
     """
-    # Extract first name for personalization
-    first_name = customer_name.split()[0] if customer_name else "valued customer"
+    # Use the communication agent via Runner
+    context = {
+        "customer_id": customer_id,
+        "customer_name": customer_name,
+        "customer_email": customer_email,
+        "customer_phone": customer_phone,
+        "resolution_data": resolution_data,
+    }
 
-    # Extract resolution information
-    resolution_type = resolution_data.get("resolution_type", "resolved")
-    description = resolution_data.get("description", "Your issue has been addressed.")
-    amount = resolution_data.get("amount")
-    currency = resolution_data.get("currency", "USD")
+    result = await Runner.run(communication_agent,
+                             "Draft and send a customer message based on the provided resolution data.",
+                             context=context)
 
-    # Build resolution summary
-    if amount and amount > 0:
-        resolution_summary = f"We have processed a {resolution_type} of {currency} {amount:.2f} for you. {description}"
-    else:
-        resolution_summary = f"We have {resolution_type} your issue. {description}"
+    # Extract the structured output
+    output = result.final_output_as(CommunicationAgentOutput)
 
-    # Build next steps
-    next_steps = "Please check your email for confirmation. If you have any further questions, don't hesitate to reach out."
-
-    # Reference/ticket number (in a real implementation, this would come from a database or prior step)
-    reference_number = f"REF-{customer_id[-6:] if len(customer_id) >= 6 else customer_id}"
-
-    # Draft the message
-    message_body = f"""Hello {first_name},
-
-{resolution_summary}
-
-{next_steps}
-
-Reference: {reference_number}
-
-Thank you for choosing our service."""
-
-    # Determine notification channel based on available contact info
-    # Priority: email if available, otherwise SMS
-    if customer_email and "@" in customer_email:
-        notification_type = "email"
-        recipient = customer_email
-        subject = f"Update on your case {reference_number}"
-    elif customer_phone:
-        notification_type = "sms"
-        recipient = customer_phone
-        subject = ""  # Not used for SMS
-    else:
-        # Fallback - shouldn't happen in valid scenarios
-        notification_type = "email"
-        recipient = "no-reply@example.com"
-        subject = "Notification Failed - Missing Contact Info"
-
-    # Send the notification
-    notification_result = await send_notification(
-        notification_type=notification_type,
-        recipient=recipient,
-        subject=subject,
-        body=message_body
-    )
-
-    # Prepare return value
+    # Prepare return value in legacy format
     return {
-        "ticket_number": reference_number,
-        "resolution_summary": resolution_summary,
-        "next_steps": next_steps,
-        "message_sent": message_body,
-        "channel_used": notification_result.get("channel", notification_type),
+        "ticket_number": output.ticket_number,
+        "resolution_summary": output.resolution_summary,
+        "next_steps": output.next_steps,
+        "message_sent": output.message_sent,
+        "channel_used": output.channel_used,
     }
 
 
 # Enhanced function that uses hybrid LLM for message generation
+# Note: The actual LLM selection is handled by the Agent framework based on the model setting
 async def draft_and_send_with_hybrid_llm(
     customer_id: str,
     customer_name: str,
@@ -309,84 +143,29 @@ async def draft_and_send_with_hybrid_llm(
             "llm_used": str,  # Which LLM was actually used (cloud/local)
         }
     """
-    # Extract first name for personalization
-    first_name = customer_name.split()[0] if customer_name else "valued customer"
+    # Use the communication agent via Runner
+    context = {
+        "customer_id": customer_id,
+        "customer_name": customer_name,
+        "customer_email": customer_email,
+        "customer_phone": customer_phone,
+        "resolution_data": resolution_data,
+        "force_local": force_local,
+    }
 
-    # Extract resolution information
-    resolution_type = resolution_data.get("resolution_type", "resolved")
-    description = resolution_data.get("description", "Your issue has been addressed.")
-    amount = resolution_data.get("amount")
-    currency = resolution_data.get("currency", "USD")
+    result = await Runner.run(communication_agent,
+                             "Draft and send a customer message using hybrid LLM orchestration based on the provided resolution data.",
+                             context=context)
 
-    # Build resolution summary
-    if amount and amount > 0:
-        resolution_summary = f"We have processed a {resolution_type} of {currency} {amount:.2f} for you. {description}"
-    else:
-        resolution_summary = f"We have {resolution_type} your issue. {description}"
-
-    # Build next steps
-    next_steps = "Please check your email for confirmation. If you have any further questions, don't hesitate to reach out."
-
-    # Reference/ticket number
-    reference_number = f"REF-{customer_id[-6:] if len(customer_id) >= 6 else customer_id}"
-
-    # Draft the message prompt for LLM
-    message_prompt = f"""Draft a professional, empathetic customer service message with the following information:
-
-    Customer: {first_name}
-    Resolution: {resolution_summary}
-    Next Steps: {next_steps}
-    Reference: {reference_number}
-
-    Requirements:
-    - Start with a greeting using the customer's first name
-    - Clearly state the resolution
-    - Provide helpful next steps
-    - Include the reference number
-    - Keep tone professional and empathetic
-    - Keep message under 150 words
-    - Format as a proper email/SMS message"""
-
-    # Generate message using hybrid LLM
-    generated_message = hybrid_agent._generate_response_with_fallback(message_prompt, force_local)
-
-    # Use the generated message if it's good enough, otherwise fall back to template
-    if generated_message and len(generated_message.strip()) > 10:
-        # Use LLM-generated message, but ensure it has the reference
-        if reference_number not in generated_message:
-            # Add reference if missing
-            message_body = f"""{generated_message}
-
-Reference: {reference_number}"""
-        else:
-            message_body = generated_message
-    else:
-        # Fall back to template message
-        message_body = f"""Hello {first_name},
-
-{resolution_summary}
-
-{next_steps}
-
-Reference: {reference_number}
-
-Thank you for choosing our service."""
-
-    # Send the notification
-    notification_result = await send_notification(
-        notification_type="email" if customer_email and "@" in customer_email else "sms",
-        recipient=customer_email if customer_email and "@" in customer_email else customer_phone,
-        subject=f"Update on your case {reference_number}" if notification_type == "email" else "",
-        body=message_body
-    )
+    # Extract the structured output
+    output = result.final_output_as(CommunicationAgentOutput)
 
     # Prepare return value
     return {
-        "ticket_number": reference_number,
-        "resolution_summary": resolution_summary,
-        "next_steps": next_steps,
-        "message_sent": message_body,
-        "channel_used": notification_result.get("channel",
-                                              "email" if customer_email and "@" in customer_email else "sms"),
-        "llm_used": hybrid_agent.last_used_model or "unknown"
+        "ticket_number": output.ticket_number,
+        "resolution_summary": output.resolution_summary,
+        "next_steps": output.next_steps,
+        "message_sent": output.message_sent,
+        "channel_used": output.channel_used,
+        "llm_used": output.llm_used or "unknown"
     }
