@@ -10,6 +10,7 @@ import os
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass
@@ -17,6 +18,7 @@ except ImportError:
 # ── Datadog APM instrumentation ───────────────────────────────────────────
 try:
     from infra.datadog_setup import configure_datadog
+
     configure_datadog()
 except ImportError:
     pass
@@ -24,6 +26,7 @@ except ImportError:
 try:
     from agents import set_default_openai_api, set_default_openai_client
     from openai import AsyncOpenAI
+
     key = os.environ.get("OPENAI_API_KEY", "")
     base_url = os.environ.get("OPENAI_BASE_URL", "")
     if key:
@@ -43,7 +46,7 @@ app = FastAPI(
 
 class InboundMessage(BaseModel):
     customer_id: str
-    channel: str          # web_chat | email | whatsapp | sms
+    channel: str  # web_chat | email | whatsapp | sms
     raw_message: str
     session_id: str | None = None
 
@@ -58,6 +61,7 @@ class ResolutionResponse(BaseModel):
 async def root() -> str:
     import os
     from dotenv import load_dotenv
+
     load_dotenv()
     has_key = bool(os.environ.get("OPENAI_API_KEY"))
     return f"""<html><body style="font-family:sans-serif;max-width:700px;margin:40px">

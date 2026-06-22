@@ -19,11 +19,23 @@ import urllib.error
 BASE = "http://127.0.0.1:8000"
 
 SCENARIOS = [
-    ("Alice  — eligible refund",        "CUST-001", "I want to return my order ORD-001, please process a refund."),
-    ("Bob    — excluded digital goods", "CUST-002", "I want to return my digital download order ORD-003."),
-    ("Charlie— damaged replacement",    "CUST-003", "My item from order ORD-004 arrived damaged, I need a replacement."),
-    ("Dave   — fraud flag reject",      "CUST-004", "Return order ORD-005 please."),
-    ("Eve    — fraud DB escalate",      "CUST-005", "I need to return order ORD-006."),
+    (
+        "Alice  — eligible refund",
+        "CUST-001",
+        "I want to return my order ORD-001, please process a refund.",
+    ),
+    (
+        "Bob    — excluded digital goods",
+        "CUST-002",
+        "I want to return my digital download order ORD-003.",
+    ),
+    (
+        "Charlie— damaged replacement",
+        "CUST-003",
+        "My item from order ORD-004 arrived damaged, I need a replacement.",
+    ),
+    ("Dave   — fraud flag reject", "CUST-004", "Return order ORD-005 please."),
+    ("Eve    — fraud DB escalate", "CUST-005", "I need to return order ORD-006."),
 ]
 
 
@@ -83,7 +95,7 @@ def main() -> None:
             failed += 1
 
         print()
-        time.sleep(1)   # small gap between calls
+        time.sleep(1)  # small gap between calls
 
     # ── summary ───────────────────────────────────────────────────────────────
     print("=" * 70)

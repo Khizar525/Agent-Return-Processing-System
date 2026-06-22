@@ -31,14 +31,27 @@ from tools.helpdesk_tools import (
 
 class EscalationSummary(BaseModel):
     """Structured output from the Escalation Agent."""
+
     success: bool = Field(description="Whether the escalation process was successfully completed.")
-    ticket_id: str | None = Field(default=None, description="The Zendesk ticket ID, if successfully created.")
-    ticket_url: str | None = Field(default=None, description="The Zendesk ticket URL, if successfully created.")
-    priority: str | None = Field(default=None, description="The ticket priority: 'low' | 'normal' | 'high' | 'urgent'")
-    context_bundle: Dict[str, Any] | None = Field(default=None, description="The compiled context bundle used for the escalation.")
-    escalation_reason: str | None = Field(default=None, description="The determined reason for escalation.")
+    ticket_id: str | None = Field(
+        default=None, description="The Zendesk ticket ID, if successfully created."
+    )
+    ticket_url: str | None = Field(
+        default=None, description="The Zendesk ticket URL, if successfully created."
+    )
+    priority: str | None = Field(
+        default=None, description="The ticket priority: 'low' | 'normal' | 'high' | 'urgent'"
+    )
+    context_bundle: Dict[str, Any] | None = Field(
+        default=None, description="The compiled context bundle used for the escalation."
+    )
+    escalation_reason: str | None = Field(
+        default=None, description="The determined reason for escalation."
+    )
     error: str | None = Field(default=None, description="Error message if execution failed.")
-    llm_used: Optional[str] = Field(default=None, description="Which LLM was actually used (cloud/local)")
+    llm_used: Optional[str] = Field(
+        default=None, description="Which LLM was actually used (cloud/local)"
+    )
 
 
 # Escalation Agent definition
@@ -132,9 +145,11 @@ async def handle_escalation(
         "raw_conversation": raw_conversation,
     }
 
-    result = await Runner.run(escalation_agent,
-                             "Handle the escalation case based on the provided context.",
-                             context=context)
+    result = await Runner.run(
+        escalation_agent,
+        "Handle the escalation case based on the provided context.",
+        context=context,
+    )
 
     # Extract the structured output
     output = result.final_output_as(EscalationSummary)
@@ -209,9 +224,11 @@ async def handle_escalation_with_hybrid_llm(
         "force_local": force_local,
     }
 
-    result = await Runner.run(escalation_agent,
-                             "Handle the escalation case using hybrid LLM orchestration based on the provided context.",
-                             context=context)
+    result = await Runner.run(
+        escalation_agent,
+        "Handle the escalation case using hybrid LLM orchestration based on the provided context.",
+        context=context,
+    )
 
     # Extract the structured output
     output = result.final_output_as(EscalationSummary)
@@ -225,5 +242,5 @@ async def handle_escalation_with_hybrid_llm(
         "context_bundle": output.context_bundle,
         "escalation_reason": output.escalation_reason,
         "error": output.error,
-        "llm_used": output.llm_used or "unknown"
+        "llm_used": output.llm_used or "unknown",
     }

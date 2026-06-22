@@ -91,7 +91,11 @@ async def _get_fedex_token(client: httpx.AsyncClient) -> str:
 
     resp = await client.post(
         _FEDEX_AUTH_URL,
-        data={"grant_type": "client_credentials", "client_id": api_key, "client_secret": api_secret},
+        data={
+            "grant_type": "client_credentials",
+            "client_id": api_key,
+            "client_secret": api_secret,
+        },
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     resp.raise_for_status()
@@ -105,7 +109,8 @@ async def _create_fedex_label(order_id: str, carrier: str) -> dict:
 
     if not api_key or not api_secret or not account_number:
         return _label_error_response(
-            carrier, "FEDEX_API_KEY, FEDEX_API_SECRET, and FEDEX_ACCOUNT_NUMBER must be set")
+            carrier, "FEDEX_API_KEY, FEDEX_API_SECRET, and FEDEX_ACCOUNT_NUMBER must be set"
+        )
 
     async with httpx.AsyncClient(timeout=_HTTP_TIMEOUT) as client:
         token = await _get_fedex_token(client)
@@ -120,8 +125,11 @@ async def _create_fedex_label(order_id: str, carrier: str) -> dict:
 
         resp = await client.post(
             _FEDEX_SHIP_URL,
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json",
-                      "X-AccountNumber": account_number},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+                "X-AccountNumber": account_number,
+            },
             json=payload,
         )
         resp.raise_for_status()
@@ -148,29 +156,37 @@ async def _create_ups_label(order_id: str, carrier: str) -> dict:
     client_secret = os.environ.get("UPS_CLIENT_SECRET")
 
     if not client_id or not client_secret:
-        return _label_error_response(
-            carrier, "UPS_CLIENT_ID and UPS_CLIENT_SECRET must be set")
+        return _label_error_response(carrier, "UPS_CLIENT_ID and UPS_CLIENT_SECRET must be set")
 
     async with httpx.AsyncClient(timeout=_HTTP_TIMEOUT) as client:
         token_resp = await client.post(
             _UPS_AUTH_URL,
-            data={"grant_type": "client_credentials", "client_id": client_id,
-                  "client_secret": client_secret},
+            data={
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret,
+            },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
         token_resp.raise_for_status()
         token = token_resp.json()["access_token"]
 
         payload = {
-            "labelSpecification": {"labelStockSize": {"height": "4", "width": "6"},
-                                    "labelFormat": {"code": "GIF"}},
+            "labelSpecification": {
+                "labelStockSize": {"height": "4", "width": "6"},
+                "labelFormat": {"code": "GIF"},
+            },
             "referenceNumber": {"value": order_id},
         }
 
         resp = await client.post(
             _UPS_SHIP_URL,
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json",
-                      "transId": "return_label", "transactionSrc": "agent01"},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+                "transId": "return_label",
+                "transactionSrc": "agent01",
+            },
             json=payload,
         )
         resp.raise_for_status()
@@ -195,29 +211,39 @@ async def _create_ups_label(order_id: str, carrier: str) -> dict:
 async def create_return_label(order_id: str, carrier: str) -> dict:
     """Generate a prepaid return shipping label via FedEx or UPS."""
     start = time.monotonic()
-    logger.info("tool_call", extra={
-        "tool": "create_return_label", "order_id": order_id, "carrier": carrier})
+    logger.info(
+        "tool_call", extra={"tool": "create_return_label", "order_id": order_id, "carrier": carrier}
+    )
 
     if not order_id or not order_id.strip():
-        logger.warning("tool_validation_error", extra={
-            "tool": "create_return_label", "reason": "empty_order_id"})
+        logger.warning(
+            "tool_validation_error",
+            extra={"tool": "create_return_label", "reason": "empty_order_id"},
+        )
         return _label_error_response(carrier, "order_id must not be empty")
 
     if not isinstance(carrier, str) or not carrier.strip():
-        logger.warning("tool_validation_error", extra={
-            "tool": "create_return_label", "reason": "invalid_carrier_type",
-            "provided": type(carrier).__name__})
+        logger.warning(
+            "tool_validation_error",
+            extra={
+                "tool": "create_return_label",
+                "reason": "invalid_carrier_type",
+                "provided": type(carrier).__name__,
+            },
+        )
         return _label_error_response(
-            str(carrier) if carrier is not None else "",
-            "carrier must be a non-empty string")
+            str(carrier) if carrier is not None else "", "carrier must be a non-empty string"
+        )
 
     normalised = carrier.strip().lower()
     if normalised not in _VALID_CARRIERS:
-        logger.warning("tool_validation_error", extra={
-            "tool": "create_return_label", "reason": "invalid_carrier",
-            "provided": carrier})
+        logger.warning(
+            "tool_validation_error",
+            extra={"tool": "create_return_label", "reason": "invalid_carrier", "provided": carrier},
+        )
         return _label_error_response(
-            carrier, f"Unsupported carrier: '{carrier}'. Must be 'fedex' or 'ups'.")
+            carrier, f"Unsupported carrier: '{carrier}'. Must be 'fedex' or 'ups'."
+        )
 
     try:
         if normalised == "fedex":
@@ -226,57 +252,82 @@ async def create_return_label(order_id: str, carrier: str) -> dict:
             result = await _create_ups_label(order_id.strip(), normalised)
 
         duration = int((time.monotonic() - start) * 1000)
-        logger.info("tool_result", extra={
-            "tool": "create_return_label", "duration_ms": duration,
-            "success": result["success"], "carrier": normalised})
+        logger.info(
+            "tool_result",
+            extra={
+                "tool": "create_return_label",
+                "duration_ms": duration,
+                "success": result["success"],
+                "carrier": normalised,
+            },
+        )
         return result
 
     except httpx.TimeoutException:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_timeout", extra={
-            "tool": "create_return_label", "duration_ms": duration, "carrier": normalised})
+        logger.error(
+            "tool_timeout",
+            extra={"tool": "create_return_label", "duration_ms": duration, "carrier": normalised},
+        )
         return _label_error_response(normalised, f"{normalised.title()} API timed out")
 
     except httpx.HTTPStatusError as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_http_error", extra={
-            "tool": "create_return_label", "duration_ms": duration,
-            "carrier": normalised, "status_code": e.response.status_code})
+        logger.error(
+            "tool_http_error",
+            extra={
+                "tool": "create_return_label",
+                "duration_ms": duration,
+                "carrier": normalised,
+                "status_code": e.response.status_code,
+            },
+        )
         return _label_error_response(
-            normalised, f"{normalised.title()} API returned HTTP {e.response.status_code}")
+            normalised, f"{normalised.title()} API returned HTTP {e.response.status_code}"
+        )
 
     except httpx.RequestError as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_connection_error", extra={
-            "tool": "create_return_label", "duration_ms": duration, "carrier": normalised})
+        logger.error(
+            "tool_connection_error",
+            extra={"tool": "create_return_label", "duration_ms": duration, "carrier": normalised},
+        )
         return _label_error_response(
-            normalised, f"Could not reach {normalised.title()} API: {str(e)}")
+            normalised, f"Could not reach {normalised.title()} API: {str(e)}"
+        )
 
     except (KeyError, TypeError) as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_parse_error", extra={
-            "tool": "create_return_label", "duration_ms": duration, "carrier": normalised})
+        logger.error(
+            "tool_parse_error",
+            extra={"tool": "create_return_label", "duration_ms": duration, "carrier": normalised},
+        )
         return _label_error_response(
-            normalised, f"Invalid {normalised.title()} response format: {str(e)}")
+            normalised, f"Invalid {normalised.title()} response format: {str(e)}"
+        )
 
     except Exception as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_unexpected_error", extra={
-            "tool": "create_return_label", "duration_ms": duration, "carrier": normalised})
+        logger.error(
+            "tool_unexpected_error",
+            extra={"tool": "create_return_label", "duration_ms": duration, "carrier": normalised},
+        )
         return _label_error_response(
-            normalised, f"Unexpected {normalised.title()} API error: {str(e)}")
+            normalised, f"Unexpected {normalised.title()} API error: {str(e)}"
+        )
 
 
 @function_tool
 async def create_replacement_order(order_id: str) -> dict:
     """Clone an order and flag it for expedited fulfillment in the OMS."""
     start = time.monotonic()
-    logger.info("tool_call", extra={
-        "tool": "create_replacement_order", "order_id": order_id})
+    logger.info("tool_call", extra={"tool": "create_replacement_order", "order_id": order_id})
 
     if not order_id or not order_id.strip():
-        logger.warning("tool_validation_error", extra={
-            "tool": "create_replacement_order", "reason": "empty_order_id"})
+        logger.warning(
+            "tool_validation_error",
+            extra={"tool": "create_replacement_order", "reason": "empty_order_id"},
+        )
         return _replacement_error_response("order_id must not be empty")
 
     oms_base = os.environ.get("OMS_BASE_URL")
@@ -301,9 +352,15 @@ async def create_replacement_order(order_id: str) -> dict:
 
         if response.status_code == 404:
             duration = int((time.monotonic() - start) * 1000)
-            logger.info("tool_result", extra={
-                "tool": "create_replacement_order", "duration_ms": duration,
-                "success": False, "error": "not_found"})
+            logger.info(
+                "tool_result",
+                extra={
+                    "tool": "create_replacement_order",
+                    "duration_ms": duration,
+                    "success": False,
+                    "error": "not_found",
+                },
+            )
             return _replacement_error_response(f"Order not found: {order_id}")
 
         response.raise_for_status()
@@ -319,38 +376,55 @@ async def create_replacement_order(order_id: str) -> dict:
         }
 
         duration = int((time.monotonic() - start) * 1000)
-        logger.info("tool_result", extra={
-            "tool": "create_replacement_order", "duration_ms": duration,
-            "success": True, "replacement_order_id": result["replacement_order_id"]})
+        logger.info(
+            "tool_result",
+            extra={
+                "tool": "create_replacement_order",
+                "duration_ms": duration,
+                "success": True,
+                "replacement_order_id": result["replacement_order_id"],
+            },
+        )
         return result
 
     except httpx.TimeoutException:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_timeout", extra={
-            "tool": "create_replacement_order", "duration_ms": duration})
+        logger.error(
+            "tool_timeout", extra={"tool": "create_replacement_order", "duration_ms": duration}
+        )
         return _replacement_error_response("OMS API timed out")
 
     except httpx.HTTPStatusError as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_http_error", extra={
-            "tool": "create_replacement_order", "duration_ms": duration,
-            "status_code": e.response.status_code})
+        logger.error(
+            "tool_http_error",
+            extra={
+                "tool": "create_replacement_order",
+                "duration_ms": duration,
+                "status_code": e.response.status_code,
+            },
+        )
         return _replacement_error_response(f"OMS API returned HTTP {e.response.status_code}")
 
     except httpx.RequestError as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_connection_error", extra={
-            "tool": "create_replacement_order", "duration_ms": duration})
+        logger.error(
+            "tool_connection_error",
+            extra={"tool": "create_replacement_order", "duration_ms": duration},
+        )
         return _replacement_error_response(f"Could not reach OMS API: {str(e)}")
 
     except (KeyError, TypeError) as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_parse_error", extra={
-            "tool": "create_replacement_order", "duration_ms": duration})
+        logger.error(
+            "tool_parse_error", extra={"tool": "create_replacement_order", "duration_ms": duration}
+        )
         return _replacement_error_response(f"Invalid OMS response format: {str(e)}")
 
     except Exception as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_unexpected_error", extra={
-            "tool": "create_replacement_order", "duration_ms": duration})
+        logger.error(
+            "tool_unexpected_error",
+            extra={"tool": "create_replacement_order", "duration_ms": duration},
+        )
         return _replacement_error_response(f"Unexpected OMS API error: {str(e)}")

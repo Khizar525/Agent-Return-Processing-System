@@ -37,9 +37,9 @@ def p(msg):
 
 
 def h(title):
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {title}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 async def demo_policy():
@@ -47,42 +47,54 @@ async def demo_policy():
     p("Customer Alice (CUST-001) bought electronics 15 days ago. Works fine, just changed mind.")
     p("> python cli.py check ORD-001 CUST-001")
     r = await check_return("ORD-001", "CUST-001")
-    print(f"    [PASS] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Reason: {r['reason']}")
+    print(
+        f"    [PASS] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Reason: {r['reason']}"
+    )
     print("    => Alice gets a full refund of $199.99")
 
     h("SCENARIO 2: Too Late - Return window exceeded")
     p("Customer Alice (CUST-001) bought electronics 45 days ago. Policy is 30 days.")
     p("> python cli.py check ORD-002 CUST-001")
     r = await check_return("ORD-002", "CUST-001")
-    print(f"    [FAIL] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Reason: {r['reason']}")
+    print(
+        f"    [FAIL] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Reason: {r['reason']}"
+    )
     print("    => Alice cannot return this item.")
 
     h("SCENARIO 3: Damaged Item - Replacement instead of refund")
     p("Customer Charlie (CUST-003) bought clothing 10 days ago. Arrived damaged.")
     p("> python cli.py check ORD-004 CUST-003")
     r = await check_return("ORD-004", "CUST-003")
-    print(f"    [PASS] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Reason: {r['reason']}")
+    print(
+        f"    [PASS] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Reason: {r['reason']}"
+    )
     print("    => Charlie gets a replacement shipped immediately.")
 
     h("SCENARIO 4: Excluded Item - Digital goods can't be returned")
     p("Customer Bob (CUST-002) bought a digital download 5 days ago.")
     p("> python cli.py check ORD-003 CUST-002")
     r = await check_return("ORD-003", "CUST-002")
-    print(f"    [FAIL] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Reason: {r['reason']}")
+    print(
+        f"    [FAIL] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Reason: {r['reason']}"
+    )
     print("    => Bob's item is excluded (digital_goods).")
 
     h("SCENARIO 5: Fraud Flag - Blocked immediately")
     p("Customer Dave (CUST-004) has a chargeback history. Trying to return a $150 item.")
     p("> python cli.py check ORD-005 CUST-004")
     r = await check_return("ORD-005", "CUST-004")
-    print(f"    [FAIL] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Fraud: {r['fraud_signal']}")
+    print(
+        f"    [FAIL] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Fraud: {r['fraud_signal']}"
+    )
     print("    => Dave's request rejected due to fraud_flag.")
 
     h("SCENARIO 6: Fraud DB Match - Escalate for human review")
     p("Customer Eve (CUST-005) has no fraud flag but matched a suspicious pattern in DB.")
     p("> python cli.py check ORD-006 CUST-005")
     r = await check_return("ORD-006", "CUST-005")
-    print(f"    [FLAG] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Fraud: {r['fraud_signal']}")
+    print(
+        f"    [FLAG] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Fraud: {r['fraud_signal']}"
+    )
     print("    => Eve's case escalated to a human agent for review.")
 
     h("SCENARIO 7: Order Not Found")
@@ -113,13 +125,17 @@ async def demo_policy():
     p("Priya (CUST-003) just bought a mouse today. Full refund available.")
     p("> python cli.py check ORD-008 CUST-003")
     r = await check_return("ORD-008", "CUST-003")
-    print(f"    [PASS] Eligible: {r['eligible']} | Days: {r['days_since_purchase']} | Action: {r['recommended_action']}")
+    print(
+        f"    [PASS] Eligible: {r['eligible']} | Days: {r['days_since_purchase']} | Action: {r['recommended_action']}"
+    )
 
     h("SCENARIO 12: Exactly 30 days - boundary")
     p("Priya (CUST-003) bought a USB cable exactly 30 days ago.")
     p("> python cli.py check ORD-009 CUST-003")
     r = await check_return("ORD-009", "CUST-003")
-    print(f"    [PASS] Eligible: {r['eligible']} | Days: {r['days_since_purchase']} | Action: {r['recommended_action']}")
+    print(
+        f"    [PASS] Eligible: {r['eligible']} | Days: {r['days_since_purchase']} | Action: {r['recommended_action']}"
+    )
 
     h("SCENARIO 13: New Customer - Clean return")
     p("Marcus (CUST-006) bought a towel set 12 days ago. Clean account.")
@@ -131,13 +147,17 @@ async def demo_policy():
     p("Alice (CUST-001) bought face cream 25 days ago. Arrived damaged.")
     p("> python cli.py check ORD-012 CUST-001")
     r = await check_return("ORD-012", "CUST-001")
-    print(f"    [PASS] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Reason: {r['reason']}")
+    print(
+        f"    [PASS] Eligible: {r['eligible']} | Action: {r['recommended_action']} | Reason: {r['reason']}"
+    )
 
     h("SCENARIO 15: New Fraud Account - Blocked")
     p("Vladimir (CUST-007) has multiple chargebacks. Order is within window.")
     p("> python cli.py check ORD-013 CUST-007")
     r = await check_return("ORD-013", "CUST-007")
-    print(f"    [FAIL] Eligible: {r['eligible']} | Fraud: {r['fraud_signal']} | Action: {r['recommended_action']}")
+    print(
+        f"    [FAIL] Eligible: {r['eligible']} | Fraud: {r['fraud_signal']} | Action: {r['recommended_action']}"
+    )
 
     h("SCENARIO 16: Final Sale - Excluded")
     p("Marcus (CUST-006) bought a final sale rug yesterday. No returns.")
@@ -149,7 +169,9 @@ async def demo_policy():
     p("Yuki (CUST-008) matched a velocity check in fraud DB. No fraud flag on account.")
     p("> python cli.py check ORD-015 CUST-008")
     r = await check_return("ORD-015", "CUST-008")
-    print(f"    [FLAG] Eligible: {r['eligible']} | Fraud: {r['fraud_signal']} | Action: {r['recommended_action']}")
+    print(
+        f"    [FLAG] Eligible: {r['eligible']} | Fraud: {r['fraud_signal']} | Action: {r['recommended_action']}"
+    )
 
 
 async def demo_guardrails():
@@ -211,9 +233,9 @@ async def main():
     print("=" * 60)
     await demo_policy()
     await demo_guardrails()
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("  Demo complete! See test queries below.")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 if __name__ == "__main__":

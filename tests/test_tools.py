@@ -42,6 +42,7 @@ async def _invoke_tool(customer_id: str) -> dict:
         return json.loads(result)
     return result
 
+
 _CRM_BASE = "https://api.crm.example.com/v1"
 _CRM_KEY = "test-api-key-abc123"
 
@@ -82,7 +83,8 @@ async def test_get_customer_profile_returns_expected_schema():
 
     async with respx.mock:
         respx.get(f"{_CRM_BASE}/customers/cust_001").respond(
-            json=payload, status_code=200,
+            json=payload,
+            status_code=200,
         )
 
         result = await _invoke_tool(customer_id="cust_001")
@@ -262,10 +264,7 @@ async def test_get_customer_profile_order_history_limited_to_10():
     monkeypatch.setenv("CRM_BASE_URL", _CRM_BASE)
     monkeypatch.setenv("CRM_API_KEY", _CRM_KEY)
 
-    orders = [
-        {"order_id": f"ORD-{i:05d}", "total": float(i * 10)}
-        for i in range(15)
-    ]
+    orders = [{"order_id": f"ORD-{i:05d}", "total": float(i * 10)} for i in range(15)]
     payload = {
         "id": "cust_001",
         "name": "Jane",
@@ -279,7 +278,8 @@ async def test_get_customer_profile_order_history_limited_to_10():
 
     async with respx.mock:
         respx.get(f"{_CRM_BASE}/customers/cust_001").respond(
-            json=payload, status_code=200,
+            json=payload,
+            status_code=200,
         )
 
         result = await _invoke_tool(customer_id="cust_001")
@@ -299,10 +299,7 @@ async def test_get_customer_profile_past_returns_limited_to_5():
     monkeypatch.setenv("CRM_BASE_URL", _CRM_BASE)
     monkeypatch.setenv("CRM_API_KEY", _CRM_KEY)
 
-    returns = [
-        {"return_id": f"RET-{i:03d}", "status": "completed"}
-        for i in range(8)
-    ]
+    returns = [{"return_id": f"RET-{i:03d}", "status": "completed"} for i in range(8)]
     payload = {
         "id": "cust_001",
         "name": "Jane",
@@ -317,7 +314,8 @@ async def test_get_customer_profile_past_returns_limited_to_5():
 
     async with respx.mock:
         respx.get(f"{_CRM_BASE}/customers/cust_001").respond(
-            json=payload, status_code=200,
+            json=payload,
+            status_code=200,
         )
 
         result = await _invoke_tool(customer_id="cust_001")
@@ -369,10 +367,10 @@ async def test_process_refund_stripe_success():
 
     async with respx.mock:
         respx.post(_STRIPE_REFUND_URL).respond(
-            json={"id": "re_stripe_12345"}, status_code=200,
+            json={"id": "re_stripe_12345"},
+            status_code=200,
         )
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=50.0, method="stripe")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=50.0, method="stripe")
 
     assert result["success"] is True
     assert result["transaction_id"] == "re_stripe_12345"
@@ -395,15 +393,14 @@ async def test_process_refund_paypal_success():
 
     async with respx.mock:
         respx.post("https://api.sandbox.paypal.com/v1/oauth2/token").respond(
-            json={"access_token": "paypal_token_abc"}, status_code=200,
+            json={"access_token": "paypal_token_abc"},
+            status_code=200,
         )
-        respx.post(
-            "https://api.sandbox.paypal.com/v2/payments/captures/ORD-001/refund"
-        ).respond(
-            json={"id": "re_paypal_67890"}, status_code=200,
+        respx.post("https://api.sandbox.paypal.com/v2/payments/captures/ORD-001/refund").respond(
+            json={"id": "re_paypal_67890"},
+            status_code=200,
         )
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=25.0, method="paypal")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=25.0, method="paypal")
 
     assert result["success"] is True
     assert result["transaction_id"] == "re_paypal_67890"
@@ -422,8 +419,7 @@ async def test_process_refund_unsupported_method():
     monkeypatch.setenv("REFUND_CAP_USD", "500")
 
     async with respx.mock:
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=50.0, method="bitcoin")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=50.0, method="bitcoin")
 
     assert result["success"] is False
     assert "Unsupported payment method" in result["error"]
@@ -438,8 +434,7 @@ async def test_process_refund_empty_order_id():
     monkeypatch.setenv("REFUND_CAP_USD", "500")
 
     async with respx.mock:
-        result = await _invoke_process_refund(
-            order_id="", amount_usd=50.0, method="stripe")
+        result = await _invoke_process_refund(order_id="", amount_usd=50.0, method="stripe")
 
     assert result["success"] is False
     assert result["error"] == "order_id must not be empty"
@@ -456,7 +451,8 @@ async def test_process_refund_invalid_amount():
     async with respx.mock:
         with pytest.raises(ValueError):
             await _invoke_process_refund(
-                order_id="ORD-001", amount_usd="not-a-number", method="stripe")
+                order_id="ORD-001", amount_usd="not-a-number", method="stripe"
+            )
 
     monkeypatch.undo()
 
@@ -468,8 +464,7 @@ async def test_process_refund_negative_amount():
     monkeypatch.setenv("REFUND_CAP_USD", "500")
 
     async with respx.mock:
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=-50.0, method="stripe")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=-50.0, method="stripe")
 
     assert result["success"] is False
     assert result["error"] == "amount_usd must be greater than 0"
@@ -485,8 +480,7 @@ async def test_process_refund_missing_stripe_key():
     monkeypatch.delenv("STRIPE_SECRET_KEY", raising=False)
 
     async with respx.mock:
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=50.0, method="stripe")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=50.0, method="stripe")
 
     assert result["success"] is False
     assert result["error"] == "STRIPE_SECRET_KEY environment variable is not set"
@@ -504,8 +498,7 @@ async def test_process_refund_missing_paypal_credentials():
     monkeypatch.setenv("PAYPAL_BASE_URL", "https://api.sandbox.paypal.com")
 
     async with respx.mock:
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=50.0, method="paypal")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=50.0, method="paypal")
 
     assert result["success"] is False
     assert "PAYPAL_CLIENT_ID" in result["error"]
@@ -526,8 +519,7 @@ async def test_process_refund_stripe_timeout():
             "Timed out",
             request=httpx.Request("POST", _STRIPE_REFUND_URL),
         )
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=50.0, method="stripe")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=50.0, method="stripe")
 
     assert result["success"] is False
     assert "Stripe refund API timed out" in result["error"]
@@ -548,11 +540,9 @@ async def test_process_refund_paypal_timeout():
         token_route = respx.post("https://api.sandbox.paypal.com/v1/oauth2/token")
         token_route.side_effect = httpx.TimeoutException(
             "Timed out",
-            request=httpx.Request(
-                "POST", "https://api.sandbox.paypal.com/v1/oauth2/token"),
+            request=httpx.Request("POST", "https://api.sandbox.paypal.com/v1/oauth2/token"),
         )
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=25.0, method="paypal")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=25.0, method="paypal")
 
     assert result["success"] is False
     assert "Paypal refund API timed out" in result["error"]
@@ -569,10 +559,10 @@ async def test_process_refund_stripe_malformed_response():
 
     async with respx.mock:
         respx.post(_STRIPE_REFUND_URL).respond(
-            text="not-json", status_code=200,
+            text="not-json",
+            status_code=200,
         )
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=50.0, method="stripe")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=50.0, method="stripe")
 
     assert result["success"] is False
     assert "Invalid Stripe response format" in result["error"]
@@ -591,15 +581,14 @@ async def test_process_refund_paypal_malformed_response():
 
     async with respx.mock:
         respx.post("https://api.sandbox.paypal.com/v1/oauth2/token").respond(
-            json={"access_token": "paypal_token_abc"}, status_code=200,
+            json={"access_token": "paypal_token_abc"},
+            status_code=200,
         )
-        respx.post(
-            "https://api.sandbox.paypal.com/v2/payments/captures/ORD-001/refund"
-        ).respond(
-            text="not-json", status_code=200,
+        respx.post("https://api.sandbox.paypal.com/v2/payments/captures/ORD-001/refund").respond(
+            text="not-json",
+            status_code=200,
         )
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=25.0, method="paypal")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=25.0, method="paypal")
 
     assert result["success"] is False
     assert "Invalid PayPal refund response format" in result["error"]
@@ -618,8 +607,7 @@ async def test_process_refund_stripe_404():
         respx.post(_STRIPE_REFUND_URL).respond(
             status_code=404,
         )
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=50.0, method="stripe")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=50.0, method="stripe")
 
     assert result["success"] is False
     assert result["error"] == "Payment intent not found: ORD-001"
@@ -638,15 +626,13 @@ async def test_process_refund_paypal_404():
 
     async with respx.mock:
         respx.post("https://api.sandbox.paypal.com/v1/oauth2/token").respond(
-            json={"access_token": "paypal_token_abc"}, status_code=200,
+            json={"access_token": "paypal_token_abc"},
+            status_code=200,
         )
-        respx.post(
-            "https://api.sandbox.paypal.com/v2/payments/captures/ORD-001/refund"
-        ).respond(
+        respx.post("https://api.sandbox.paypal.com/v2/payments/captures/ORD-001/refund").respond(
             status_code=404,
         )
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=25.0, method="paypal")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=25.0, method="paypal")
 
     assert result["success"] is False
     assert result["error"] == "Capture not found: ORD-001"
@@ -661,12 +647,10 @@ async def test_process_refund_malformed_refund_cap():
     monkeypatch.setenv("REFUND_CAP_USD", "abc")
 
     async with respx.mock:
-        result = await _invoke_process_refund(
-            order_id="ORD-001", amount_usd=50.0, method="stripe")
+        result = await _invoke_process_refund(order_id="ORD-001", amount_usd=50.0, method="stripe")
 
     assert result["success"] is False
-    assert result["error"] == (
-        "REFUND_CAP_USD environment variable must be a valid number")
+    assert result["error"] == ("REFUND_CAP_USD environment variable must be a valid number")
 
     monkeypatch.undo()
 
@@ -679,8 +663,7 @@ async def test_process_refund_blocks_above_cap():
 
     async with respx.mock:
         with pytest.raises(ValueError, match="human_approval_required"):
-            await _invoke_process_refund(
-                order_id="ORD-001", amount_usd=200.0, method="stripe")
+            await _invoke_process_refund(order_id="ORD-001", amount_usd=200.0, method="stripe")
 
     monkeypatch.undo()
 
@@ -730,15 +713,14 @@ async def test_create_return_label_fedex_success():
 
     async with respx.mock:
         respx.post(_FEDEX_AUTH_URL).respond(
-            json={"access_token": "test_fedex_token"}, status_code=200)
+            json={"access_token": "test_fedex_token"}, status_code=200
+        )
         respx.post(_FEDEX_SHIP_URL).respond(
             json={
                 "output": {
                     "transactionShipments": [
                         {
-                            "shipmentDocuments": [
-                                {"url": "https://fedex.com/label/abc.pdf"}
-                            ],
+                            "shipmentDocuments": [{"url": "https://fedex.com/label/abc.pdf"}],
                             "masterTrackingNumber": "FDX1234567890",
                         }
                     ]
@@ -768,8 +750,7 @@ async def test_create_return_label_ups_success():
     monkeypatch.setenv("UPS_CLIENT_SECRET", "ups_secret")
 
     async with respx.mock:
-        respx.post(_UPS_AUTH_URL).respond(
-            json={"access_token": "test_ups_token"}, status_code=200)
+        respx.post(_UPS_AUTH_URL).respond(json={"access_token": "test_ups_token"}, status_code=200)
         respx.post(_UPS_SHIP_URL).respond(
             json={
                 "labelUrl": "https://ups.com/label/xyz.gif",
@@ -912,9 +893,9 @@ async def test_create_return_label_fedex_malformed_response():
 
     async with respx.mock:
         respx.post(_FEDEX_AUTH_URL).respond(
-            json={"access_token": "test_fedex_token"}, status_code=200)
-        respx.post(_FEDEX_SHIP_URL).respond(
-            text="not-json", status_code=200)
+            json={"access_token": "test_fedex_token"}, status_code=200
+        )
+        respx.post(_FEDEX_SHIP_URL).respond(text="not-json", status_code=200)
 
         result = await _invoke_create_return_label(order_id="ORD-001", carrier="fedex")
 
@@ -932,8 +913,7 @@ async def test_create_return_label_ups_malformed_response():
     monkeypatch.setenv("UPS_CLIENT_SECRET", "ups_secret")
 
     async with respx.mock:
-        respx.post(_UPS_AUTH_URL).respond(
-            json={"access_token": "test_ups_token"}, status_code=200)
+        respx.post(_UPS_AUTH_URL).respond(json={"access_token": "test_ups_token"}, status_code=200)
         respx.post(_UPS_SHIP_URL).respond(
             json={"labelUrl": "https://ups.com/label/xyz.gif"},
             status_code=200,
@@ -1075,7 +1055,8 @@ async def test_create_replacement_order_malformed_response():
 
     async with respx.mock:
         respx.post("https://oms.example.com/orders/ORD-001/replicate").respond(
-            text="not-json", status_code=200,
+            text="not-json",
+            status_code=200,
         )
         result = await _invoke_create_replacement_order(order_id="ORD-001")
 

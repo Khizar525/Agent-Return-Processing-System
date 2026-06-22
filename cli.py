@@ -26,6 +26,7 @@ logging.getLogger("agents").setLevel(logging.WARNING)
 os.environ["OPENTELEMETRY_TRACING"] = "0"
 try:
     from agents import set_tracing_disabled
+
     set_tracing_disabled(True)
 except ImportError:
     pass
@@ -33,6 +34,7 @@ except ImportError:
 # Load .env if available
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass
@@ -41,6 +43,7 @@ except ImportError:
 try:
     from agents import set_default_openai_api, set_default_openai_client
     from openai import AsyncOpenAI
+
     key = os.environ.get("OPENAI_API_KEY", "")
     base_url = os.environ.get("OPENAI_BASE_URL", "")
     if key:
@@ -57,16 +60,20 @@ def print_json(data: object) -> None:
 
 # ── Command: check ────────────────────────────────────────────────────────
 
+
 async def cmd_check(order_id: str, customer_id: str) -> None:
     from tools.policy_tools import RAW_CHECK_RETURN_POLICY as check
+
     result = await check(order_id, customer_id)
     print_json(result)
 
 
 # ── Command: guardrail ────────────────────────────────────────────────────
 
+
 async def cmd_guardrail_pii(message: str) -> None:
     from guardrails.pii_scrubber import RAW_PII_SCRUBBER as check
+
     output = await check(None, None, message)
     print(f"Tripwire triggered: {output.tripwire_triggered}")
     print(f"Scrubbed message:  {output.output_info['scrubbed_message']}")
@@ -74,12 +81,14 @@ async def cmd_guardrail_pii(message: str) -> None:
 
 async def cmd_guardrail_sentiment(message: str) -> None:
     from guardrails.sentiment_monitor import RAW_SENTIMENT_MONITOR as check
+
     output = await check(None, None, message)
     print_json(output.output_info)
 
 
 async def cmd_guardrail_refund(amount: str) -> None:
     from guardrails.refund_cap import RAW_REFUND_CAP as check
+
     try:
         amt = float(amount)
     except ValueError:
@@ -91,9 +100,11 @@ async def cmd_guardrail_refund(amount: str) -> None:
 
 # ── Command: run (triage agent) ──────────────────────────────────────────
 
+
 async def cmd_run(message: str) -> None:
     from agents import Runner
     from app_agents.triage_orchestrator import triage_agent
+
     print(f"[Running TriageAgent with: '{message}']")
     result = await Runner.run(triage_agent, input=message)
     print(f"Output:\n{result.final_output}")
@@ -101,9 +112,11 @@ async def cmd_run(message: str) -> None:
 
 # ── Command: agent (policy agent) ────────────────────────────────────────
 
+
 async def cmd_agent(message: str) -> None:
     from agents import Runner
     from app_agents.policy_agent import policy_agent
+
     print(f"[Running PolicyAgent with: '{message}']")
     result = await Runner.run(policy_agent, input=message)
     print(f"Output:\n{result.final_output}")
@@ -111,8 +124,10 @@ async def cmd_agent(message: str) -> None:
 
 # ── Command: chat ─────────────────────────────────────────────────────────
 
+
 async def cmd_chat() -> None:
     import httpx
+
     base = os.environ.get("API_BASE_URL", "http://localhost:8000")
     session_id: str | None = None
     print(f"Connected to {base}. Type 'quit' to exit.\n")
@@ -149,15 +164,17 @@ async def cmd_chat() -> None:
 
 # ── Command: shell (interactive) ─────────────────────────────────────────
 
+
 async def cmd_shell() -> None:
     from tools.policy_tools import RAW_CHECK_RETURN_POLICY as check_return
     from guardrails.pii_scrubber import RAW_PII_SCRUBBER as scrub_pii
     from guardrails.sentiment_monitor import RAW_SENTIMENT_MONITOR as score_sent
     from guardrails.refund_cap import RAW_REFUND_CAP as check_refund
     from chat import respond as chat_respond
-    print("\n" + "="*56)
+
+    print("\n" + "=" * 56)
     print("  Agent 01 — Interactive Shell")
-    print("="*56)
+    print("=" * 56)
     print("  Just type naturally, or use prefix commands:")
     print("    check <order> <cust>      Check return policy")
     print("    pii <msg>                 Test PII scrubber")
@@ -168,7 +185,7 @@ async def cmd_shell() -> None:
     print("    demo                      Run full scenario demo")
     print("    help                      Show this menu")
     print("    quit                      Exit")
-    print("="*56)
+    print("=" * 56)
     while True:
         try:
             text = input("\n> ").strip()
@@ -181,6 +198,7 @@ async def cmd_shell() -> None:
             continue
         if text == "demo":
             from demo import main as run_demo
+
             await run_demo()
             continue
         parts = text.split(maxsplit=1)
@@ -211,12 +229,14 @@ async def cmd_shell() -> None:
             elif cmd == "agent":
                 from agents import Runner
                 from app_agents.policy_agent import policy_agent
+
                 print("  [Calling PolicyAgent...]")
                 r = await Runner.run(policy_agent, input=args)
                 print(f"  Output: {r.final_output}")
             elif cmd == "triage":
                 from agents import Runner
                 from app_agents.triage_orchestrator import triage_agent
+
                 print("  [Calling TriageAgent...]")
                 r = await Runner.run(triage_agent, input=args)
                 print(f"  Output: {r.final_output}")
@@ -228,14 +248,17 @@ async def cmd_shell() -> None:
 
 # ── Command: server ───────────────────────────────────────────────────────
 
+
 def cmd_server() -> None:
     import uvicorn
+
     port = int(os.environ.get("PORT", "8000"))
     print(f"Starting server on http://0.0.0.0:{port}")
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
 
 
 # ── Main dispatcher ───────────────────────────────────────────────────────
+
 
 def main() -> None:
     if len(sys.argv) < 2:

@@ -49,7 +49,7 @@ PROHIBITED_LANGUAGE = {
     # Multi-word phrases
     "fix this now": "address this promptly",
     "worthless": "of limited value",
-    "terrible": "unsatisfactory"
+    "terrible": "unsatisfactory",
 }
 
 # Compile regex patterns for prohibited language (case-insensitive)
@@ -79,7 +79,7 @@ async def brand_voice_guardrail(ctx, agent, output) -> GuardrailFunctionOutput:
     words = modified_text.split()
     if len(words) > 150:
         # Truncate to 150 words and add ellipsis
-        modified_text = ' '.join(words[:150]) + '...'
+        modified_text = " ".join(words[:150]) + "..."
         modifications_made.append(f"Truncated to 150 words (was {len(words)} words)")
 
     # 3. Fix ALL CAPS words (except acronyms - assume acronyms are 2+ chars and all uppercase)
@@ -92,7 +92,7 @@ async def brand_voice_guardrail(ctx, agent, output) -> GuardrailFunctionOutput:
         return word
 
     # Match words (sequences of alphabetic characters)
-    modified_text = re.sub(r'\b[A-Z]+\b', fix_all_caps, modified_text)
+    modified_text = re.sub(r"\b[A-Z]+\b", fix_all_caps, modified_text)
 
     # 4. Note: "Always address customer by first name if known"
     #    cannot be fully implemented in the guardrail as we don't have access to customer name.
@@ -103,19 +103,15 @@ async def brand_voice_guardrail(ctx, agent, output) -> GuardrailFunctionOutput:
         "modified_output": modified_text,
         "modifications_made": modifications_made,
         "original_length": len(output_text.split()),
-        "modified_length": len(modified_text.split()) if not modified_text.endswith('...') else 150
+        "modified_length": len(modified_text.split()) if not modified_text.endswith("...") else 150,
     }
 
     # Determine if any modifications were made
     if modifications_made:
         # Return the modified output
-        return GuardrailFunctionOutput(
-            output_info=output_info,
-            tripwire_triggered=False
-        )
+        return GuardrailFunctionOutput(output_info=output_info, tripwire_triggered=False)
     else:
         # No modifications needed
         return GuardrailFunctionOutput(
-            output_info={"allowed": True, "original_output": output_text},
-            tripwire_triggered=False
+            output_info={"allowed": True, "original_output": output_text}, tripwire_triggered=False
         )

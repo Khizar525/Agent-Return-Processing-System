@@ -14,11 +14,13 @@ if sys.platform == "win32":
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass
 
 import logging
+
 logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("agents").setLevel(logging.WARNING)
@@ -26,6 +28,7 @@ logging.getLogger("agents").setLevel(logging.WARNING)
 os.environ["OPENTELEMETRY_TRACING"] = "0"
 try:
     from agents import set_tracing_disabled
+
     set_tracing_disabled(True)
 except ImportError:
     pass
@@ -33,6 +36,7 @@ except ImportError:
 try:
     from agents import set_default_openai_api, set_default_openai_client
     from openai import AsyncOpenAI
+
     key = os.environ.get("OPENAI_API_KEY", "")
     base_url = os.environ.get("OPENAI_BASE_URL", "")
     if key:
@@ -63,10 +67,28 @@ def detect_amount(text: str) -> float | None:
     return None
 
 
-RETURN_KEYWORDS = {"return", "refund", "replace", "exchange", "send back", "damaged", "broken", "wrong item"}
+RETURN_KEYWORDS = {
+    "return",
+    "refund",
+    "replace",
+    "exchange",
+    "send back",
+    "damaged",
+    "broken",
+    "wrong item",
+}
 POLICY_KEYWORDS = {"eligible", "eligibility", "can i return", "policy", "window"}
 PII_KEYWORDS = {"card", "credit card", "ssn", "social security", "bank account"}
-SENTIMENT_KEYWORDS = {"sue", "lawyer", "attorney", "furious", "outrageous", "unacceptable", "desperate", "ruined"}
+SENTIMENT_KEYWORDS = {
+    "sue",
+    "lawyer",
+    "attorney",
+    "furious",
+    "outrageous",
+    "unacceptable",
+    "desperate",
+    "ruined",
+}
 REFUND_CAP_KEYWORDS = {"refund cap", "refund limit", "approval required"}
 
 
@@ -118,6 +140,7 @@ async def run_check_return(order_id: str | None, customer_id: str | None, text: 
 
 async def run_pii_scrubber(text: str) -> str:
     from guardrails.pii_scrubber import RAW_PII_SCRUBBER as scrub
+
     r = await scrub(None, None, text)
     if r.tripwire_triggered:
         return f"[LOCK] PII detected and redacted.\nScrubbed: {r.output_info['scrubbed_message']}"
@@ -126,6 +149,7 @@ async def run_pii_scrubber(text: str) -> str:
 
 async def run_sentiment(text: str) -> str:
     from guardrails.sentiment_monitor import RAW_SENTIMENT_MONITOR as score
+
     r = await score(None, None, text)
     s = r.output_info["score"]
     if r.tripwire_triggered:
@@ -135,11 +159,17 @@ async def run_sentiment(text: str) -> str:
 
 async def run_refund_cap(text: str) -> str:
     from guardrails.refund_cap import RAW_REFUND_CAP as check
+
     text_lower = text.lower()
     cap = os.environ.get("REFUND_CAP_USD", "500")
 
     # Just asking about the cap, not testing a specific amount
-    if text_lower in ("what is the refund cap?", "what is the refund cap", "refund cap", "refund limit"):
+    if text_lower in (
+        "what is the refund cap?",
+        "what is the refund cap",
+        "refund cap",
+        "refund limit",
+    ):
         return f"The refund cap is ${cap}. Any refund up to ${cap} is auto-approved. Amounts above require human approval."
 
     amount = detect_amount(text) or 600.0
@@ -167,9 +197,30 @@ async def run_agent(text: str) -> str:
         return f"[!] Agent error: {e}. Trying tool directly...\n{await run_check_return(order_id, customer_id, text)}"
 
 
-GREETINGS = {"hello", "hi", "hey", "good morning", "good afternoon", "good evening", "howdy", "sup", "yo"}
+GREETINGS = {
+    "hello",
+    "hi",
+    "hey",
+    "good morning",
+    "good afternoon",
+    "good evening",
+    "howdy",
+    "sup",
+    "yo",
+}
 HELP_KEYWORDS = {"help", "what can you do", "capabilities", "features", "how does this work"}
-UNRELATED = {"weather", "stock", "news", "sports", "joke", "poem", "story", "movie", "song", "recipe"}
+UNRELATED = {
+    "weather",
+    "stock",
+    "news",
+    "sports",
+    "joke",
+    "poem",
+    "story",
+    "movie",
+    "song",
+    "recipe",
+}
 
 
 def is_generic_message(text_lower: str) -> str | None:

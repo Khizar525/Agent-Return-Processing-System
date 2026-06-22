@@ -48,8 +48,7 @@ def build_queue_depth_monitor() -> dict[str, Any]:
         "name": "Agent 01 — Queue Depth > 500",
         "type": "query alert",
         "query": (
-            "max(last_1m):max:kafka.consumer_lag{topic:agent01.{webchat,email,whatsapp,sms}} "
-            "> 500"
+            "max(last_1m):max:kafka.consumer_lag{topic:agent01.{webchat,email,whatsapp,sms}} > 500"
         ),
         "message": (
             "{{#is_alert}}"
@@ -229,17 +228,21 @@ def create_monitors(api_key: str, app_key: str, site: str) -> list[dict[str, Any
             created.append(data)
             logger.info(
                 "Monitor created — id=%s, name='%s'",
-                data.get("id"), monitor["name"],
+                data.get("id"),
+                monitor["name"],
             )
         except httpx.HTTPStatusError as exc:
             logger.error(
                 "Failed to create monitor '%s': %s — %s",
-                monitor["name"], exc.response.status_code, exc.response.text,
+                monitor["name"],
+                exc.response.status_code,
+                exc.response.text,
             )
         except httpx.RequestError as exc:
             logger.error(
                 "Request failed for monitor '%s': %s",
-                monitor["name"], exc,
+                monitor["name"],
+                exc,
             )
     return created
 

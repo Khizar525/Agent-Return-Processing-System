@@ -84,9 +84,7 @@ def _resolve_topic(channel: str) -> str:
     env_key = _CHANNEL_TOPIC_ENV[channel]
     topic = os.environ.get(env_key)
     if not topic:
-        raise RuntimeError(
-            f"{env_key} is not set — cannot start consumer for channel '{channel}'"
-        )
+        raise RuntimeError(f"{env_key} is not set — cannot start consumer for channel '{channel}'")
     return topic
 
 
@@ -105,7 +103,11 @@ def validate_message(msg: dict[str, Any]) -> list[str]:
             errors.append(
                 f"Field '{field}' must be {expected_type.__name__}, got {type(value).__name__}"
             )
-    if "session_id" in msg and msg["session_id"] is not None and not isinstance(msg["session_id"], str):
+    if (
+        "session_id" in msg
+        and msg["session_id"] is not None
+        and not isinstance(msg["session_id"], str)
+    ):
         errors.append("Field 'session_id' must be str | None")
     return errors
 
@@ -136,7 +138,10 @@ def create_consumer(channel: str) -> Any:
 
     logger.info(
         "Starting consumer — channel=%s, topic=%s, group=%s, bootstrap=%s",
-        channel, topic, group_id, bootstrap,
+        channel,
+        topic,
+        group_id,
+        bootstrap,
     )
     return KafkaConsumer(
         topic,
@@ -173,9 +178,7 @@ def forward_message(payload: dict[str, Any], webhook_url: str) -> str | None:
 def consume_loop(channel: str, webhook_url: str | None = None) -> int:
     """Run the consume-and-forward loop. Returns count of messages processed."""
     if webhook_url is None:
-        webhook_url = os.environ.get(
-            "WEBHOOK_URL", "http://localhost:8000/webhook/message"
-        )
+        webhook_url = os.environ.get("WEBHOOK_URL", "http://localhost:8000/webhook/message")
 
     consumer = create_consumer(channel)
     message_count = 0
@@ -209,9 +212,7 @@ def consume_loop(channel: str, webhook_url: str | None = None) -> int:
         logger.info("Interrupted — shutting down")
     finally:
         consumer.close()
-        logger.info(
-            "Consumer closed — processed=%d, errors=%d", message_count, error_count
-        )
+        logger.info("Consumer closed — processed=%d, errors=%d", message_count, error_count)
 
     return message_count
 

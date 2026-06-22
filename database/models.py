@@ -31,7 +31,9 @@ class CustomerModel(Base):
     )
 
     orders: Mapped[list["OrderModel"]] = relationship(back_populates="customer")
-    fraud_db_match: Mapped[Optional["FraudDbMatchModel"]] = relationship(back_populates="customer", uselist=False)
+    fraud_db_match: Mapped[Optional["FraudDbMatchModel"]] = relationship(
+        back_populates="customer", uselist=False
+    )
 
 
 class OrderModel(Base):
@@ -52,9 +54,7 @@ class OrderModel(Base):
 
     customer: Mapped["CustomerModel"] = relationship(back_populates="orders")
 
-    __table_args__ = (
-        Index("idx_orders_customer", "customer_id"),
-    )
+    __table_args__ = (Index("idx_orders_customer", "customer_id"),)
 
 
 class FraudDbMatchModel(Base):

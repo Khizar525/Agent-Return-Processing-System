@@ -69,7 +69,10 @@ def test_agent_has_output_type():
 
 
 def test_agent_instructions_mention_billing():
-    assert "billing" in billing_agent.instructions.lower() or "dispute" in billing_agent.instructions.lower()
+    assert (
+        "billing" in billing_agent.instructions.lower()
+        or "dispute" in billing_agent.instructions.lower()
+    )
 
 
 def test_agent_instructions_mention_refund_cap():
@@ -167,7 +170,8 @@ async def test_process_refund_success():
 
     async with respx.mock:
         respx.post(_STRIPE_REFUND_URL).respond(
-            json={"id": "re_123", "status": "succeeded"}, status_code=200,
+            json={"id": "re_123", "status": "succeeded"},
+            status_code=200,
         )
         result = await _invoke_process_refund("ORD-001", 25.0, "stripe")
         assert result["success"] is True
@@ -206,7 +210,8 @@ class TestRefundCapEnforcement:
 
         async with respx.mock:
             respx.post(_STRIPE_REFUND_URL).respond(
-                json={"id": "re_789", "status": "succeeded"}, status_code=200,
+                json={"id": "re_789", "status": "succeeded"},
+                status_code=200,
             )
             result = await _invoke_process_refund("ORD-001", 200.0, "stripe")
             assert result["success"] is True
