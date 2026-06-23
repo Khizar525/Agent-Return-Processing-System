@@ -32,7 +32,9 @@ try:
     if key:
         client = AsyncOpenAI(api_key=key, base_url=base_url if base_url else None)
         set_default_openai_client(client)
-    set_default_openai_api("chat_completions")
+        # Force Chat Completions API (SDK defaults to Responses API which
+        # not all providers support).
+        set_default_openai_api("chat_completions")
 except ImportError:
     pass
 
