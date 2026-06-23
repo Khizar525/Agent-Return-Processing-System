@@ -27,6 +27,7 @@ from app_agents.policy_agent import policy_agent
 from app_agents.billing_agent import billing_agent
 from app_agents.escalation_agent import escalation_agent
 from tools.crm_tools import get_customer_profile
+from tools.tracking_tools import tracking_lookup, faq_lookup
 
 
 # ---------------------------------------------------------------------------
@@ -112,6 +113,8 @@ triage_agent = Agent(
     handoffs=[policy_agent, billing_agent, escalation_agent],
     tools=[
         get_customer_profile,
+        tracking_lookup,
+        faq_lookup,
     ],
 )
 
