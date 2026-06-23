@@ -56,9 +56,15 @@ def _seed_policy_tools_data() -> Generator[None, None, None]:
 # ============================================================================
 
 TOOL_CONTRACT_KEYS = [
-    "eligible", "reason", "recommended_action",
-    "return_window_days", "days_since_purchase", "item_category",
-    "exclusion_reason", "fraud_signal", "error",
+    "eligible",
+    "reason",
+    "recommended_action",
+    "return_window_days",
+    "days_since_purchase",
+    "item_category",
+    "exclusion_reason",
+    "fraud_signal",
+    "error",
 ]
 
 ERROR_CONTRACT_KEYS = ["success", "error"]
@@ -167,8 +173,12 @@ class TestBoundaryCases:
     async def test_all_four_actions_producible(self) -> None:
         """Assert that mock data can produce all 4 recommended_action values."""
         actions_seen: set[str] = set()
-        for oid, cust in [("ORD-001", "CUST-001"), ("ORD-004", "CUST-003"),
-                          ("ORD-002", "CUST-001"), ("ORD-006", "CUST-005")]:
+        for oid, cust in [
+            ("ORD-001", "CUST-001"),
+            ("ORD-004", "CUST-003"),
+            ("ORD-002", "CUST-001"),
+            ("ORD-006", "CUST-005"),
+        ]:
             r = await check_return_policy(order_id=oid, customer_id=cust)
             actions_seen.add(r["recommended_action"])
         assert actions_seen == VALID_ACTIONS, (
@@ -423,6 +433,7 @@ class TestIdempotencyAndMutation:
         repo = get_current_repo()
         assert isinstance(repo, MemoryBackend)
         import copy
+
         orders_before = copy.deepcopy(repo.orders)
         await check_return_policy(order_id="ORD-001", customer_id="CUST-001")
         assert repo.orders == orders_before, "Tool mutated mock data!"
@@ -759,6 +770,7 @@ class TestRefundCap:
     @pytest.mark.asyncio
     async def test_refund_cap_is_positive(self) -> None:
         from guardrails.refund_cap import CAP
+
         assert CAP > 0
 
     @pytest.mark.asyncio
@@ -827,6 +839,7 @@ class TestPolicyAgent:
 
     def test_agent_tools_contains_check_return_policy(self) -> None:
         from tools.policy_tools import check_return_policy as tool_fn
+
         assert tool_fn in policy_agent.tools
 
     def test_agent_no_handoffs(self) -> None:
@@ -845,6 +858,7 @@ class TestCrossContractCompliance:
     @pytest.mark.asyncio
     async def test_all_tools_async(self) -> None:
         import asyncio
+
         for tool in [check_return_policy, pii_scrubber, sentiment_monitor, refund_cap]:
             assert asyncio.iscoroutinefunction(tool), f"{tool.__name__} is not async"
 
@@ -852,8 +866,10 @@ class TestCrossContractCompliance:
     async def test_check_return_policy_function_tool_decorated(self) -> None:
         """Verify @function_tool wraps the raw function into a FunctionTool object."""
         from tools.policy_tools import check_return_policy as decorated
+
         # @function_tool returns a FunctionTool instance (not directly callable)
         import inspect
+
         assert not inspect.iscoroutinefunction(decorated), (
             "FunctionTool wrapper should not be a coroutine function"
         )
@@ -881,12 +897,14 @@ class TestCrossContractCompliance:
                 r = await check_return_policy(order_id=oid, customer_id=cid)
                 assert isinstance(r, dict), f"Non-dict return for ({oid!r}, {cid!r})"
             except Exception as exc:
-                pytest.fail(f"Unhandled exception ({type(exc).__name__}) for "
-                            f"({oid!r}, {cid!r}): {exc}")
+                pytest.fail(
+                    f"Unhandled exception ({type(exc).__name__}) for ({oid!r}, {cid!r}): {exc}"
+                )
 
     def test_exclusion_list_is_set(self) -> None:
         """EXCLUDED_CATEGORIES must be a set (fast lookup, no dupes)."""
         from tools.policy_tools import EXCLUDED_CATEGORIES as ec
+
         assert isinstance(ec, set)
         assert "digital_goods" in ec
         assert "perishables" in ec

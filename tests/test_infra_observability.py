@@ -187,9 +187,7 @@ class TestDatadogSetup:
             with patch("ddtrace.patch_all") as mock_patch:
                 result = configure_datadog()
                 assert result is True
-                mock_patch.assert_called_once_with(
-                    fastapi=True, httpx=True, redis=True
-                )
+                mock_patch.assert_called_once_with(fastapi=True, httpx=True, redis=True)
 
     def test_agent_span_disabled_when_no_tracer(self) -> None:
         from infra.datadog_setup import agent_span
@@ -459,14 +457,16 @@ class TestCSATPipeline:
         _CSAT_RECORDS.clear()
 
         for i in range(3):
-            ingest_resolution_event({
-                "session_id": f"sess_{i}",
-                "agent_chain": ["triage"],
-                "resolved_by": "resolution_agent",
-                "survey_score": 5.0,
-                "channel": "web_chat",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            })
+            ingest_resolution_event(
+                {
+                    "session_id": f"sess_{i}",
+                    "agent_chain": ["triage"],
+                    "resolved_by": "resolution_agent",
+                    "survey_score": 5.0,
+                    "channel": "web_chat",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            )
 
         result = get_rolling_csat()
         assert result["rolling_csat"] == 5.0

@@ -186,12 +186,16 @@ def ingest_resolution_event(event: dict[str, Any]) -> dict[str, Any]:
     if elapsed > 5.0:
         logger.warning(
             "CSAT pipeline exceeded 5s SLA — session=%s, elapsed=%.2fs",
-            session_id, elapsed,
+            session_id,
+            elapsed,
         )
     else:
         logger.info(
             "CSAT updated — session=%s, score=%.2f, samples=%d, elapsed=%.2fs",
-            session_id, result["rolling_csat"], result["sample_count"], elapsed,
+            session_id,
+            result["rolling_csat"],
+            result["sample_count"],
+            elapsed,
         )
 
     return result
@@ -215,8 +219,7 @@ def get_rolling_csat() -> dict[str, Any]:
         per_agent[agent].append(float(score))
 
     per_agent_avg = {
-        agent: round(sum(scores) / len(scores), 4)
-        for agent, scores in per_agent.items()
+        agent: round(sum(scores) / len(scores), 4) for agent, scores in per_agent.items()
     }
 
     return {

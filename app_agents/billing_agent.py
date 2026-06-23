@@ -46,12 +46,8 @@ class BillingDecision(BaseModel):
         default=None,
         description="Payment method to refund to: 'stripe' or 'paypal'",
     )
-    reasoning: str = Field(
-        description="Explanation of the investigation findings and decision"
-    )
-    customer_message: str = Field(
-        description="Customer-facing summary of the resolution"
-    )
+    reasoning: str = Field(description="Explanation of the investigation findings and decision")
+    customer_message: str = Field(description="Customer-facing summary of the resolution")
     error: str | None = Field(
         default=None,
         description="Error message if investigation failed",

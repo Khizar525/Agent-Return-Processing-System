@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import os
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -193,7 +192,16 @@ class TestMemoryBackend:
     @pytest.mark.asyncio
     async def test_custom_data(self) -> None:
         data = {
-            "orders": {"O-1": {"order_id": "O-1", "customer_id": "C-1", "item_category": "x", "days_since_purchase": 1, "price": 10.0, "damaged": False}},
+            "orders": {
+                "O-1": {
+                    "order_id": "O-1",
+                    "customer_id": "C-1",
+                    "item_category": "x",
+                    "days_since_purchase": 1,
+                    "price": 10.0,
+                    "damaged": False,
+                }
+            },
             "customers": {"C-1": {"customer_id": "C-1", "fraud_flag": False, "fraud_reason": None}},
             "fraud_db_matches": {},
         }
@@ -227,7 +235,16 @@ class TestFileBackend:
     @pytest.mark.asyncio
     async def test_loads_from_file(self, tmp_file: str) -> None:
         data = {
-            "orders": {"O-1": {"order_id": "O-1", "customer_id": "C-1", "item_category": "electronics", "days_since_purchase": 5, "price": 99.99, "damaged": False}},
+            "orders": {
+                "O-1": {
+                    "order_id": "O-1",
+                    "customer_id": "C-1",
+                    "item_category": "electronics",
+                    "days_since_purchase": 5,
+                    "price": 99.99,
+                    "damaged": False,
+                }
+            },
             "customers": {"C-1": {"customer_id": "C-1", "fraud_flag": False, "fraud_reason": None}},
             "fraud_db_matches": {},
         }

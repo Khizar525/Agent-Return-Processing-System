@@ -56,7 +56,9 @@ def _get_customer_contact(customer_id: str, channel: str) -> tuple[str, str]:
     """Return (to_address, from_address) for the given channel."""
     if channel == "email":
         email_map = json.loads(os.environ.get("CUSTOMER_EMAIL_MAP", "{}"))
-        to_email = email_map.get(customer_id, os.environ.get("SENDGRID_FROM_EMAIL", "test@example.com"))
+        to_email = email_map.get(
+            customer_id, os.environ.get("SENDGRID_FROM_EMAIL", "test@example.com")
+        )
         from_email = os.environ.get("SENDGRID_FROM_EMAIL", "noreply@example.com")
         return to_email, from_email
 
@@ -77,15 +79,26 @@ async def _send_email(to_email: str, from_email: str, subject: str, body: str) -
             return {"success": False, "message_id": "", "error": "SENDGRID_API_KEY not set"}
 
         sg = sendgrid.SendGridAPIClient(api_key=api_key)
-        mail = Mail(from_email=from_email, to_emails=to_email, subject=subject, plain_text_content=body)
+        mail = Mail(
+            from_email=from_email, to_emails=to_email, subject=subject, plain_text_content=body
+        )
         response = sg.send(mail)
 
         if 200 <= response.status_code < 300:
             message_id = response.headers.get("X-Message-Id", "")
             delivered_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
-            return {"success": True, "message_id": message_id, "delivered_at": delivered_at, "error": None}
+            return {
+                "success": True,
+                "message_id": message_id,
+                "delivered_at": delivered_at,
+                "error": None,
+            }
 
-        return {"success": False, "message_id": "", "error": f"SendGrid returned {response.status_code}"}
+        return {
+            "success": False,
+            "message_id": "",
+            "error": f"SendGrid returned {response.status_code}",
+        }
     except Exception as e:
         return {"success": False, "message_id": "", "error": str(e)}
 
@@ -103,7 +116,12 @@ async def _send_sms(to_phone: str, from_phone: str, body: str) -> dict[str, Any]
 
         if message.sid:
             delivered_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
-            return {"success": True, "message_id": message.sid, "delivered_at": delivered_at, "error": None}
+            return {
+                "success": True,
+                "message_id": message.sid,
+                "delivered_at": delivered_at,
+                "error": None,
+            }
 
         return {"success": False, "message_id": "", "error": "Twilio returned empty SID"}
     except Exception as e:
@@ -118,8 +136,13 @@ async def send_notification_impl(
 ) -> dict[str, Any]:
     """Send an email or SMS notification with email→SMS fallback."""
     if channel not in ("email", "sms"):
-        return {"success": False, "message_id": "", "channel": channel,
-                "delivered_at": None, "error": f"Invalid channel: {channel}"}
+        return {
+            "success": False,
+            "message_id": "",
+            "channel": channel,
+            "delivered_at": None,
+            "error": f"Invalid channel: {channel}",
+        }
 
     if channel == "email":
         if not SENDGRID_AVAILABLE:
@@ -129,8 +152,13 @@ async def send_notification_impl(
                 result = await _send_sms(to_phone, from_phone, body)
                 result["channel"] = "sms"
                 return result
-            return {"success": False, "message_id": "", "channel": channel,
-                    "delivered_at": None, "error": "SendGrid not installed"}
+            return {
+                "success": False,
+                "message_id": "",
+                "channel": channel,
+                "delivered_at": None,
+                "error": "SendGrid not installed",
+            }
 
         to_email, from_email = _get_customer_contact(customer_id, "email")
         result = await _send_email(to_email, from_email, subject, body)
@@ -145,8 +173,13 @@ async def send_notification_impl(
 
     # channel == "sms"
     if not TWILIO_AVAILABLE:
-        return {"success": False, "message_id": "", "channel": channel,
-                "delivered_at": None, "error": "Twilio not installed"}
+        return {
+            "success": False,
+            "message_id": "",
+            "channel": channel,
+            "delivered_at": None,
+            "error": "Twilio not installed",
+        }
 
     to_phone, from_phone = _get_customer_contact(customer_id, "sms")
     result = await _send_sms(to_phone, from_phone, body)
@@ -165,8 +198,13 @@ async def _send_notification_tool(
     try:
         result = await send_notification_impl(customer_id, channel, subject, body)
     except Exception as e:
-        return {"success": False, "message_id": "", "channel": channel,
-                "delivered_at": None, "error": str(e)}
+        return {
+            "success": False,
+            "message_id": "",
+            "channel": channel,
+            "delivered_at": None,
+            "error": str(e),
+        }
     # Ensure all expected keys are present
     result.setdefault("message_id", "")
     result.setdefault("channel", channel)
@@ -182,12 +220,14 @@ async def send_notification(
     body: str,
 ) -> dict[str, Any]:
     """Send an email or SMS notification to the customer (public wrapper)."""
-    input_json = json.dumps({
-        "customer_id": customer_id,
-        "channel": channel,
-        "subject": subject,
-        "body": body,
-    })
+    input_json = json.dumps(
+        {
+            "customer_id": customer_id,
+            "channel": channel,
+            "subject": subject,
+            "body": body,
+        }
+    )
 
     class _Ctx:
         def __init__(self, name: str) -> None:

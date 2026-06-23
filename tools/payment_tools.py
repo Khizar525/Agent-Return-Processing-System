@@ -117,8 +117,10 @@ async def _refund_paypal(order_id: str, amount_usd: float) -> dict:
             f"{base_url}/v1/oauth2/token",
             auth=(client_id, client_secret),
             data={"grant_type": "client_credentials"},
-            headers={"Content-Type": "application/x-www-form-urlencoded",
-                      "Accept": "application/json"},
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json",
+            },
         )
         token_resp.raise_for_status()
         try:
@@ -158,13 +160,20 @@ async def _refund_paypal(order_id: str, amount_usd: float) -> dict:
 async def process_refund(order_id: str, amount_usd: float, method: str) -> dict:
     """Issue a refund to the customer's original payment method."""
     start = time.monotonic()
-    logger.info("tool_call", extra={
-        "tool": "process_refund", "order_id": order_id,
-        "amount_usd": amount_usd, "method": method})
+    logger.info(
+        "tool_call",
+        extra={
+            "tool": "process_refund",
+            "order_id": order_id,
+            "amount_usd": amount_usd,
+            "method": method,
+        },
+    )
 
     if not order_id or not order_id.strip():
-        logger.warning("tool_validation_error", extra={
-            "tool": "process_refund", "reason": "empty_order_id"})
+        logger.warning(
+            "tool_validation_error", extra={"tool": "process_refund", "reason": "empty_order_id"}
+        )
         return _error_response("order_id must not be empty")
 
     if not isinstance(method, str) or not method.strip():
@@ -173,7 +182,8 @@ async def process_refund(order_id: str, amount_usd: float, method: str) -> dict:
     normalised_method = method.strip().lower()
     if normalised_method not in ("stripe", "paypal"):
         return _error_response(
-            f"Unsupported payment method: '{method}'. Must be 'stripe' or 'paypal'.")
+            f"Unsupported payment method: '{method}'. Must be 'stripe' or 'paypal'."
+        )
 
     if not isinstance(amount_usd, (int, float)) or not math.isfinite(amount_usd):
         return _error_response("amount_usd must be a finite number")
@@ -185,10 +195,10 @@ async def process_refund(order_id: str, amount_usd: float, method: str) -> dict:
     try:
         refund_cap = float(os.environ.get("REFUND_CAP_USD", "500"))
     except (ValueError, TypeError):
-        logger.error("tool_config_error", extra={
-            "tool": "process_refund", "reason": "invalid_refund_cap"})
-        return _error_response(
-            "REFUND_CAP_USD environment variable must be a valid number")
+        logger.error(
+            "tool_config_error", extra={"tool": "process_refund", "reason": "invalid_refund_cap"}
+        )
+        return _error_response("REFUND_CAP_USD environment variable must be a valid number")
 
     # ── Adapter Execution Safety Boundary (Defense in Depth) ───────────
     # The ResolutionAgent is the primary decision-maker and must autonomously
@@ -196,10 +206,15 @@ async def process_refund(order_id: str, amount_usd: float, method: str) -> dict:
     # layer. This check is a low-level adapter safeguard to prevent execution of
     # unauthorized amounts in case of agent hallucination.
     if amount_usd > refund_cap:
-        logger.error("tool_safety_block", extra={
-            "tool": "process_refund", "amount_usd": amount_usd, "refund_cap": refund_cap,
-            "reason": "Execution blocked by adapter safety boundary."
-        })
+        logger.error(
+            "tool_safety_block",
+            extra={
+                "tool": "process_refund",
+                "amount_usd": amount_usd,
+                "refund_cap": refund_cap,
+                "reason": "Execution blocked by adapter safety boundary.",
+            },
+        )
         raise ValueError("human_approval_required")
 
     # ── Execute refund ──────────────────────────────────────────────────
@@ -210,44 +225,56 @@ async def process_refund(order_id: str, amount_usd: float, method: str) -> dict:
             result = await _refund_paypal(order_id.strip(), amount_usd)
 
         duration = int((time.monotonic() - start) * 1000)
-        logger.info("tool_result", extra={
-            "tool": "process_refund", "duration_ms": duration,
-            "success": result["success"], "method": normalised_method,
-            "transaction_id": result.get("transaction_id", "")})
+        logger.info(
+            "tool_result",
+            extra={
+                "tool": "process_refund",
+                "duration_ms": duration,
+                "success": result["success"],
+                "method": normalised_method,
+                "transaction_id": result.get("transaction_id", ""),
+            },
+        )
         return result
 
     except httpx.TimeoutException:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_timeout", extra={
-            "tool": "process_refund", "duration_ms": duration,
-            "method": normalised_method})
-        return _error_response(
-            f"{normalised_method.title()} refund API timed out")
+        logger.error(
+            "tool_timeout",
+            extra={"tool": "process_refund", "duration_ms": duration, "method": normalised_method},
+        )
+        return _error_response(f"{normalised_method.title()} refund API timed out")
 
     except httpx.HTTPStatusError as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_http_error", extra={
-            "tool": "process_refund", "duration_ms": duration,
-            "method": normalised_method,
-            "status_code": e.response.status_code})
+        logger.error(
+            "tool_http_error",
+            extra={
+                "tool": "process_refund",
+                "duration_ms": duration,
+                "method": normalised_method,
+                "status_code": e.response.status_code,
+            },
+        )
         return _error_response(
-            f"{normalised_method.title()} API returned HTTP {e.response.status_code}")
+            f"{normalised_method.title()} API returned HTTP {e.response.status_code}"
+        )
 
     except httpx.RequestError as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_connection_error", extra={
-            "tool": "process_refund", "duration_ms": duration,
-            "method": normalised_method})
-        return _error_response(
-            f"Could not reach {normalised_method.title()} API: {str(e)}")
+        logger.error(
+            "tool_connection_error",
+            extra={"tool": "process_refund", "duration_ms": duration, "method": normalised_method},
+        )
+        return _error_response(f"Could not reach {normalised_method.title()} API: {str(e)}")
 
     except (KeyError, TypeError) as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_parse_error", extra={
-            "tool": "process_refund", "duration_ms": duration,
-            "method": normalised_method})
-        return _error_response(
-            f"Invalid {normalised_method.title()} response format: {str(e)}")
+        logger.error(
+            "tool_parse_error",
+            extra={"tool": "process_refund", "duration_ms": duration, "method": normalised_method},
+        )
+        return _error_response(f"Invalid {normalised_method.title()} response format: {str(e)}")
 
     except ValueError as e:
         # Guardrail ValueError (human_approval_required) must propagate
@@ -256,15 +283,16 @@ async def process_refund(order_id: str, amount_usd: float, method: str) -> dict:
         if "human_approval_required" in str(e):
             raise
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_unexpected_error", extra={
-            "tool": "process_refund", "duration_ms": duration,
-            "method": normalised_method})
+        logger.error(
+            "tool_unexpected_error",
+            extra={"tool": "process_refund", "duration_ms": duration, "method": normalised_method},
+        )
         return _error_response(f"Unexpected {normalised_method.title()} API error: {str(e)}")
 
     except Exception as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_unexpected_error", extra={
-            "tool": "process_refund", "duration_ms": duration,
-            "method": normalised_method})
-        return _error_response(
-            f"Unexpected {normalised_method.title()} API error: {str(e)}")
+        logger.error(
+            "tool_unexpected_error",
+            extra={"tool": "process_refund", "duration_ms": duration, "method": normalised_method},
+        )
+        return _error_response(f"Unexpected {normalised_method.title()} API error: {str(e)}")

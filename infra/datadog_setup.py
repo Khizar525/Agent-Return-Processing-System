@@ -70,7 +70,6 @@ def configure_datadog() -> bool:
     try:
         from ddtrace import config as ddconfig
         from ddtrace import patch_all
-        from ddtrace.trace import tracer as _tracer
 
         service = os.environ.get("DD_SERVICE", "agent01-customer-support")
         env = os.environ.get("DD_ENV", "production")
@@ -85,7 +84,9 @@ def configure_datadog() -> bool:
 
         logger.info(
             "Datadog APM configured — service=%s, env=%s, version=%s",
-            service, env, version,
+            service,
+            env,
+            version,
         )
         _TRACER_ENABLED = True
         return True
@@ -203,14 +204,15 @@ def record_resolution(
         span.set_metric("resolution.duration_seconds", duration_seconds)
         span.set_tag("resolution.success", str(success))
 
-        chain_tags = ",".join(
-            _AGENT_SERVICES.get(a, a) for a in agent_chain
-        )
+        chain_tags = ",".join(_AGENT_SERVICES.get(a, a) for a in agent_chain)
         span.set_tag("agent_chain.services", chain_tags)
 
         logger.info(
             "Resolution recorded — session=%s, chain=%s, duration=%.2fs, success=%s",
-            session_id, agent_chain, duration_seconds, success,
+            session_id,
+            agent_chain,
+            duration_seconds,
+            success,
         )
     except Exception:
         logger.exception("Failed to record resolution metric")

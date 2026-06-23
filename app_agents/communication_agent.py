@@ -16,19 +16,20 @@ Dependencies:
     - guardrails/brand_voice.py                         — Member 4 (you)
 """
 
-import os
-import json
-from typing import Dict, Any, Optional
+from typing import Optional
 from agents import Agent, Runner
 from pydantic import BaseModel, Field
-from tools.notification_tools import send_notification, _send_notification_tool as send_notification_tool
+from tools.notification_tools import _send_notification_tool as send_notification_tool
 from guardrails.brand_voice import brand_voice_guardrail
 
 
 class CommunicationAgentOutput(BaseModel):
     """Structured output from the Communication Agent."""
+
     ticket_number: str = Field(description="Reference/ticket number for the communication")
-    resolution_summary: str = Field(description="Summary of the resolution provided to the customer")
+    resolution_summary: str = Field(
+        description="Summary of the resolution provided to the customer"
+    )
     next_steps: str = Field(description="Next steps the customer needs to take")
     message_sent: str = Field(description="The actual message that was sent to the customer")
     channel_used: str = Field(description="The channel used to send the message (email or sms)")
@@ -95,9 +96,11 @@ async def draft_and_send(
         "resolution_data": resolution_data,
     }
 
-    result = await Runner.run(communication_agent,
-                             "Draft and send a customer message based on the provided resolution data.",
-                             context=context)
+    result = await Runner.run(
+        communication_agent,
+        "Draft and send a customer message based on the provided resolution data.",
+        context=context,
+    )
 
     # Extract the structured output
     output = result.final_output_as(CommunicationAgentOutput)
@@ -153,9 +156,11 @@ async def draft_and_send_with_hybrid_llm(
         "force_local": force_local,
     }
 
-    result = await Runner.run(communication_agent,
-                             "Draft and send a customer message using hybrid LLM orchestration based on the provided resolution data.",
-                             context=context)
+    result = await Runner.run(
+        communication_agent,
+        "Draft and send a customer message using hybrid LLM orchestration based on the provided resolution data.",
+        context=context,
+    )
 
     # Extract the structured output
     output = result.final_output_as(CommunicationAgentOutput)
@@ -167,5 +172,5 @@ async def draft_and_send_with_hybrid_llm(
         "next_steps": output.next_steps,
         "message_sent": output.message_sent,
         "channel_used": output.channel_used,
-        "llm_used": output.llm_used or "unknown"
+        "llm_used": output.llm_used or "unknown",
     }

@@ -33,6 +33,7 @@ from tools.crm_tools import get_customer_profile
 # Output schema — enforces structured intent classification
 # ---------------------------------------------------------------------------
 
+
 class TriageDecision(BaseModel):
     """Structured output from the TriageOrchestrator agent."""
 
@@ -48,11 +49,14 @@ class TriageDecision(BaseModel):
     channel: str
     suggested_action: str
 
+
 try:
     from infra.redis_config import get_session as _redis_get, save_session as _redis_save
+
     _redis_available = True
 except Exception:
     _redis_available = False
+
 
 async def get_session(session_id: str) -> dict[str, Any]:
     if _redis_available:
@@ -62,6 +66,7 @@ async def get_session(session_id: str) -> dict[str, Any]:
             pass
     return {}
 
+
 async def save_session(session: dict[str, Any], existing_id: str | None = None) -> str:
     if _redis_available:
         try:
@@ -69,7 +74,9 @@ async def save_session(session: dict[str, Any], existing_id: str | None = None) 
         except Exception:
             pass
     import uuid as _uuid
+
     return existing_id or str(_uuid.uuid4())
+
 
 # ---------------------------------------------------------------------------
 # Triage Orchestrator definition
@@ -113,6 +120,7 @@ triage_agent = Agent(
 # Session-aware entry point
 # ---------------------------------------------------------------------------
 
+
 async def handle_customer_message(
     message: str,
     customer_id: str,
@@ -124,7 +132,6 @@ async def handle_customer_message(
     Loads existing session from Redis (if any), runs the triage agent,
     and persists updated session state.
     """
-    import uuid
 
     # Load or initialise session
     session = await get_session(session_id) if session_id else {}

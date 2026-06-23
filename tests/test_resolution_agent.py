@@ -97,10 +97,10 @@ async def test_process_refund_returns_dict_with_success_key():
 
     async with respx.mock:
         respx.post(_STRIPE_REFUND_URL).respond(
-            json={"id": "txn_111", "object": "refund"}, status_code=200,
+            json={"id": "txn_111", "object": "refund"},
+            status_code=200,
         )
-        result = await _invoke_process_refund(
-            order_id="ORD-111", amount_usd=10.0, method="stripe")
+        result = await _invoke_process_refund(order_id="ORD-111", amount_usd=10.0, method="stripe")
 
     assert isinstance(result, dict)
     assert result["success"] is True
@@ -112,8 +112,7 @@ async def test_process_refund_returns_dict_with_success_key():
 @pytest.mark.asyncio
 async def test_process_refund_empty_order_id():
     """Empty order_id returns error dict, not raises ValueError."""
-    result = await _invoke_process_refund(
-        order_id="", amount_usd=50.0, method="stripe")
+    result = await _invoke_process_refund(order_id="", amount_usd=50.0, method="stripe")
     assert result["success"] is False
     assert "order_id must not be empty" in result["error"]
 
@@ -121,8 +120,7 @@ async def test_process_refund_empty_order_id():
 @pytest.mark.asyncio
 async def test_process_refund_unsupported_method():
     """Unsupported method returns error dict."""
-    result = await _invoke_process_refund(
-        order_id="ORD-001", amount_usd=50.0, method="bitcoin")
+    result = await _invoke_process_refund(order_id="ORD-001", amount_usd=50.0, method="bitcoin")
     assert result["success"] is False
     assert "Unsupported payment method" in result["error"]
 
@@ -135,9 +133,9 @@ async def test_process_refund_unsupported_method():
 def test_resolution_fixture_has_resolution_agent_cases(resolutions):
     """Verify at least one fixture case expects resolution_agent in chain."""
     cases = [
-        r for r in resolutions
-        if r.get("expected_agent_chain")
-        and "ResolutionAgent" in r["expected_agent_chain"]
+        r
+        for r in resolutions
+        if r.get("expected_agent_chain") and "ResolutionAgent" in r["expected_agent_chain"]
     ]
     assert len(cases) >= 1
 
@@ -173,9 +171,7 @@ async def test_agent_autonomous_refund_success():
 
     async with respx.mock:
         # Mock Stripe refund API
-        respx.post(_STRIPE_REFUND_URL).respond(
-            json={"id": "txn_stripe_111"}, status_code=200
-        )
+        respx.post(_STRIPE_REFUND_URL).respond(json={"id": "txn_stripe_111"}, status_code=200)
 
         # 1. Mock OpenAI response initiating process_refund tool call
         respx.post("https://api.openai.com/v1/responses").respond(
@@ -193,13 +189,15 @@ async def test_agent_autonomous_refund_success():
                         "type": "function_call",
                         "call_id": "call_123",
                         "name": "process_refund",
-                        "arguments": json.dumps({"order_id": "ord_1002", "amount_usd": 149.50, "method": "stripe"}),
-                        "status": "completed"
+                        "arguments": json.dumps(
+                            {"order_id": "ord_1002", "amount_usd": 149.50, "method": "stripe"}
+                        ),
+                        "status": "completed",
                     }
                 ],
-                "usage": {"input_tokens": 10, "output_tokens": 10, "total_tokens": 20}
+                "usage": {"input_tokens": 10, "output_tokens": 10, "total_tokens": 20},
             },
-            status_code=200
+            status_code=200,
         )
 
         # 2. Mock OpenAI final output yielding the structured response
@@ -221,24 +219,28 @@ async def test_agent_autonomous_refund_success():
                         "content": [
                             {
                                 "type": "output_text",
-                                "text": json.dumps({
-                                    "success": True,
-                                    "refund_amount": 149.50,
-                                    "currency": "USD",
-                                    "human_approval_required": False,
-                                    "reason": "Refund processed successfully via Stripe."
-                                }),
-                                "annotations": []
+                                "text": json.dumps(
+                                    {
+                                        "success": True,
+                                        "refund_amount": 149.50,
+                                        "currency": "USD",
+                                        "human_approval_required": False,
+                                        "reason": "Refund processed successfully via Stripe.",
+                                    }
+                                ),
+                                "annotations": [],
                             }
-                        ]
+                        ],
                     }
                 ],
-                "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40}
+                "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40},
             },
-            status_code=200
+            status_code=200,
         )
 
-        result = await Runner.run(resolution_agent, "Process a refund of $149.50 for order ord_1002 using stripe.")
+        result = await Runner.run(
+            resolution_agent, "Process a refund of $149.50 for order ord_1002 using stripe."
+        )
 
     # Assert structured output is deserialized correctly into ResolutionSummary
     assert isinstance(result.final_output, ResolutionSummary)
@@ -278,20 +280,22 @@ async def test_agent_refund_cap_enforcement_above_limit():
                         "content": [
                             {
                                 "type": "output_text",
-                                "text": json.dumps({
-                                    "success": False,
-                                    "human_approval_required": True,
-                                    "amount": 1200.00,
-                                    "reason": "exceeds_cap"
-                                }),
-                                "annotations": []
+                                "text": json.dumps(
+                                    {
+                                        "success": False,
+                                        "human_approval_required": True,
+                                        "amount": 1200.00,
+                                        "reason": "exceeds_cap",
+                                    }
+                                ),
+                                "annotations": [],
                             }
-                        ]
+                        ],
                     }
                 ],
-                "usage": {"input_tokens": 10, "output_tokens": 10, "total_tokens": 20}
+                "usage": {"input_tokens": 10, "output_tokens": 10, "total_tokens": 20},
             },
-            status_code=200
+            status_code=200,
         )
 
         with pytest.raises(OutputGuardrailTripwireTriggered) as excinfo:
@@ -317,9 +321,7 @@ async def test_agent_graceful_api_failure_handling():
 
     async with respx.mock:
         # Stripe returns HTTP 500
-        respx.post(_STRIPE_REFUND_URL).respond(
-            status_code=500
-        )
+        respx.post(_STRIPE_REFUND_URL).respond(status_code=500)
 
         # 1. Mock OpenAI tool call
         respx.post("https://api.openai.com/v1/responses").respond(
@@ -337,13 +339,15 @@ async def test_agent_graceful_api_failure_handling():
                         "type": "function_call",
                         "call_id": "call_123",
                         "name": "process_refund",
-                        "arguments": json.dumps({"order_id": "ord_1002", "amount_usd": 50.0, "method": "stripe"}),
-                        "status": "completed"
+                        "arguments": json.dumps(
+                            {"order_id": "ord_1002", "amount_usd": 50.0, "method": "stripe"}
+                        ),
+                        "status": "completed",
                     }
                 ],
-                "usage": {"input_tokens": 10, "output_tokens": 10, "total_tokens": 20}
+                "usage": {"input_tokens": 10, "output_tokens": 10, "total_tokens": 20},
             },
-            status_code=200
+            status_code=200,
         )
 
         # 2. Mock OpenAI error summary response
@@ -365,19 +369,21 @@ async def test_agent_graceful_api_failure_handling():
                         "content": [
                             {
                                 "type": "output_text",
-                                "text": json.dumps({
-                                    "success": False,
-                                    "error": "Stripe API returned HTTP 500",
-                                    "reason": "Failed to process refund due to payment gateway error."
-                                }),
-                                "annotations": []
+                                "text": json.dumps(
+                                    {
+                                        "success": False,
+                                        "error": "Stripe API returned HTTP 500",
+                                        "reason": "Failed to process refund due to payment gateway error.",
+                                    }
+                                ),
+                                "annotations": [],
                             }
-                        ]
+                        ],
                     }
                 ],
-                "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40}
+                "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40},
             },
-            status_code=200
+            status_code=200,
         )
 
         result = await Runner.run(resolution_agent, "Refund $50 for order ord_1002.")
@@ -402,8 +408,12 @@ async def test_agent_autonomous_replacement_success():
     async with respx.mock:
         # Mock OMS API
         respx.post("https://oms.example.com/orders/ord_102/replicate").respond(
-            json={"order_id": "rep_111", "expedited": True, "estimated_delivery": "0222-06-15T12:00:00Z"},
-            status_code=200
+            json={
+                "order_id": "rep_111",
+                "expedited": True,
+                "estimated_delivery": "0222-06-15T12:00:00Z",
+            },
+            status_code=200,
         )
 
         # 1. Mock OpenAI response initiating create_replacement_order tool call
@@ -423,12 +433,12 @@ async def test_agent_autonomous_replacement_success():
                         "call_id": "call_123",
                         "name": "create_replacement_order",
                         "arguments": json.dumps({"order_id": "ord_102"}),
-                        "status": "completed"
+                        "status": "completed",
                     }
                 ],
-                "usage": {"input_tokens": 10, "output_tokens": 10, "total_tokens": 20}
+                "usage": {"input_tokens": 10, "output_tokens": 10, "total_tokens": 20},
             },
-            status_code=200
+            status_code=200,
         )
 
         # 2. Mock OpenAI final output yielding the structured response
@@ -450,20 +460,22 @@ async def test_agent_autonomous_replacement_success():
                         "content": [
                             {
                                 "type": "output_text",
-                                "text": json.dumps({
-                                    "success": True,
-                                    "replacement_order_id": "rep_111",
-                                    "estimated_delivery": "0222-06-15T12:00:00Z",
-                                    "reason": "Replacement order rep_111 has been generated."
-                                }),
-                                "annotations": []
+                                "text": json.dumps(
+                                    {
+                                        "success": True,
+                                        "replacement_order_id": "rep_111",
+                                        "estimated_delivery": "0222-06-15T12:00:00Z",
+                                        "reason": "Replacement order rep_111 has been generated.",
+                                    }
+                                ),
+                                "annotations": [],
                             }
-                        ]
+                        ],
                     }
                 ],
-                "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40}
+                "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40},
             },
-            status_code=200
+            status_code=200,
         )
 
         result = await Runner.run(resolution_agent, "Send a replacement order for ord_102.")
@@ -492,7 +504,7 @@ async def test_agent_autonomous_label_success():
         )
         respx.post("https://onlinetools.ups.com/api/shipments/v1/label").respond(
             json={"labelUrl": "https://ups.com/label.gif", "trackingNumber": "1Z111"},
-            status_code=200
+            status_code=200,
         )
 
         # 1. Mock OpenAI response initiating create_return_label tool call
@@ -512,12 +524,12 @@ async def test_agent_autonomous_label_success():
                         "call_id": "call_123",
                         "name": "create_return_label",
                         "arguments": json.dumps({"order_id": "ord_102", "carrier": "ups"}),
-                        "status": "completed"
+                        "status": "completed",
                     }
                 ],
-                "usage": {"input_tokens": 10, "output_tokens": 10, "total_tokens": 20}
+                "usage": {"input_tokens": 10, "output_tokens": 10, "total_tokens": 20},
             },
-            status_code=200
+            status_code=200,
         )
 
         # 2. Mock OpenAI final output yielding the structured response
@@ -539,21 +551,23 @@ async def test_agent_autonomous_label_success():
                         "content": [
                             {
                                 "type": "output_text",
-                                "text": json.dumps({
-                                    "success": True,
-                                    "label_url": "https://ups.com/label.gif",
-                                    "tracking_number": "1Z111",
-                                    "carrier": "ups",
-                                    "reason": "UPS label generated."
-                                }),
-                                "annotations": []
+                                "text": json.dumps(
+                                    {
+                                        "success": True,
+                                        "label_url": "https://ups.com/label.gif",
+                                        "tracking_number": "1Z111",
+                                        "carrier": "ups",
+                                        "reason": "UPS label generated.",
+                                    }
+                                ),
+                                "annotations": [],
                             }
-                        ]
+                        ],
                     }
                 ],
-                "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40}
+                "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40},
             },
-            status_code=200
+            status_code=200,
         )
 
         result = await Runner.run(resolution_agent, "Generate a UPS return label for ord_102.")
@@ -585,12 +599,10 @@ async def test_agent_autonomous_sequencing():
         )
         respx.post("https://onlinetools.ups.com/api/shipments/v1/label").respond(
             json={"labelUrl": "https://ups.com/label.gif", "trackingNumber": "1Z111"},
-            status_code=200
+            status_code=200,
         )
         # Mock Stripe API
-        respx.post(_STRIPE_REFUND_URL).respond(
-            json={"id": "txn_stripe_111"}, status_code=200
-        )
+        respx.post(_STRIPE_REFUND_URL).respond(json={"id": "txn_stripe_111"}, status_code=200)
 
         # 1. Mock OpenAI response initiating create_return_label first
         respx.post("https://api.openai.com/v1/responses").respond(
@@ -609,12 +621,12 @@ async def test_agent_autonomous_sequencing():
                         "call_id": "call_123",
                         "name": "create_return_label",
                         "arguments": json.dumps({"order_id": "ord_102", "carrier": "ups"}),
-                        "status": "completed"
+                        "status": "completed",
                     }
                 ],
-                "usage": {"input_tokens": 10, "output_tokens": 10, "total_tokens": 20}
+                "usage": {"input_tokens": 10, "output_tokens": 10, "total_tokens": 20},
             },
-            status_code=200
+            status_code=200,
         )
 
         # 2. Mock OpenAI response initiating process_refund next
@@ -633,13 +645,15 @@ async def test_agent_autonomous_sequencing():
                         "type": "function_call",
                         "call_id": "call_456",
                         "name": "process_refund",
-                        "arguments": json.dumps({"order_id": "ord_102", "amount_usd": 149.50, "method": "stripe"}),
-                        "status": "completed"
+                        "arguments": json.dumps(
+                            {"order_id": "ord_102", "amount_usd": 149.50, "method": "stripe"}
+                        ),
+                        "status": "completed",
                     }
                 ],
-                "usage": {"input_tokens": 20, "output_tokens": 10, "total_tokens": 30}
+                "usage": {"input_tokens": 20, "output_tokens": 10, "total_tokens": 30},
             },
-            status_code=200
+            status_code=200,
         )
 
         # 3. Mock OpenAI final output yielding the structured response with both label and refund details
@@ -661,28 +675,30 @@ async def test_agent_autonomous_sequencing():
                         "content": [
                             {
                                 "type": "output_text",
-                                "text": json.dumps({
-                                    "success": True,
-                                    "refund_amount": 149.50,
-                                    "currency": "USD",
-                                    "label_url": "https://ups.com/label.gif",
-                                    "tracking_number": "1Z111",
-                                    "carrier": "ups",
-                                    "reason": "UPS label generated and refund processed successfully."
-                                }),
-                                "annotations": []
+                                "text": json.dumps(
+                                    {
+                                        "success": True,
+                                        "refund_amount": 149.50,
+                                        "currency": "USD",
+                                        "label_url": "https://ups.com/label.gif",
+                                        "tracking_number": "1Z111",
+                                        "carrier": "ups",
+                                        "reason": "UPS label generated and refund processed successfully.",
+                                    }
+                                ),
+                                "annotations": [],
                             }
-                        ]
+                        ],
                     }
                 ],
-                "usage": {"input_tokens": 30, "output_tokens": 20, "total_tokens": 50}
+                "usage": {"input_tokens": 30, "output_tokens": 20, "total_tokens": 50},
             },
-            status_code=200
+            status_code=200,
         )
 
         result = await Runner.run(
             resolution_agent,
-            "Create a UPS return label and process a refund of $149.50 for order ord_102 using stripe."
+            "Create a UPS return label and process a refund of $149.50 for order ord_102 using stripe.",
         )
 
     assert isinstance(result.final_output, ResolutionSummary)

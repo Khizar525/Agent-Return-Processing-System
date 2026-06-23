@@ -20,26 +20,45 @@ from collections.abc import Generator
 from database.repository import MemoryBackend
 from tools.policy_tools import set_repo_for_testing, reset_repo_for_testing
 
+
 @pytest.fixture(autouse=True)
 def _setup_integration_test_repo(orders, customers, fraud_signals) -> Generator[None, None, None]:
     data = {
-        "orders": {o["order_id"]: {
-            "order_id": o["order_id"],
-            "customer_id": o["customer_id"],
-            "item_category": o.get("item_category") or (o["items"][0]["category"] if o.get("items") else "electronics"),
-            "days_since_purchase": o["days_since_purchase"],
-            "price": float(o.get("total_usd") or (sum(i["price_usd"] * i["qty"] for i in o["items"]) if o.get("items") else 100.0)),
-            "damaged": any(i.get("damaged", False) for i in o.get("items", [])) or o.get("damaged", False),
-        } for o in orders},
-        "customers": {c["customer_id"]: {
-            "customer_id": c["customer_id"],
-            "fraud_flag": c["fraud_flag"],
-            "fraud_reason": c.get("fraud_reason"),
-        } for c in customers},
-        "fraud_db_matches": {s["customer_id"]: {
-            "customer_id": s["customer_id"],
-            "match_reason": s["description"],
-        } for s in fraud_signals},
+        "orders": {
+            o["order_id"]: {
+                "order_id": o["order_id"],
+                "customer_id": o["customer_id"],
+                "item_category": o.get("item_category")
+                or (o["items"][0]["category"] if o.get("items") else "electronics"),
+                "days_since_purchase": o["days_since_purchase"],
+                "price": float(
+                    o.get("total_usd")
+                    or (
+                        sum(i["price_usd"] * i["qty"] for i in o["items"])
+                        if o.get("items")
+                        else 100.0
+                    )
+                ),
+                "damaged": any(i.get("damaged", False) for i in o.get("items", []))
+                or o.get("damaged", False),
+            }
+            for o in orders
+        },
+        "customers": {
+            c["customer_id"]: {
+                "customer_id": c["customer_id"],
+                "fraud_flag": c["fraud_flag"],
+                "fraud_reason": c.get("fraud_reason"),
+            }
+            for c in customers
+        },
+        "fraud_db_matches": {
+            s["customer_id"]: {
+                "customer_id": s["customer_id"],
+                "match_reason": s["description"],
+            }
+            for s in fraud_signals
+        },
     }
     set_repo_for_testing(MemoryBackend(data))
     yield
@@ -107,21 +126,27 @@ class TestFixtureIntegrity:
             missing = required - set(res.keys())
             assert not missing, f"Resolution {res['resolution_id']} missing fields: {missing}"
 
-    def test_all_customer_ids_in_orders_exist(self, orders: list[dict], customers: list[dict]) -> None:
+    def test_all_customer_ids_in_orders_exist(
+        self, orders: list[dict], customers: list[dict]
+    ) -> None:
         customer_ids = {c["customer_id"] for c in customers}
         for order in orders:
             assert order["customer_id"] in customer_ids, (
                 f"Order {order['order_id']} references unknown customer {order['customer_id']}"
             )
 
-    def test_all_message_customer_ids_exist(self, messages: list[dict], customers: list[dict]) -> None:
+    def test_all_message_customer_ids_exist(
+        self, messages: list[dict], customers: list[dict]
+    ) -> None:
         customer_ids = {c["customer_id"] for c in customers}
         for msg in messages:
             assert msg["customer_id"] in customer_ids, (
                 f"Message {msg['message_id']} references unknown customer {msg['customer_id']}"
             )
 
-    def test_all_resolution_message_ids_exist(self, resolutions: list[dict], messages: list[dict]) -> None:
+    def test_all_resolution_message_ids_exist(
+        self, resolutions: list[dict], messages: list[dict]
+    ) -> None:
         message_ids = {m["message_id"] for m in messages}
         for res in resolutions:
             assert res["message_id"] in message_ids, (
@@ -129,7 +154,13 @@ class TestFixtureIntegrity:
             )
 
     def test_intents_are_valid(self, messages: list[dict]) -> None:
-        valid_intents = {"return_request", "order_status", "billing_dispute", "general_inquiry", "edge_case_escalate"}
+        valid_intents = {
+            "return_request",
+            "order_status",
+            "billing_dispute",
+            "general_inquiry",
+            "edge_case_escalate",
+        }
         for msg in messages:
             assert msg["expected_intent"] in valid_intents, (
                 f"Message {msg['message_id']} has invalid intent {msg['expected_intent']}"
@@ -180,7 +211,10 @@ class TestCheckReturnPolicy:
         result = await check_return_policy("ord_6001", "cust_006")
         assert result["eligible"] is False
         assert result["recommended_action"] == "reject"
-        assert "final_sale" in (result.get("exclusion_reason") or "").lower() or "final" in result["reason"].lower()
+        assert (
+            "final_sale" in (result.get("exclusion_reason") or "").lower()
+            or "final" in result["reason"].lower()
+        )
         assert result["error"] is None
 
     @pytest.mark.asyncio
@@ -216,11 +250,20 @@ class TestCheckReturnPolicy:
     async def test_return_schema_matches_spec(self) -> None:
         result = await check_return_policy("ord_1002", "cust_001")
         expected_keys = {
-            "success", "eligible", "reason", "recommended_action",
-            "return_window_days", "days_since_purchase", "item_category",
-            "exclusion_reason", "fraud_signal", "error",
+            "success",
+            "eligible",
+            "reason",
+            "recommended_action",
+            "return_window_days",
+            "days_since_purchase",
+            "item_category",
+            "exclusion_reason",
+            "fraud_signal",
+            "error",
         }
-        assert set(result.keys()) == expected_keys, f"Extra/missing keys: {set(result.keys()) ^ expected_keys}"
+        assert set(result.keys()) == expected_keys, (
+            f"Extra/missing keys: {set(result.keys()) ^ expected_keys}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -333,8 +376,6 @@ class TestIntentMapping:
             )
 
 
-
-
 # ---------------------------------------------------------------------------
 # Pipeline test skeletons
 # pytest.skip() until teammate branches are merged.
@@ -353,7 +394,9 @@ class TestPipelineSkeletons:
     # ── res_001: Happy path (return → policy → resolution → communication) ──
 
     @pytest.mark.asyncio
-    async def test_return_request_routes_to_policy_agent(self, get_message, get_resolution, get_customer, get_order):
+    async def test_return_request_routes_to_policy_agent(
+        self, get_message, get_resolution, get_customer, get_order
+    ):
         """msg_001 is a clean return request → must route to PolicyAgent.
         Expected chain: Triage → PolicyAgent → ResolutionAgent → CommunicationAgent."""
         msg = get_message("msg_001")
@@ -420,7 +463,12 @@ class TestPipelineSkeletons:
         assert msg is not None and res is not None
 
         expected_chain = res["expected_agent_chain"]
-        assert expected_chain == ["TriageOrchestrator", "PolicyAgent", "ResolutionAgent", "EscalationAgent"]
+        assert expected_chain == [
+            "TriageOrchestrator",
+            "PolicyAgent",
+            "ResolutionAgent",
+            "EscalationAgent",
+        ]
 
         res_out = res["expected_resolution_output"]
         assert res_out["human_approval_required"] is True
@@ -433,7 +481,9 @@ class TestPipelineSkeletons:
     # ── res_005: Fraud flag on account ──
 
     @pytest.mark.asyncio
-    async def test_fraud_flag_blocks_return_and_escalates(self, get_message, get_resolution, get_customer):
+    async def test_fraud_flag_blocks_return_and_escalates(
+        self, get_message, get_resolution, get_customer
+    ):
         """msg_006 comes from a fraud-flagged account.
         Expected chain: Triage → PolicyAgent → EscalationAgent."""
         msg = get_message("msg_006")

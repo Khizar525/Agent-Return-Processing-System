@@ -29,16 +29,36 @@ from guardrails.refund_cap import refund_cap_guardrail
 
 class ResolutionSummary(BaseModel):
     success: bool = Field(description="Whether the resolution action was successfully executed.")
-    refund_amount: float | None = Field(default=None, description="The amount refunded in USD, if applicable.")
-    currency: str | None = Field(default=None, description="The currency of the refund (e.g. 'USD'), if applicable.")
-    human_approval_required: bool = Field(default=False, description="Whether human approval is required.")
-    amount: float | None = Field(default=None, description="The attempted refund amount if human approval is required.")
-    reason: str | None = Field(default=None, description="The reason for the status or failure (e.g. 'exceeds_cap' or error message).")
+    refund_amount: float | None = Field(
+        default=None, description="The amount refunded in USD, if applicable."
+    )
+    currency: str | None = Field(
+        default=None, description="The currency of the refund (e.g. 'USD'), if applicable."
+    )
+    human_approval_required: bool = Field(
+        default=False, description="Whether human approval is required."
+    )
+    amount: float | None = Field(
+        default=None, description="The attempted refund amount if human approval is required."
+    )
+    reason: str | None = Field(
+        default=None,
+        description="The reason for the status or failure (e.g. 'exceeds_cap' or error message).",
+    )
     label_url: str | None = Field(default=None, description="The return label URL, if applicable.")
-    tracking_number: str | None = Field(default=None, description="The return label tracking number, if applicable.")
-    carrier: str | None = Field(default=None, description="The shipping carrier used for the return label, if applicable.")
-    replacement_order_id: str | None = Field(default=None, description="The replacement order ID, if applicable.")
-    estimated_delivery: str | None = Field(default=None, description="Estimated delivery date/time for replacement order, if applicable.")
+    tracking_number: str | None = Field(
+        default=None, description="The return label tracking number, if applicable."
+    )
+    carrier: str | None = Field(
+        default=None, description="The shipping carrier used for the return label, if applicable."
+    )
+    replacement_order_id: str | None = Field(
+        default=None, description="The replacement order ID, if applicable."
+    )
+    estimated_delivery: str | None = Field(
+        default=None,
+        description="Estimated delivery date/time for replacement order, if applicable.",
+    )
     error: str | None = Field(default=None, description="Error message, if execution failed.")
 
 

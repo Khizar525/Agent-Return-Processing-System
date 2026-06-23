@@ -53,20 +53,16 @@ class FraudDbMatchDTO:
 
 class Repository(ABC):
     @abstractmethod
-    async def get_order(self, order_id: str) -> OrderDTO | None:
-        ...
+    async def get_order(self, order_id: str) -> OrderDTO | None: ...
 
     @abstractmethod
-    async def get_customer(self, customer_id: str) -> CustomerDTO | None:
-        ...
+    async def get_customer(self, customer_id: str) -> CustomerDTO | None: ...
 
     @abstractmethod
-    async def get_fraud_db_match(self, customer_id: str) -> FraudDbMatchDTO | None:
-        ...
+    async def get_fraud_db_match(self, customer_id: str) -> FraudDbMatchDTO | None: ...
 
     @abstractmethod
-    async def close(self) -> None:
-        ...
+    async def close(self) -> None: ...
 
 
 # ── PostgreSQL backend (production) ──────────────────────────────────────────
@@ -100,7 +96,9 @@ class PostgresBackend(Repository):
         from sqlalchemy import select
 
         async with self._session() as session:
-            row = (await session.execute(select(OrderModel).where(OrderModel.order_id == order_id))).scalar_one_or_none()
+            row = (
+                await session.execute(select(OrderModel).where(OrderModel.order_id == order_id))
+            ).scalar_one_or_none()
             if row is None:
                 return None
             return OrderDTO(
@@ -117,7 +115,11 @@ class PostgresBackend(Repository):
         from sqlalchemy import select
 
         async with self._session() as session:
-            row = (await session.execute(select(CustomerModel).where(CustomerModel.customer_id == customer_id))).scalar_one_or_none()
+            row = (
+                await session.execute(
+                    select(CustomerModel).where(CustomerModel.customer_id == customer_id)
+                )
+            ).scalar_one_or_none()
             if row is None:
                 return None
             return CustomerDTO(
@@ -131,7 +133,11 @@ class PostgresBackend(Repository):
         from sqlalchemy import select
 
         async with self._session() as session:
-            row = (await session.execute(select(FraudDbMatchModel).where(FraudDbMatchModel.customer_id == customer_id))).scalar_one_or_none()
+            row = (
+                await session.execute(
+                    select(FraudDbMatchModel).where(FraudDbMatchModel.customer_id == customer_id)
+                )
+            ).scalar_one_or_none()
             if row is None:
                 return None
             return FraudDbMatchDTO(
@@ -150,33 +156,146 @@ class PostgresBackend(Repository):
 _DEFAULT_DATA: dict[str, Any] = {
     "orders": {
         # ── Existing test records (do not modify) ────────────────────────
-        "ORD-001": {"order_id": "ORD-001", "customer_id": "CUST-001", "item_category": "electronics", "days_since_purchase": 15, "price": 199.99, "damaged": False},
-        "ORD-002": {"order_id": "ORD-002", "customer_id": "CUST-001", "item_category": "electronics", "days_since_purchase": 45, "price": 299.99, "damaged": False},
-        "ORD-003": {"order_id": "ORD-003", "customer_id": "CUST-002", "item_category": "digital_goods", "days_since_purchase": 5, "price": 49.99, "damaged": False},
-        "ORD-004": {"order_id": "ORD-004", "customer_id": "CUST-003", "item_category": "clothing", "days_since_purchase": 10, "price": 89.99, "damaged": True},
-        "ORD-005": {"order_id": "ORD-005", "customer_id": "CUST-004", "item_category": "home_goods", "days_since_purchase": 20, "price": 150.00, "damaged": False},
-        "ORD-006": {"order_id": "ORD-006", "customer_id": "CUST-005", "item_category": "electronics", "days_since_purchase": 3, "price": 799.99, "damaged": False},
+        "ORD-001": {
+            "order_id": "ORD-001",
+            "customer_id": "CUST-001",
+            "item_category": "electronics",
+            "days_since_purchase": 15,
+            "price": 199.99,
+            "damaged": False,
+        },
+        "ORD-002": {
+            "order_id": "ORD-002",
+            "customer_id": "CUST-001",
+            "item_category": "electronics",
+            "days_since_purchase": 45,
+            "price": 299.99,
+            "damaged": False,
+        },
+        "ORD-003": {
+            "order_id": "ORD-003",
+            "customer_id": "CUST-002",
+            "item_category": "digital_goods",
+            "days_since_purchase": 5,
+            "price": 49.99,
+            "damaged": False,
+        },
+        "ORD-004": {
+            "order_id": "ORD-004",
+            "customer_id": "CUST-003",
+            "item_category": "clothing",
+            "days_since_purchase": 10,
+            "price": 89.99,
+            "damaged": True,
+        },
+        "ORD-005": {
+            "order_id": "ORD-005",
+            "customer_id": "CUST-004",
+            "item_category": "home_goods",
+            "days_since_purchase": 20,
+            "price": 150.00,
+            "damaged": False,
+        },
+        "ORD-006": {
+            "order_id": "ORD-006",
+            "customer_id": "CUST-005",
+            "item_category": "electronics",
+            "days_since_purchase": 3,
+            "price": 799.99,
+            "damaged": False,
+        },
         # ── Extra demo records ──────────────────────────────────────────
-        "ORD-007": {"order_id": "ORD-007", "customer_id": "CUST-001", "item_category": "perishables",     "days_since_purchase": 2,  "price": 12.99,  "damaged": False},
-        "ORD-008": {"order_id": "ORD-008", "customer_id": "CUST-003", "item_category": "electronics",     "days_since_purchase": 0,  "price": 549.00, "damaged": False},
-        "ORD-009": {"order_id": "ORD-009", "customer_id": "CUST-003", "item_category": "electronics",     "days_since_purchase": 30, "price": 29.99,  "damaged": False},
-        "ORD-010": {"order_id": "ORD-010", "customer_id": "CUST-006", "item_category": "home_goods",      "days_since_purchase": 12, "price": 89.99,  "damaged": False},
-        "ORD-011": {"order_id": "ORD-011", "customer_id": "CUST-002", "item_category": "electronics",     "days_since_purchase": 8,  "price": 45.00,  "damaged": False},
-        "ORD-012": {"order_id": "ORD-012", "customer_id": "CUST-001", "item_category": "beauty",          "days_since_purchase": 25, "price": 34.99,  "damaged": True},
-        "ORD-013": {"order_id": "ORD-013", "customer_id": "CUST-007", "item_category": "electronics",     "days_since_purchase": 5,  "price": 999.99, "damaged": False},
-        "ORD-014": {"order_id": "ORD-014", "customer_id": "CUST-006", "item_category": "final_sale",      "days_since_purchase": 1,  "price": 199.00, "damaged": False},
-        "ORD-015": {"order_id": "ORD-015", "customer_id": "CUST-008", "item_category": "electronics",     "days_since_purchase": 7,  "price": 250.00, "damaged": False},
+        "ORD-007": {
+            "order_id": "ORD-007",
+            "customer_id": "CUST-001",
+            "item_category": "perishables",
+            "days_since_purchase": 2,
+            "price": 12.99,
+            "damaged": False,
+        },
+        "ORD-008": {
+            "order_id": "ORD-008",
+            "customer_id": "CUST-003",
+            "item_category": "electronics",
+            "days_since_purchase": 0,
+            "price": 549.00,
+            "damaged": False,
+        },
+        "ORD-009": {
+            "order_id": "ORD-009",
+            "customer_id": "CUST-003",
+            "item_category": "electronics",
+            "days_since_purchase": 30,
+            "price": 29.99,
+            "damaged": False,
+        },
+        "ORD-010": {
+            "order_id": "ORD-010",
+            "customer_id": "CUST-006",
+            "item_category": "home_goods",
+            "days_since_purchase": 12,
+            "price": 89.99,
+            "damaged": False,
+        },
+        "ORD-011": {
+            "order_id": "ORD-011",
+            "customer_id": "CUST-002",
+            "item_category": "electronics",
+            "days_since_purchase": 8,
+            "price": 45.00,
+            "damaged": False,
+        },
+        "ORD-012": {
+            "order_id": "ORD-012",
+            "customer_id": "CUST-001",
+            "item_category": "beauty",
+            "days_since_purchase": 25,
+            "price": 34.99,
+            "damaged": True,
+        },
+        "ORD-013": {
+            "order_id": "ORD-013",
+            "customer_id": "CUST-007",
+            "item_category": "electronics",
+            "days_since_purchase": 5,
+            "price": 999.99,
+            "damaged": False,
+        },
+        "ORD-014": {
+            "order_id": "ORD-014",
+            "customer_id": "CUST-006",
+            "item_category": "final_sale",
+            "days_since_purchase": 1,
+            "price": 199.00,
+            "damaged": False,
+        },
+        "ORD-015": {
+            "order_id": "ORD-015",
+            "customer_id": "CUST-008",
+            "item_category": "electronics",
+            "days_since_purchase": 7,
+            "price": 250.00,
+            "damaged": False,
+        },
     },
     "customers": {
         # ── Existing test records (do not modify) ────────────────────────
         "CUST-001": {"customer_id": "CUST-001", "fraud_flag": False, "fraud_reason": None},
         "CUST-002": {"customer_id": "CUST-002", "fraud_flag": False, "fraud_reason": None},
         "CUST-003": {"customer_id": "CUST-003", "fraud_flag": False, "fraud_reason": None},
-        "CUST-004": {"customer_id": "CUST-004", "fraud_flag": True,  "fraud_reason": "chargeback_history"},
+        "CUST-004": {
+            "customer_id": "CUST-004",
+            "fraud_flag": True,
+            "fraud_reason": "chargeback_history",
+        },
         "CUST-005": {"customer_id": "CUST-005", "fraud_flag": False, "fraud_reason": None},
         # ── Extra demo records ──────────────────────────────────────────
         "CUST-006": {"customer_id": "CUST-006", "fraud_flag": False, "fraud_reason": None},
-        "CUST-007": {"customer_id": "CUST-007", "fraud_flag": True,  "fraud_reason": "multiple_chargebacks"},
+        "CUST-007": {
+            "customer_id": "CUST-007",
+            "fraud_flag": True,
+            "fraud_reason": "multiple_chargebacks",
+        },
         "CUST-008": {"customer_id": "CUST-008", "fraud_flag": False, "fraud_reason": None},
     },
     "fraud_db_matches": {
@@ -241,6 +360,7 @@ class MemoryBackend(Repository):
 
     def __init__(self, data: dict[str, Any] | None = None) -> None:
         import copy
+
         self._data = copy.deepcopy(data) if data is not None else copy.deepcopy(_DEFAULT_DATA)
 
     @property

@@ -71,14 +71,29 @@ async def _create_human_ticket_tool(
         zendesk_api_token = os.environ.get("ZENDESK_API_TOKEN")
 
         if not zendesk_subdomain:
-            return {"success": False, "ticket_id": None, "ticket_url": None,
-                    "priority": "normal", "error": "ZENDESK_SUBDOMAIN not set"}
+            return {
+                "success": False,
+                "ticket_id": None,
+                "ticket_url": None,
+                "priority": "normal",
+                "error": "ZENDESK_SUBDOMAIN not set",
+            }
         if not zendesk_email:
-            return {"success": False, "ticket_id": None, "ticket_url": None,
-                    "priority": "normal", "error": "ZENDESK_EMAIL not set"}
+            return {
+                "success": False,
+                "ticket_id": None,
+                "ticket_url": None,
+                "priority": "normal",
+                "error": "ZENDESK_EMAIL not set",
+            }
         if not zendesk_api_token:
-            return {"success": False, "ticket_id": None, "ticket_url": None,
-                    "priority": "normal", "error": "ZENDESK_API_TOKEN not set"}
+            return {
+                "success": False,
+                "ticket_id": None,
+                "ticket_url": None,
+                "priority": "normal",
+                "error": "ZENDESK_API_TOKEN not set",
+            }
 
         url = f"https://{zendesk_subdomain}.zendesk.com/api/v2/tickets.json"
         auth = (f"{zendesk_email}/token", zendesk_api_token)
@@ -189,9 +204,7 @@ async def _log_resolution_tool(
             "timestamp": timestamp,
         }
 
-        log_file_path = os.environ.get(
-            "RESOLUTION_LOG_PATH", "resolution_log.jsonl"
-        )
+        log_file_path = os.environ.get("RESOLUTION_LOG_PATH", "resolution_log.jsonl")
         with open(log_file_path, "a", encoding="utf-8") as f:
             json.dump(log_entry, f)
             f.write("\n")

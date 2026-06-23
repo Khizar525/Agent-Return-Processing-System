@@ -101,7 +101,9 @@ async def _check_return_policy_impl(order_id: str, customer_id: str) -> dict[str
     reasons: list[str] = []
     exclusion_reason: str | None = None
     if not window_ok:
-        reasons.append(f"Return window of {RETURN_WINDOW_DAYS} days exceeded ({order.days_since_purchase} days since purchase)")
+        reasons.append(
+            f"Return window of {RETURN_WINDOW_DAYS} days exceeded ({order.days_since_purchase} days since purchase)"
+        )
     if not not_excluded:
         exclusion_reason = f"Item category '{order.item_category}' is excluded"
         reasons.append(exclusion_reason)
@@ -134,6 +136,7 @@ async def _check_return_policy_impl(order_id: str, customer_id: str) -> dict[str
         "fraud_signal": fraud_signal,
         "error": None,
     }
+
 
 RAW_CHECK_RETURN_POLICY = _check_return_policy_impl
 check_return_policy = function_tool(_check_return_policy_impl)

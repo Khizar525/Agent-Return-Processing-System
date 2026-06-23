@@ -80,8 +80,10 @@ async def get_customer_profile(customer_id: str) -> dict:
     logger.info("tool_call", extra={"tool": "get_customer_profile", "customer_id": customer_id})
 
     if not customer_id or not customer_id.strip():
-        logger.warning("tool_validation_error", extra={
-            "tool": "get_customer_profile", "reason": "empty_customer_id"})
+        logger.warning(
+            "tool_validation_error",
+            extra={"tool": "get_customer_profile", "reason": "empty_customer_id"},
+        )
         return _error_response("customer_id must not be empty")
 
     base_url = os.environ.get("CRM_BASE_URL")
@@ -105,9 +107,15 @@ async def get_customer_profile(customer_id: str) -> dict:
 
         if response.status_code == 404:
             duration = int((time.monotonic() - start) * 1000)
-            logger.info("tool_result", extra={
-                "tool": "get_customer_profile", "duration_ms": duration,
-                "success": False, "error": "not_found"})
+            logger.info(
+                "tool_result",
+                extra={
+                    "tool": "get_customer_profile",
+                    "duration_ms": duration,
+                    "success": False,
+                    "error": "not_found",
+                },
+            )
             return _error_response(f"Customer not found: {customer_id}")
 
         response.raise_for_status()
@@ -116,38 +124,48 @@ async def get_customer_profile(customer_id: str) -> dict:
         result = _format_profile(data)
 
         duration = int((time.monotonic() - start) * 1000)
-        logger.info("tool_result", extra={
-            "tool": "get_customer_profile", "duration_ms": duration,
-            "success": True})
+        logger.info(
+            "tool_result",
+            extra={"tool": "get_customer_profile", "duration_ms": duration, "success": True},
+        )
         return result
 
     except httpx.TimeoutException:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_timeout", extra={
-            "tool": "get_customer_profile", "duration_ms": duration})
+        logger.error(
+            "tool_timeout", extra={"tool": "get_customer_profile", "duration_ms": duration}
+        )
         return _error_response("CRM API timed out")
 
     except httpx.HTTPStatusError as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_http_error", extra={
-            "tool": "get_customer_profile", "duration_ms": duration,
-            "status_code": e.response.status_code})
+        logger.error(
+            "tool_http_error",
+            extra={
+                "tool": "get_customer_profile",
+                "duration_ms": duration,
+                "status_code": e.response.status_code,
+            },
+        )
         return _error_response(f"CRM API returned HTTP {e.response.status_code}")
 
     except httpx.RequestError as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_connection_error", extra={
-            "tool": "get_customer_profile", "duration_ms": duration})
+        logger.error(
+            "tool_connection_error", extra={"tool": "get_customer_profile", "duration_ms": duration}
+        )
         return _error_response(f"Could not reach CRM API: {str(e)}")
 
     except (KeyError, TypeError, ValueError) as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_parse_error", extra={
-            "tool": "get_customer_profile", "duration_ms": duration})
+        logger.error(
+            "tool_parse_error", extra={"tool": "get_customer_profile", "duration_ms": duration}
+        )
         return _error_response(f"Invalid CRM response format: {str(e)}")
 
     except Exception as e:
         duration = int((time.monotonic() - start) * 1000)
-        logger.error("tool_unexpected_error", extra={
-            "tool": "get_customer_profile", "duration_ms": duration})
+        logger.error(
+            "tool_unexpected_error", extra={"tool": "get_customer_profile", "duration_ms": duration}
+        )
         return _error_response(f"Unexpected CRM API error: {str(e)}")
