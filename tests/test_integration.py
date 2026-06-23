@@ -271,27 +271,46 @@ class TestCheckReturnPolicy:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="tracking_lookup_impl not yet implemented in triage_orchestrator")
 @pytest.mark.asyncio
 async def test_tracking_lookup_found() -> None:
-    from app_agents.triage_orchestrator import tracking_lookup_impl as tracking_lookup
+    from tools.tracking_tools import RAW_TRACKING_LOOKUP as tracking_lookup
 
-    result = await tracking_lookup("ord_1001")
+    result = await tracking_lookup("ORD-001")
     assert result["success"] is True
     assert result["found"] is True
     assert result["status"] == "delivered"
     assert result["carrier"] == "fedex"
 
 
-@pytest.mark.skip(reason="tracking_lookup_impl not yet implemented in triage_orchestrator")
 @pytest.mark.asyncio
 async def test_tracking_lookup_not_found() -> None:
-    from app_agents.triage_orchestrator import tracking_lookup_impl as tracking_lookup
+    from tools.tracking_tools import RAW_TRACKING_LOOKUP as tracking_lookup
 
-    result = await tracking_lookup("ord_does_not_exist")
+    result = await tracking_lookup("ORD-DOES-NOT-EXIST")
     assert result["success"] is False
     assert result["found"] is False
     assert result["error"] is not None
+
+
+@pytest.mark.asyncio
+async def test_tracking_lookup_empty_order_id() -> None:
+    from tools.tracking_tools import RAW_TRACKING_LOOKUP as tracking_lookup
+
+    result = await tracking_lookup("")
+    assert result["success"] is False
+    assert result["error"] is not None
+
+
+@pytest.mark.asyncio
+async def test_tracking_lookup_output_contract() -> None:
+    from tools.tracking_tools import RAW_TRACKING_LOOKUP as tracking_lookup
+
+    result = await tracking_lookup("ORD-002")
+    expected_keys = {
+        "success", "found", "status", "carrier",
+        "tracking_number", "estimated_delivery", "last_update", "error",
+    }
+    assert set(result.keys()) == expected_keys
 
 
 # ---------------------------------------------------------------------------
@@ -299,10 +318,9 @@ async def test_tracking_lookup_not_found() -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="faq_lookup_impl not yet implemented in triage_orchestrator")
 @pytest.mark.asyncio
 async def test_faq_lookup_matches_keyword() -> None:
-    from app_agents.triage_orchestrator import faq_lookup_impl as faq_lookup
+    from tools.tracking_tools import RAW_FAQ_LOOKUP as faq_lookup
 
     result = await faq_lookup("What is your return window?")
     assert result["success"] is True
@@ -310,15 +328,42 @@ async def test_faq_lookup_matches_keyword() -> None:
     assert result["error"] is None
 
 
-@pytest.mark.skip(reason="faq_lookup_impl not yet implemented in triage_orchestrator")
 @pytest.mark.asyncio
 async def test_faq_lookup_no_match() -> None:
-    from app_agents.triage_orchestrator import faq_lookup_impl as faq_lookup
+    from tools.tracking_tools import RAW_FAQ_LOOKUP as faq_lookup
 
     result = await faq_lookup("How do I reset my password?")
     assert result["success"] is False
     assert result["matched_keyword"] is None
     assert result["error"] is not None
+
+
+@pytest.mark.asyncio
+async def test_faq_lookup_empty_query() -> None:
+    from tools.tracking_tools import RAW_FAQ_LOOKUP as faq_lookup
+
+    result = await faq_lookup("")
+    assert result["success"] is False
+    assert result["error"] is not None
+
+
+@pytest.mark.asyncio
+async def test_faq_lookup_output_contract() -> None:
+    from tools.tracking_tools import RAW_FAQ_LOOKUP as faq_lookup
+
+    result = await faq_lookup("refund status")
+    expected_keys = {"success", "matched_keyword", "answer", "confidence", "error"}
+    assert set(result.keys()) == expected_keys
+
+
+@pytest.mark.asyncio
+async def test_faq_lookup_multiple_keywords() -> None:
+    """FAQ lookup should match the most relevant keyword."""
+    from tools.tracking_tools import RAW_FAQ_LOOKUP as faq_lookup
+
+    result = await faq_lookup("How do I track my shipping order?")
+    assert result["success"] is True
+    assert result["matched_keyword"] in ("tracking", "shipping")
 
 
 # ---------------------------------------------------------------------------
