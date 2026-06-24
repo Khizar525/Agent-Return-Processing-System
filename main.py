@@ -108,6 +108,7 @@ class ResolutionResponse(BaseModel):
     session_id: str
     resolution: dict | str
     agent_chain: list[str]
+    tool_results: dict | None = None
 
 
 @app.get("/")

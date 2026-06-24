@@ -581,11 +581,31 @@ async function sendMessage() {
     // Show routing steps
     renderRouting(data);
 
-    // Format response
-    const resolution = typeof data.resolution === 'string' ? data.resolution : JSON.stringify(data.resolution, null, 2);
-    const intentBadge = `<span class="badge">${data.resolution?.intent || 'processed'}</span>`;
+    // Build response message
+    let html = '';
+    const intent = data.resolution?.intent || 'processed';
+    const action = data.suggested_action || data.resolution?.suggested_action || '';
+
+    // Show intent + action summary
+    html += `<div style="margin-bottom:8px"><strong>Intent:</strong> ${escapeHtml(intent)}</div>`;
+    if (action) html += `<div style="margin-bottom:12px;color:var(--text3)">${escapeHtml(action)}</div>`;
+
+    // Show tool results if present
+    if (data.tool_results && Object.keys(data.tool_results).length > 0) {
+      for (const [tool, result] of Object.entries(data.tool_results)) {
+        html += `<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px">`;
+        html += `<div style="font-size:0.75rem;color:var(--accent);font-weight:600;margin-bottom:6px">🔧 ${escapeHtml(tool)}</div>`;
+        html += `<pre style="white-space:pre-wrap;margin:0;font-size:0.8rem;color:var(--text2)">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`;
+        html += `</div>`;
+      }
+    } else {
+      // Show raw resolution if no tool results
+      html += `<pre style="white-space:pre-wrap;margin:0;font-size:0.85rem">${escapeHtml(JSON.stringify(data.resolution, null, 2))}</pre>`;
+    }
+
+    const intentBadge = `<span class="badge">${intent}</span>`;
     const chainBadge = `<span class="badge">${data.agent_chain?.join(' → ') || 'system'}</span>`;
-    addMessage(`<pre style="white-space:pre-wrap;margin:0;font-size:0.85rem">${escapeHtml(typeof data.resolution === 'object' ? JSON.stringify(data.resolution, null, 2) : resolution)}</pre>`, 'agent', intentBadge + chainBadge);
+    addMessage(html, 'agent', intentBadge + chainBadge);
 
   } catch (err) {
     typing.remove();
@@ -624,28 +644,39 @@ function addRoutingStep(icon, label, detail, time) {
 
 function renderRouting(data) {
   clearRouting();
-  const t0 = Date.now();
   addRoutingStep('triage', 'Triage Orchestrator', `Intent: <strong>${data.resolution?.intent || 'unknown'}</strong>`, '0ms');
 
-  setTimeout(() => {
-    const chain = data.agent_chain || [];
-    chain.forEach((agent, i) => {
-      if (agent === 'TriageOrchestrator') return;
-      const isTool = ['tracking_lookup', 'faq_lookup', 'get_customer_profile'].includes(agent);
+  // Show tool calls from tool_results
+  if (data.tool_results && Object.keys(data.tool_results).length > 0) {
+    let delay = 200;
+    for (const [tool, result] of Object.entries(data.tool_results)) {
+      const success = result?.success !== false;
+      const detail = success
+        ? `✅ ${tool.replace(/_/g, ' ')} — returned data`
+        : `❌ ${tool.replace(/_/g, ' ')} — ${result?.error || 'failed'}`;
       setTimeout(() => {
-        addRoutingStep(
-          isTool ? 'tool' : 'handoff',
-          agent.replace(/_/g, ' '),
-          isTool ? 'Tool call — context stays with orchestrator' : 'Handoff — specialist takes full ownership',
-          `${(i + 1) * 120}ms`
-        );
-      }, (i) * 120);
-    });
-
+        addRoutingStep('tool', tool.replace(/_/g, ' '), detail, `${delay}ms`);
+      }, delay);
+      delay += 150;
+    }
     setTimeout(() => {
-      addRoutingStep('guard', 'Resolution', `Session: ${data.session_id?.slice(0, 8) || '—'}...`, `${chain.length * 120 + 80}ms`);
-    }, chain.length * 120);
-  }, 200);
+      addRoutingStep('guard', 'Resolution', `Session: ${data.session_id?.slice(0, 8) || '—'}...`, `${delay}ms`);
+    }, delay);
+  } else {
+    // Show agent chain for handoffs
+    setTimeout(() => {
+      const chain = data.agent_chain || [];
+      chain.forEach((agent, i) => {
+        if (agent === 'TriageOrchestrator') return;
+        setTimeout(() => {
+          addRoutingStep('handoff', agent.replace(/_/g, ' '), 'Handoff — specialist takes full ownership', `${(i + 1) * 120}ms`);
+        }, i * 120);
+      });
+      setTimeout(() => {
+        addRoutingStep('guard', 'Resolution', `Session: ${data.session_id?.slice(0, 8) || '—'}...`, `${chain.length * 120 + 80}ms`);
+      }, chain.length * 120);
+    }, 200);
+  }
 }
 
 // ── Scenario Runner ─────────────────────────────────────────────
