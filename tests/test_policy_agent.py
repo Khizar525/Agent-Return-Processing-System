@@ -597,16 +597,16 @@ class TestSentimentMonitor:
 
     @pytest.mark.asyncio
     async def test_legal_keywords_and_all_caps(self) -> None:
-        """ALL CAPS (0.3) + legal (0.3) + distress (0.2) = 0.8 → not triggered (0.8 not > 0.8)."""
+        """ALL CAPS (0.3) + legal (0.4) + distress (0.2) = 0.9 → triggered."""
         msg = "I AM GOING TO SUE YOU THIS IS OUTRAGEOUS"
         r = await sentiment_monitor(None, None, msg)
-        # ALL_CAPS(0.3) + legal(0.3) + distress(0.2) = 0.8
-        assert r.output_info["score"] == 0.8
-        assert r.tripwire_triggered is False
+        # ALL_CAPS(0.3) + legal(0.4) + distress(0.2) = 0.9
+        assert r.output_info["score"] == 0.9
+        assert r.tripwire_triggered is True
 
     @pytest.mark.asyncio
     async def test_above_threshold_escalates(self) -> None:
-        """ALL CAPS (0.3) + legal (0.3) + distress (0.2) + profanity (0.2) = 1.0 → triggered."""
+        """ALL CAPS (0.3) + legal (0.4) + distress (0.2) + profanity (0.2) = 1.1 → clamped to 1.0 → triggered."""
         msg = "I AM A FUCKING FURIOUS I WILL SUE YOUR COMPANY!!!"
         r = await sentiment_monitor(None, None, msg)
         assert r.output_info["score"] > 0.8
@@ -633,11 +633,11 @@ class TestSentimentMonitor:
 
     @pytest.mark.asyncio
     async def test_boundary_exactly_threshold(self) -> None:
-        """Score exactly 0.8 must NOT trigger (> not >=)."""
+        """ALL CAPS (0.3) + legal (0.4) + distress (0.2) = 0.9 → triggered (>= threshold)."""
         msg = "I AM GOING TO SUE YOUR COMPANY THIS IS UNACCEPTABLE"
         r = await sentiment_monitor(None, None, msg)
-        assert r.output_info["score"] == 0.8
-        assert r.tripwire_triggered is False
+        assert r.output_info["score"] == 0.9
+        assert r.tripwire_triggered is True
 
     @pytest.mark.asyncio
     async def test_profanity_only(self) -> None:
@@ -816,7 +816,7 @@ class TestPolicyAgent:
         assert policy_agent.name == "PolicyAgent"
 
     def test_agent_model(self) -> None:
-        assert policy_agent.model == "deepseek-v4-flash-free"
+        assert policy_agent.model == "openai/gpt-oss-120b:free"
 
     def test_agent_has_tools(self) -> None:
         assert len(policy_agent.tools) >= 1

@@ -180,19 +180,35 @@ async def run_refund_cap(text: str) -> str:
 
 
 async def run_agent(text: str) -> str:
-    from agents import Runner
-    from app_agents.policy_agent import policy_agent
+    from app_agents.triage_orchestrator import handle_customer_message
 
-    order_id = detect_order_id(text) or "ORD-001"
     customer_id = detect_customer_id(text) or "CUST-001"
+    order_id = detect_order_id(text)
 
-    prompt = f"Customer {customer_id} asks about order {order_id}: '{text}'. Validate return eligibility."
     try:
-        r = await Runner.run(policy_agent, input=prompt)
-        output = r.final_output
-        if isinstance(output, str):
-            return f"[AI] Policy Agent says:\n{output}"
-        return f"[AI] Policy Agent says:\n{json.dumps(output, indent=2)}"
+        result = await handle_customer_message(
+            message=text,
+            customer_id=customer_id,
+            channel="cli",
+        )
+        intent = result["intent"]
+        reasoning = result.get("reasoning", "")
+        action = result.get("suggested_action", "")
+        resolution = result.get("resolution", {})
+
+        lines = [f"[AI] Intent: {intent}"]
+        if reasoning:
+            lines.append(f"Reasoning: {reasoning}")
+        if action:
+            lines.append(f"Action: {action}")
+
+        # Handle Pydantic models in resolution
+        if hasattr(resolution, "model_dump"):
+            resolution = resolution.model_dump()
+        if resolution:
+            lines.append(f"Details: {json.dumps(resolution, indent=2)}")
+
+        return "\n".join(lines)
     except Exception as e:
         return f"[!] Agent error: {e}. Trying tool directly...\n{await run_check_return(order_id, customer_id, text)}"
 

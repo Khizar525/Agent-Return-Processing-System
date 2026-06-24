@@ -3,7 +3,7 @@ Sentiment Monitor — Passive Input Guardrail
 Owner: Member 2
 
 Scores every inbound message for CSAT risk (0.0 – 1.0).
-If score > SENTIMENT_ESCALATION_THRESHOLD (default 0.8, set in .env),
+If score >= SENTIMENT_ESCALATION_THRESHOLD (default 0.8, set in .env),
 override the Triage Orchestrator routing and send directly to the
 Escalation Agent.
 
@@ -28,7 +28,10 @@ THRESHOLD = float(os.environ.get("SENTIMENT_ESCALATION_THRESHOLD", "0.8"))
 
 LEGAL_KEYWORDS = {"lawyer", "sue", "court", "attorney", "legal", "litigation"}
 DISTRESS_KEYWORDS = {"crying", "desperate", "ruined", "outrageous", "unacceptable", "furious"}
-PROFANITY_PATTERN = re.compile(r"\b(fuck|shit|crap|damn|bastard|asshole)\b", re.IGNORECASE)
+PROFANITY_PATTERN = re.compile(
+    r"\b(f[\W_]*u[\W_]*c[\W_]*k|s[\W_]*h[\W_]*i[\W_]*t|crap|damn|bastard|asshole)\b",
+    re.IGNORECASE,
+)
 EXCLAMATION_PATTERN = re.compile(r"[!?]{2,}")
 
 
@@ -45,7 +48,7 @@ async def _sentiment_monitor_impl(ctx: Any, agent: Any, message: Any) -> Guardra
         score += 0.3
 
     if any(kw in lower for kw in LEGAL_KEYWORDS):
-        score += 0.3
+        score += 0.4
 
     if any(kw in lower for kw in DISTRESS_KEYWORDS):
         score += 0.2
@@ -57,8 +60,8 @@ async def _sentiment_monitor_impl(ctx: Any, agent: Any, message: Any) -> Guardra
     if exclamation_matches:
         score += min(0.2, len(exclamation_matches) * 0.1)
 
-    score = min(score, 1.0)
-    escalate = score > THRESHOLD
+    score = min(round(score, 10), 1.0)
+    escalate = score >= THRESHOLD
 
     return GuardrailFunctionOutput(
         tripwire_triggered=escalate,
