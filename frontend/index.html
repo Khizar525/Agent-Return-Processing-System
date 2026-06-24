@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent 01 — Customer Support & Returns Orchestrator</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--card:#1a1a2e;--border:#2a2a3e;
+  --accent:#6c63ff;--accent2:#00d4aa;--accent3:#ff6b6b;--accent4:#ffd93d;
+  --text:#e8e8f0;--text2:#9898b0;--text3:#6868a0;
+  --glass:rgba(26,26,46,0.6);--glass-border:rgba(108,99,255,0.15);
+  --radius:16px;--radius-sm:10px;
+  --shadow:0 8px 32px rgba(0,0,0,0.4);
+  --gradient:linear-gradient(135deg,#6c63ff 0%,#00d4aa 50%,#ff6b6b 100%);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+
+/* ── Animated Background ──────────────────────────────────────── */
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 20% 50%,rgba(108,99,255,0.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(0,212,170,0.06) 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(255,107,107,0.05) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+/* ── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+
+/* ── Typography ───────────────────────────────────────────────── */
+h1{font-size:clamp(2.5rem,6vw,4rem);font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1}
+h2{font-size:1.8rem;font-weight:700;color:var(--text)}
+h3{font-size:1.2rem;font-weight:600;color:var(--text)}
+p{color:var(--text2)}
+a{color:var(--accent);text-decoration:none;transition:color .2s}
+a:hover{color:var(--accent2)}
+code{font-family:'JetBrains Mono','Fira Code',monospace;font-size:0.9em;background:rgba(108,99,255,0.15);padding:2px 8px;border-radius:5px;color:var(--accent)}
+
+/* ── Layout ───────────────────────────────────────────────────── */
+.container{max-width:1200px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+section{padding:80px 0}
+
+/* ── Nav ──────────────────────────────────────────────────────── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(20px);background:rgba(10,10,15,0.8);border-bottom:1px solid var(--glass-border);padding:14px 0}
+nav .container{display:flex;align-items:center;justify-content:space-between}
+nav .logo{font-weight:800;font-size:1.2rem;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+nav .links{display:flex;gap:28px}
+nav .links a{color:var(--text2);font-size:0.9rem;font-weight:500;transition:color .2s}
+nav .links a:hover{color:var(--text)}
+
+/* ── Hero ─────────────────────────────────────────────────────── */
+.hero{min-height:100vh;display:flex;align-items:center;padding-top:80px}
+.hero-content{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(108,99,255,0.15);border:1px solid var(--glass-border);border-radius:999px;padding:6px 16px;font-size:0.8rem;color:var(--accent);margin-bottom:24px;font-weight:600}
+.hero-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.hero h1{margin-bottom:20px}
+.hero p{font-size:1.1rem;margin-bottom:32px;max-width:500px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
+.stat-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:16px;text-align:center}
+.stat-card .num{font-size:1.8rem;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-card .label{font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+
+/* ── Hero Visual (Architecture Preview) ───────────────────────── */
+.hero-visual{position:relative}
+.arch-preview{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow)}
+.arch-preview .node{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;margin:4px;font-size:0.85rem;font-weight:600;transition:all .3s}
+.arch-preview .node:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 20px rgba(108,99,255,0.2)}
+.arch-preview .node .icon{font-size:1.1rem}
+.arch-preview .node.active{border-color:var(--accent2);box-shadow:0 0 20px rgba(0,212,170,0.2)}
+.flow-line{text-align:center;color:var(--text3);font-size:1.2rem;margin:8px 0}
+
+/* ── Buttons ──────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:var(--radius-sm);font-weight:600;font-size:0.95rem;cursor:pointer;border:none;transition:all .2s;font-family:inherit}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 20px rgba(108,99,255,0.3)}
+.btn-primary:hover{background:#5a52e0;transform:translateY(-1px);box-shadow:0 6px 24px rgba(108,99,255,0.4)}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:8px 16px;font-size:0.85rem}
+
+/* ── Section Headers ──────────────────────────────────────────── */
+.section-header{text-align:center;margin-bottom:60px}
+.section-header h2{margin-bottom:12px}
+.section-header p{max-width:600px;margin:0 auto}
+.section-tag{display:inline-block;background:rgba(108,99,255,0.1);color:var(--accent);font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;padding:6px 14px;border-radius:999px;margin-bottom:16px}
+
+/* ── Architecture Diagram ─────────────────────────────────────── */
+.arch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.arch-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:28px;transition:all .3s;position:relative;overflow:hidden}
+.arch-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient);opacity:0;transition:opacity .3s}
+.arch-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 8px 40px rgba(108,99,255,0.15)}
+.arch-card:hover::before{opacity:1}
+.arch-card .card-icon{font-size:2rem;margin-bottom:16px}
+.arch-card h3{margin-bottom:8px}
+.arch-card p{font-size:0.9rem;margin-bottom:16px}
+.arch-card .tags{display:flex;flex-wrap:wrap;gap:6px}
+.arch-card .tag{font-size:0.7rem;background:rgba(108,99,255,0.1);color:var(--accent);padding:4px 10px;border-radius:999px;font-weight:600}
+.arch-card .tag.green{background:rgba(0,212,170,0.1);color:var(--accent2)}
+.arch-card .tag.red{background:rgba(255,107,107,0.1);color:var(--accent3)}
+.arch-card .tag.yellow{background:rgba(255,217,61,0.1);color:var(--accent4)}
+
+/* ── Live Chat ────────────────────────────────────────────────── */
+.chat-section{background:linear-gradient(180deg,transparent 0%,rgba(108,99,255,0.03) 50%,transparent 100%)}
+.chat-layout{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+.chat-container{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.chat-header{background:var(--card);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;gap:12px}
+.chat-header .status-dot{width:10px;height:10px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite}
+.chat-header .title{font-weight:600;font-size:0.95rem}
+.chat-header .subtitle{font-size:0.75rem;color:var(--text3)}
+.chat-messages{height:420px;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+.chat-msg{max-width:85%;padding:12px 16px;border-radius:14px;font-size:0.9rem;line-height:1.5;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.chat-msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.chat-msg.agent{align-self:flex-start;background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px}
+.chat-msg.system{align-self:center;background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.2);color:var(--accent2);font-size:0.8rem;text-align:center;border-radius:999px;padding:6px 16px}
+.chat-msg .meta{font-size:0.7rem;color:var(--text3);margin-top:6px;display:flex;gap:8px}
+.chat-msg .meta .badge{background:rgba(108,99,255,0.2);color:var(--accent);padding:2px 8px;border-radius:999px;font-weight:600}
+.chat-input-area{border-top:1px solid var(--border);padding:16px 20px;display:flex;gap:10px}
+.chat-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-size:0.9rem;font-family:inherit;outline:none;transition:border-color .2s}
+.chat-input:focus{border-color:var(--accent)}
+.chat-input::placeholder{color:var(--text3)}
+.chat-send{background:var(--accent);border:none;border-radius:var(--radius-sm);padding:12px 20px;color:#fff;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+.chat-send:hover{background:#5a52e0}
+.chat-send:disabled{opacity:0.4;cursor:not-allowed}
+
+/* ── Routing Panel ────────────────────────────────────────────── */
+.routing-panel{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:24px}
+.routing-panel h3{margin-bottom:16px;font-size:1rem}
+.routing-log{max-height:420px;overflow-y:auto}
+.routing-entry{padding:12px;border-bottom:1px solid var(--border);animation:fadeIn .3s ease}
+.routing-entry:last-child{border-bottom:none}
+.routing-entry .step{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.routing-entry .step-icon{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700}
+.routing-entry .step-icon.triage{background:rgba(108,99,255,0.2);color:var(--accent)}
+.routing-entry .step-icon.tool{background:rgba(0,212,170,0.2);color:var(--accent2)}
+.routing-entry .step-icon.handoff{background:rgba(255,107,107,0.2);color:var(--accent3)}
+.routing-entry .step-icon.guard{background:rgba(255,217,61,0.2);color:var(--accent4)}
+.routing-entry .step-label{font-weight:600;font-size:0.85rem}
+.routing-entry .step-time{font-size:0.7rem;color:var(--text3);margin-left:auto}
+.routing-entry .step-detail{font-size:0.8rem;color:var(--text3);padding-left:32px}
+
+/* ── Scenario Cards ───────────────────────────────────────────── */
+.scenarios-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.scenario-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:20px;cursor:pointer;transition:all .3s}
+.scenario-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 30px rgba(108,99,255,0.15)}
+.scenario-card.active{border-color:var(--accent2);box-shadow:0 0 20px rgba(0,212,170,0.15)}
+.scenario-card .scenario-icon{font-size:1.5rem;margin-bottom:12px}
+.scenario-card h4{font-size:0.95rem;margin-bottom:6px}
+.scenario-card p{font-size:0.8rem;color:var(--text3);margin-bottom:12px}
+.scenario-card .scenario-tag{font-size:0.7rem;padding:4px 10px;border-radius:999px;font-weight:600;display:inline-block}
+.scenario-card .scenario-tag.eligible{background:rgba(0,212,170,0.15);color:var(--accent2)}
+.scenario-card .scenario-tag.rejected{background:rgba(255,107,107,0.15);color:var(--accent3)}
+.scenario-card .scenario-tag.escalated{background:rgba(255,217,61,0.15);color:var(--accent4)}
+
+/* ── Guardrail Section ────────────────────────────────────────── */
+.guardrail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+.guardrail-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:28px;position:relative;overflow:hidden}
+.guardrail-card::after{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:0 0 0 80px;opacity:0.1}
+.guardrail-card.pii::after{background:var(--accent3)}
+.guardrail-card.sentiment::after{background:var(--accent4)}
+.guardrail-card.refund::after{background:var(--accent2)}
+.guardrail-card.brand::after{background:var(--accent)}
+.guardrail-card h3{margin-bottom:8px}
+.guardrail-card p{font-size:0.85rem;margin-bottom:16px}
+.guardrail-demo{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-top:12px}
+.guardrail-demo .input-row{display:flex;gap:8px;margin-bottom:12px}
+.guardrail-demo input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.85rem;font-family:inherit;outline:none}
+.guardrail-demo input:focus{border-color:var(--accent)}
+.guardrail-demo .output{background:var(--bg);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;min-height:40px;color:var(--text2)}
+.guardrail-demo .output .score{font-weight:700}
+.guardrail-demo .output .score.high{color:var(--accent3)}
+.guardrail-demo .output .score.medium{color:var(--accent4)}
+.guardrail-demo .output .score.low{color:var(--accent2)}
+
+/* ── Tech Stack ───────────────────────────────────────────────── */
+.tech-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.tech-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-sm);padding:20px;text-align:center;transition:all .3s}
+.tech-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.tech-card .tech-icon{font-size:2rem;margin-bottom:8px}
+.tech-card h4{font-size:0.9rem;margin-bottom:4px}
+.tech-card p{font-size:0.75rem;color:var(--text3)}
+
+/* ── Footer ───────────────────────────────────────────────────── */
+footer{text-align:center;padding:40px 0;border-top:1px solid var(--border);color:var(--text3);font-size:0.85rem}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media(max-width:900px){
+  .hero-content,.chat-layout{grid-template-columns:1fr}
+  .arch-grid{grid-template-columns:1fr}
+  .guardrail-grid{grid-template-columns:1fr}
+  .tech-grid{grid-template-columns:repeat(2,1fr)}
+  nav .links{display:none}
+}
+
+/* ── Typing Animation ─────────────────────────────────────────── */
+.typing-dots{display:inline-flex;gap:4px;padding:4px 0}
+.typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--text3);animation:typingBounce 1.4s infinite}
+.typing-dots span:nth-child(2){animation-delay:0.2s}
+.typing-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+/* ── Glow Effects ─────────────────────────────────────────────── */
+.glow{position:relative}
+.glow::after{content:'';position:absolute;top:-2px;left:-2px;right:-2px;bottom:-2px;background:var(--gradient);border-radius:inherit;z-index:-1;opacity:0;transition:opacity .3s;filter:blur(12px)}
+.glow:hover::after{opacity:0.3}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ─────────────────────────────────────────────── -->
+<nav>
+  <div class="container">
+    <div class="logo">Agent 01</div>
+    <div class="links">
+      <a href="#architecture">Architecture</a>
+      <a href="#demo">Live Demo</a>
+      <a href="#scenarios">Scenarios</a>
+      <a href="#guardrails">Guardrails</a>
+      <a href="#stack">Stack</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero ───────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <div>
+        <div class="hero-badge"><span class="dot"></span> Production Ready</div>
+        <h1>Customer Support & Returns Orchestrator</h1>
+        <p>A multi-agent AI system that intelligently triages, routes, and resolves customer support interactions with built-in guardrails, fraud detection, and human escalation.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <a href="#demo" class="btn btn-primary">Try Live Demo</a>
+          <a href="#architecture" class="btn btn-outline">View Architecture</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-card"><div class="num">6</div><div class="label">AI Agents</div></div>
+          <div class="stat-card"><div class="num">10</div><div class="label">Tools</div></div>
+          <div class="stat-card"><div class="num">4</div><div class="label">Guardrails</div></div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="arch-preview">
+          <div style="text-align:center;margin-bottom:16px;font-size:0.8rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Agent Flow</div>
+          <div style="text-align:center">
+            <div class="node active" style="display:inline-flex"><span class="icon">📨</span> Inbound Message</div>
+          </div>
+          <div class="flow-line">↓</div>
+          <div style="text-align:center">
+            <div class="node" style="display:inline-flex;border-color:var(--accent)"><span class="icon">🧠</span> Triage Orchestrator</div>
+          </div>
+          <div class="flow-line">↓ tool call / handoff ↓</div>
+          <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:8px">
+            <div class="node"><span class="icon">📋</span> Policy</div>
+            <div class="node"><span class="icon">💳</span> Billing</div>
+            <div class="node"><span class="icon">🚨</span> Escalation</div>
+          </div>
+          <div class="flow-line">↓</div>
+          <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
+            <div class="node" style="font-size:0.75rem"><span class="icon">🔍</span> Tracking</div>
+            <div class="node" style="font-size:0.75rem"><span class="icon">💬</span> FAQ</div>
+            <div class="node" style="font-size:0.75rem"><span class="icon">🛡️</span> Guardrails</div>
+          </div>
+          <div class="flow-line">↓</div>
+          <div style="text-align:center">
+            <div class="node" style="display:inline-flex;border-color:var(--accent2)"><span class="icon">✅</span> Resolution</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Architecture ───────────────────────────────────────────── -->
+<section id="architecture">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Architecture</div>
+      <h2>Manager + Handoff Hybrid</h2>
+      <p>Tool calls keep context with the orchestrator. Handoffs give specialists full ownership of complex cases.</p>
+    </div>
+    <div class="arch-grid">
+      <div class="arch-card">
+        <div class="card-icon">🧠</div>
+        <h3>Triage Orchestrator</h3>
+        <p>Entry point for all inbound messages. Classifies intent and routes via tool calls or handoffs.</p>
+        <div class="tags">
+          <span class="tag">tracking_lookup</span>
+          <span class="tag">faq_lookup</span>
+          <span class="tag">get_customer_profile</span>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="card-icon">📋</div>
+        <h3>Policy Agent</h3>
+        <p>Evaluates return eligibility against business rules, fraud signals, and customer history.</p>
+        <div class="tags">
+          <span class="tag">check_return_policy</span>
+          <span class="tag green">handoff</span>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="card-icon">🔧</div>
+        <h3>Resolution Agent</h3>
+        <p>Executes refunds, creates return labels, and places replacement orders.</p>
+        <div class="tags">
+          <span class="tag">process_refund</span>
+          <span class="tag">create_return_label</span>
+          <span class="tag">create_replacement_order</span>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="card-icon">💳</div>
+        <h3>Billing Agent</h3>
+        <p>Handles billing disputes and processes refunds with cap enforcement.</p>
+        <div class="tags">
+          <span class="tag">process_refund</span>
+          <span class="tag red">$500 cap</span>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="card-icon">💬</div>
+        <h3>Communication Agent</h3>
+        <p>Sends branded notifications across email, SMS, WhatsApp, and web channels.</p>
+        <div class="tags">
+          <span class="tag">send_notification</span>
+          <span class="tag yellow">brand voice</span>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="card-icon">🚨</div>
+        <h3>Escalation Agent</h3>
+        <p>Creates human tickets for complex cases and logs resolution outcomes.</p>
+        <div class="tags">
+          <span class="tag">create_human_ticket</span>
+          <span class="tag">log_resolution</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Live Demo ──────────────────────────────────────────────── -->
+<section id="demo" class="chat-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Interactive Demo</div>
+      <h2>Try It Live</h2>
+      <p>Send messages to the multi-agent system and watch the routing decisions in real time.</p>
+    </div>
+    <div class="chat-layout">
+      <div>
+        <div class="chat-container">
+          <div class="chat-header">
+            <span class="status-dot"></span>
+            <div>
+              <div class="title">Agent 01 Support</div>
+              <div class="subtitle">Connected to live backend</div>
+            </div>
+          </div>
+          <div class="chat-messages" id="chatMessages">
+            <div class="chat-msg system">System online — ready to process messages</div>
+          </div>
+          <div class="chat-input-area">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Type a message..." autocomplete="off">
+            <button class="chat-send" id="chatSend" onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">
+          <button class="btn btn-sm btn-outline" onclick="sendQuick('I want to return order ORD-001')">Return ORD-001</button>
+          <button class="btn btn-sm btn-outline" onclick="sendQuick('Check status of ORD-002')">Track ORD-002</button>
+          <button class="btn btn-sm btn-outline" onclick="sendQuick('I will sue you this is outrageous')">Legal Threat</button>
+          <button class="btn btn-sm btn-outline" onclick="sendQuick('My card is 4111-1111-1111-1111')">PII Test</button>
+          <button class="btn btn-sm btn-outline" onclick="sendQuick('Process a refund of $600')">Refund $600</button>
+        </div>
+      </div>
+      <div class="routing-panel">
+        <h3>📡 Routing Pipeline</h3>
+        <div class="routing-log" id="routingLog">
+          <div style="text-align:center;color:var(--text3);padding:40px 0;font-size:0.85rem">
+            Send a message to see routing decisions
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Scenarios ──────────────────────────────────────────────── -->
+<section id="scenarios">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Test Scenarios</div>
+      <h2>Pre-Built Demo Scenarios</h2>
+      <p>Click any scenario to run it through the live system.</p>
+    </div>
+    <div class="scenarios-grid">
+      <div class="scenario-card" onclick="runScenario('return', 'CUST-001', 'I want to return my order ORD-001')">
+        <div class="scenario-icon">📦</div>
+        <h4>Happy Path — Return</h4>
+        <p>Customer returns an item within the 30-day window.</p>
+        <span class="scenario-tag eligible">Eligible</span>
+      </div>
+      <div class="scenario-card" onclick="runScenario('late', 'CUST-001', 'I want to return order ORD-002')">
+        <div class="scenario-icon">⏰</div>
+        <h4>Window Exceeded</h4>
+        <p>Customer tries to return after 45 days — past the limit.</p>
+        <span class="scenario-tag rejected">Rejected</span>
+      </div>
+      <div class="scenario-card" onclick="runScenario('damaged', 'CUST-003', 'My order ORD-004 arrived damaged')">
+        <div class="scenario-icon">💔</div>
+        <h4>Damaged Item</h4>
+        <p>Customer received a damaged item — eligible for replacement.</p>
+        <span class="scenario-tag eligible">Replacement</span>
+      </div>
+      <div class="scenario-card" onclick="runScenario('fraud', 'CUST-004', 'I want to return order ORD-005')">
+        <div class="scenario-icon">🚩</div>
+        <h4>Fraud Flag</h4>
+        <p>Customer has chargeback history — request blocked.</p>
+        <span class="scenario-tag escalated">Blocked</span>
+      </div>
+      <div class="scenario-card" onclick="runScenario('digital', 'CUST-002', 'I want to return order ORD-003')">
+        <div class="scenario-icon">💿</div>
+        <h4>Excluded — Digital Goods</h4>
+        <p>Digital downloads are non-returnable per policy.</p>
+        <span class="scenario-tag rejected">Excluded</span>
+      </div>
+      <div class="scenario-card" onclick="runScenario('tracking', 'CUST-001', 'Where is my order ORD-001?')">
+        <div class="scenario-icon">🚚</div>
+        <h4>Order Tracking</h4>
+        <p>Customer asks for delivery status via tracking lookup.</p>
+        <span class="scenario-tag eligible">Tool Call</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Guardrails ─────────────────────────────────────────────── -->
+<section id="guardrails">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Safety Layer</div>
+      <h2>Guardrails</h2>
+      <p>Automated checks that protect customers and the business at every step.</p>
+    </div>
+    <div class="guardrail-grid">
+      <!-- PII Scrubber -->
+      <div class="guardrail-card pii">
+        <h3>🔒 PII Scrubber</h3>
+        <p>Detects and redacts credit card numbers, SSNs, and bank account details from all inbound messages.</p>
+        <div class="guardrail-demo">
+          <div class="input-row">
+            <input type="text" id="piiInput" placeholder="Try: My card is 4111-1111-1111-1111" value="My card is 4111-1111-1111-1111">
+            <button class="btn btn-sm btn-primary" onclick="testPII()">Test</button>
+          </div>
+          <div class="output" id="piiOutput">Click "Test" to run PII detection</div>
+        </div>
+      </div>
+      <!-- Sentiment -->
+      <div class="guardrail-card sentiment">
+        <h3>😤 Sentiment Monitor</h3>
+        <p>Scores messages 0.0–1.0 for distress. Legal threats (ALL CAPS + legal keywords) trigger escalation at 0.8.</p>
+        <div class="guardrail-demo">
+          <div class="input-row">
+            <input type="text" id="sentInput" placeholder="Try: I WILL SUE YOU!!!" value="I WILL SUE YOU!!!">
+            <button class="btn btn-sm btn-primary" onclick="testSentiment()">Test</button>
+          </div>
+          <div class="output" id="sentOutput">Click "Test" to score sentiment</div>
+        </div>
+      </div>
+      <!-- Refund Cap -->
+      <div class="guardrail-card refund">
+        <h3>💰 Refund Cap</h3>
+        <p>Enforces a $500 maximum auto-approved refund. Higher amounts require human approval.</p>
+        <div class="guardrail-demo">
+          <div class="input-row">
+            <input type="text" id="refundInput" placeholder="Try: 600" value="600">
+            <button class="btn btn-sm btn-primary" onclick="testRefundCap()">Test</button>
+          </div>
+          <div class="output" id="refundOutput">Click "Test" to check refund cap</div>
+        </div>
+      </div>
+      <!-- Brand Voice -->
+      <div class="guardrail-card brand">
+        <h3>🎨 Brand Voice</h3>
+        <p>Ensures outbound messages stay within brand guidelines — no prohibited language, 150-word limit.</p>
+        <div class="guardrail-demo">
+          <div class="input-row">
+            <input type="text" id="brandInput" placeholder="Try: We are SO sorry for the inconvenience!" value="We are SO sorry for the inconvenience!">
+            <button class="btn btn-sm btn-primary" onclick="testBrand()">Test</button>
+          </div>
+          <div class="output" id="brandOutput">Click "Test" to check brand voice</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Tech Stack ─────────────────────────────────────────────── -->
+<section id="stack">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Technology</div>
+      <h2>Built With</h2>
+    </div>
+    <div class="tech-grid">
+      <div class="tech-card"><div class="tech-icon">⚡</div><h4>FastAPI</h4><p>Async Python backend</p></div>
+      <div class="tech-card"><div class="tech-icon">🤖</div><h4>OpenAI Agents SDK</h4><p>Multi-agent orchestration</p></div>
+      <div class="tech-card"><div class="tech-icon">🧠</div><h4>GPT-OSS-120B</h4><p>LLM via OpenRouter (free)</p></div>
+      <div class="tech-card"><div class="tech-icon">🐘</div><h4>PostgreSQL</h4><p>Customer & order data</p></div>
+      <div class="tech-card"><div class="tech-icon">🔴</div><h4>Redis</h4><p>Session state management</p></div>
+      <div class="tech-card"><div class="tech-icon">📨</div><h4>Kafka</h4><p>Multi-channel ingestion</p></div>
+      <div class="tech-card"><div class="tech-icon">📊</div><h4>Datadog</h4><p>APM & monitoring</p></div>
+      <div class="tech-card"><div class="tech-icon">☸️</div><h4>Kubernetes</h4><p>Container orchestration</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>Agent 01 — Customer Support & Returns Orchestrator</p>
+    <p style="margin-top:4px;font-size:0.8rem">Built with OpenAI Agents SDK • 6 Agents • 10 Tools • 4 Guardrails • 353 Tests Passing</p>
+  </div>
+</footer>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────
+const API_URL = 'http://localhost:8000';
+const CUSTOMER_ID = 'CUST-001';
+let sessionId = null;
+
+// ── Chat ────────────────────────────────────────────────────────
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+
+chatInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+
+function addMessage(text, type, meta) {
+  const div = document.createElement('div');
+  div.className = `chat-msg ${type}`;
+  div.innerHTML = text + (meta ? `<div class="meta">${meta}</div>` : '');
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return div;
+}
+
+function addTyping() {
+  return addMessage('<div class="typing-dots"><span></span><span></span><span></span></div>', 'agent');
+}
+
+async function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text) return;
+  chatInput.value = '';
+  document.getElementById('chatSend').disabled = true;
+
+  addMessage(text, 'user');
+  const typing = addTyping();
+  clearRouting();
+
+  try {
+    const res = await fetch(`${API_URL}/webhook/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer_id: CUSTOMER_ID,
+        channel: 'web_chat',
+        raw_message: text,
+        session_id: sessionId
+      })
+    });
+
+    typing.remove();
+
+    if (!res.ok) {
+      addMessage(`Error: ${res.status} — ${res.statusText}`, 'system');
+      return;
+    }
+
+    const data = await res.json();
+    sessionId = data.session_id;
+
+    // Show routing steps
+    renderRouting(data);
+
+    // Format response
+    const resolution = typeof data.resolution === 'string' ? data.resolution : JSON.stringify(data.resolution, null, 2);
+    const intentBadge = `<span class="badge">${data.resolution?.intent || 'processed'}</span>`;
+    const chainBadge = `<span class="badge">${data.agent_chain?.join(' → ') || 'system'}</span>`;
+    addMessage(`<pre style="white-space:pre-wrap;margin:0;font-size:0.85rem">${escapeHtml(typeof data.resolution === 'object' ? JSON.stringify(data.resolution, null, 2) : resolution)}</pre>`, 'agent', intentBadge + chainBadge);
+
+  } catch (err) {
+    typing.remove();
+    addMessage(`Connection error — is the backend running on ${API_URL}?`, 'system');
+  }
+
+  document.getElementById('chatSend').disabled = false;
+  chatInput.focus();
+}
+
+function sendQuick(text) {
+  chatInput.value = text;
+  sendMessage();
+}
+
+// ── Routing Visualization ───────────────────────────────────────
+function clearRouting() {
+  document.getElementById('routingLog').innerHTML = '';
+}
+
+function addRoutingStep(icon, label, detail, time) {
+  const log = document.getElementById('routingLog');
+  const entry = document.createElement('div');
+  entry.className = 'routing-entry';
+  entry.innerHTML = `
+    <div class="step">
+      <div class="step-icon ${icon}">${icon === 'triage' ? '🧠' : icon === 'tool' ? '🔧' : icon === 'handoff' ? '🤝' : '🛡️'}</div>
+      <span class="step-label">${label}</span>
+      <span class="step-time">${time || ''}</span>
+    </div>
+    ${detail ? `<div class="step-detail">${detail}</div>` : ''}
+  `;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function renderRouting(data) {
+  clearRouting();
+  const t0 = Date.now();
+  addRoutingStep('triage', 'Triage Orchestrator', `Intent: <strong>${data.resolution?.intent || 'unknown'}</strong>`, '0ms');
+
+  setTimeout(() => {
+    const chain = data.agent_chain || [];
+    chain.forEach((agent, i) => {
+      if (agent === 'TriageOrchestrator') return;
+      const isTool = ['tracking_lookup', 'faq_lookup', 'get_customer_profile'].includes(agent);
+      setTimeout(() => {
+        addRoutingStep(
+          isTool ? 'tool' : 'handoff',
+          agent.replace(/_/g, ' '),
+          isTool ? 'Tool call — context stays with orchestrator' : 'Handoff — specialist takes full ownership',
+          `${(i + 1) * 120}ms`
+        );
+      }, (i) * 120);
+    });
+
+    setTimeout(() => {
+      addRoutingStep('guard', 'Resolution', `Session: ${data.session_id?.slice(0, 8) || '—'}...`, `${chain.length * 120 + 80}ms`);
+    }, chain.length * 120);
+  }, 200);
+}
+
+// ── Scenario Runner ─────────────────────────────────────────────
+async function runScenario(type, cid, msg) {
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  chatInput.value = '';
+  addMessage(msg, 'user');
+  const typing = addTyping();
+  clearRouting();
+
+  try {
+    const res = await fetch(`${API_URL}/webhook/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customer_id: cid, channel: 'web_chat', raw_message: msg, session_id: sessionId })
+    });
+    typing.remove();
+    if (!res.ok) { addMessage(`Error: ${res.status}`, 'system'); return; }
+    const data = await res.json();
+    sessionId = data.session_id;
+    renderRouting(data);
+    const intent = data.resolution?.intent || 'processed';
+    addMessage(`<pre style="white-space:pre-wrap;margin:0;font-size:0.85rem">${escapeHtml(JSON.stringify(data.resolution, null, 2))}</pre>`, 'agent', `<span class="badge">${intent}</span>`);
+  } catch (err) {
+    typing.remove();
+    addMessage(`Backend not reachable at ${API_URL}`, 'system');
+  }
+}
+
+// ── Guardrail Demos (local, no LLM needed) ─────────────────────
+function testPII() {
+  const text = document.getElementById('piiInput').value;
+  const patterns = [
+    { re: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, name: 'Credit Card' },
+    { re: /\b\d{3}-\d{2}-\d{4}\b/g, name: 'SSN' },
+    { re: /\b\d{8,17}\b/g, name: 'Bank Account' },
+  ];
+  let scrubbed = text;
+  let found = [];
+  patterns.forEach(p => {
+    if (p.re.test(text)) { found.push(p.name); scrubbed = scrubbed.replace(p.re, '[REDACTED]'); }
+  });
+  const el = document.getElementById('piiOutput');
+  if (found.length) {
+    el.innerHTML = `<span class="score high">PII Detected:</span> ${found.join(', ')}<br><br>Scrubbed: <strong>${escapeHtml(scrubbed)}</strong>`;
+  } else {
+    el.innerHTML = `<span class="score low">No PII detected</span>`;
+  }
+}
+
+function testSentiment() {
+  const text = document.getElementById('sentInput').value;
+  let score = 0;
+  const lower = text.toLowerCase();
+
+  if (text === text.toUpperCase() && text.length > 10) score += 0.3;
+  if (/\b(lawyer|sue|court|attorney|legal|litigation)\b/i.test(lower)) score += 0.4;
+  if (/\b(crying|desperate|ruined|outrageous|unacceptable|furious)\b/i.test(lower)) score += 0.2;
+  if (/\b(f[\W_]*u[\W_]*c[\W_]*k|s[\W_]*h[\W_]*i[\W_]*t|crap|damn|bastard|asshole)\b/i.test(lower)) score += 0.2;
+  if (/[!?]{2,}/.test(text)) score += 0.1;
+
+  score = Math.min(Math.round(score * 100) / 100, 1.0);
+  const escalate = score >= 0.8;
+  const el = document.getElementById('sentOutput');
+  const cls = score >= 0.8 ? 'high' : score >= 0.5 ? 'medium' : 'low';
+  el.innerHTML = `Score: <span class="score ${cls}">${score.toFixed(2)}</span> / 1.0<br>Escalate: <span class="score ${escalate ? 'high' : 'low'}">${escalate ? 'YES — trigger escalation' : 'No — within threshold'}</span>`;
+}
+
+function testRefundCap() {
+  const amount = parseFloat(document.getElementById('refundInput').value) || 0;
+  const cap = 500;
+  const blocked = amount > cap;
+  const el = document.getElementById('refundOutput');
+  el.innerHTML = blocked
+    ? `<span class="score high">BLOCKED</span> — $${amount.toFixed(2)} exceeds $${cap} cap<br>Requires human approval`
+    : `<span class="score low">APPROVED</span> — $${amount.toFixed(2)} is within $${cap} cap`;
+}
+
+function testBrand() {
+  const text = document.getElementById('brandInput').value;
+  const prohibited = ['unfortunately', 'policy states', 'as per our terms', 'we cannot'];
+  const flagged = prohibited.filter(p => text.toLowerCase().includes(p));
+  const words = text.split(/\s+/).length;
+  const overLimit = words > 150;
+  const el = document.getElementById('brandOutput');
+  let html = `Word count: <span class="score ${overLimit ? 'high' : 'low'}">${words}</span> / 150<br>`;
+  if (flagged.length) html += `Flagged phrases: <span class="score medium">${flagged.join(', ')}</span><br>`;
+  if (!flagged.length && !overLimit) html += `<span class="score low">Passes brand voice checks</span>`;
+  el.innerHTML = html;
+}
+
+// ── Utilities ───────────────────────────────────────────────────
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Auto-focus
+chatInput.focus();
+</script>
+</body>
+</html>

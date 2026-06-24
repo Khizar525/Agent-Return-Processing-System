@@ -4,6 +4,7 @@ FastAPI webhook receiver — entry point for all inbound channels.
 """
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 import os
@@ -35,6 +36,48 @@ try:
         # Force Chat Completions API (SDK defaults to Responses API which
         # not all providers support).
         set_default_openai_api("chat_completions")
+
+        # ── Provider compatibility layer ────────────────────────────────
+        # Free-tier OpenAI-compatible providers (OpenRouter, Groq, Cerebras)
+        # have two limitations vs the official OpenAI API:
+        #   1. Model names with "/" (e.g. "openai/gpt-oss-120b:free") are
+        #      misinterpreted as provider prefixes by MultiProvider.
+        #   2. `response_format` (structured output) cannot be combined
+        #      with `tools` in the same request.
+        # We patch both for broad provider compatibility.
+
+        # Patch 1: MultiProvider passes full model names through as-is
+        import agents.models.multi_provider as _mp
+
+        _orig_mp_init = _mp.MultiProvider.__init__
+
+        def _patched_mp_init(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+            kwargs.setdefault("unknown_prefix_mode", "model_id")
+            _orig_mp_init(self, *args, **kwargs)
+
+        _mp.MultiProvider.__init__ = _patched_mp_init  # type: ignore[method-assign]
+
+        # Patch 2: Strip response_format when tools/handoffs are present
+        # (providers like OpenRouter/Groq reject the combination)
+        import agents.models.openai_chatcompletions as _chat
+
+        _orig_fetch = _chat.OpenAIChatCompletionsModel._fetch_response
+
+        async def _compat_fetch(  # type: ignore[no-untyped-def]
+            self, system_instructions, input, model_settings, tools,
+            output_schema, handoffs, span, tracing, stream=False,
+            prompt=None,
+        ):
+            has_tools = bool(tools) or bool(handoffs)
+            if has_tools and output_schema and not output_schema.is_plain_text():
+                output_schema = None
+            return await _orig_fetch(
+                self, system_instructions, input, model_settings, tools,
+                output_schema, handoffs, span, tracing, stream, prompt,
+            )
+
+        _chat.OpenAIChatCompletionsModel._fetch_response = _compat_fetch  # type: ignore[assignment]
+
 except ImportError:
     pass
 
@@ -43,6 +86,14 @@ from app_agents.triage_orchestrator import handle_customer_message
 app = FastAPI(
     title="Agent 01 — Customer Support & Returns Orchestrator",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -55,7 +106,7 @@ class InboundMessage(BaseModel):
 
 class ResolutionResponse(BaseModel):
     session_id: str
-    resolution: str
+    resolution: dict | str
     agent_chain: list[str]
 
 
