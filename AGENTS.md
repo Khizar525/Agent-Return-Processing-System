@@ -31,17 +31,42 @@ Run `ruff check . --fix; pytest tests/ -v` before PR.
   - *Tool calls* (tracking, FAQ) keep context with the Triage Orchestrator
   - *Handoffs* (Policy, Billing, Escalation) give full specialist ownership
 - **Entry:** `main.py` → FastAPI `POST /webhook/message` → `triage_orchestrator.handle_customer_message()`
-- **Model:** `deepseek-v4-flash-free` for all agents (cost-optimized, free tier)
+- **Model:** `openai/gpt-oss-120b:free` via OpenRouter for all agents (cost-optimized, free tier)
+
+### Triage Orchestrator — Production Architecture
+
+The triage orchestrator uses a **keyword-first, deterministic tool dispatch** pattern:
+
+1. **Keyword classification** (primary): Fast, deterministic, zero-cost intent detection
+2. **LLM classification** (enrichment): Optional — provides better reasoning quality when available
+3. **Tool dispatch** (deterministic): Code maps intent → tool call (not LLM-dependent)
+
+This avoids the SDK limitation where `Runner.run()` consumes tool call results internally and never exposes them to the caller.
+
+```
+Message → Keyword Classifier → Intent
+                ↓ (optional enrichment)
+         LLM Classifier → Intent + Reasoning
+                ↓
+         _dispatch_table(intent) → Tool Execution → Result
+```
 
 ### Routing Table
 
-| Intent | Route | Type |
-|--------|-------|------|
-| `return_request` | PolicyAgent | Handoff |
-| `order_status` | `tracking_lookup` | Tool call |
-| `billing_dispute` | BillingAgent | Handoff |
-| `general_inquiry` | `faq_lookup` | Tool call |
-| `edge_case_escalate` | EscalationAgent | Handoff |
+| Intent | Route | Type | Tool Executed |
+|--------|-------|------|---------------|
+| `return_request` | `check_return_policy` | Tool call | Yes — eligibility check |
+| `order_status` | `tracking_lookup` | Tool call | Yes — tracking status |
+| `billing_dispute` | BillingAgent | Handoff | No — specialist ownership |
+| `general_inquiry` | `faq_lookup` | Tool call | Yes — FAQ search |
+| `edge_case_escalate` | EscalationAgent | Handoff | No — human escalation |
+
+### LLM Provider
+
+- **Provider:** OpenRouter (free tier)
+- **Model:** `openai/gpt-oss-120b:free`
+- **Rate limits:** 30 RPM, 1K RPD
+- **Compatibility patches:** MultiProvider `unknown_prefix_mode="model_id"`, `response_format` stripped when tools present
 
 ---
 
@@ -51,18 +76,22 @@ All agents live in `app_agents/` and use `Agent(name=..., instructions=..., mode
 
 | Agent | File | Owner | Model | Tools | Guardrails | Output Type |
 |-------|------|-------|-------|-------|------------|-------------|
-| **TriageOrchestrator** | `triage_orchestrator.py` | Lead | deepseek-v4-flash-free | `get_customer_profile`, `tracking_lookup`, `faq_lookup` | PII scrubber (input), Sentiment monitor (input) | `TriageDecision` |
-| **PolicyAgent** | `policy_agent.py` | M2 | deepseek-v4-flash-free | `check_return_policy`, `get_customer_profile` | — | `PolicyDecision` |
-| **ResolutionAgent** | `resolution_agent.py` | M3 | deepseek-v4-flash-free | `process_refund`, `create_return_label`, `create_replacement_order` | Refund cap (output) | `ResolutionSummary` |
-| **BillingAgent** | `billing_agent.py` | Lead | deepseek-v4-flash-free | `process_refund` | Refund cap (output) | `BillingDecision` |
-| **CommunicationAgent** | `communication_agent.py` | M4 | deepseek-v4-flash-free | `send_notification` | Brand voice (output) | `CommunicationAgentOutput` |
-| **EscalationAgent** | `escalation_agent.py` | M4 | deepseek-v4-flash-free | `create_human_ticket`, `log_resolution` | — | `EscalationSummary` |
+| **TriageOrchestrator** | `triage_orchestrator.py` | Lead | gpt-oss-120b:free | `get_customer_profile` | PII scrubber (input), Sentiment monitor (input) | `TriageDecision` |
+| **PolicyAgent** | `policy_agent.py` | M2 | gpt-oss-120b:free | `check_return_policy`, `get_customer_profile` | — | `PolicyDecision` |
+| **ResolutionAgent** | `resolution_agent.py` | M3 | gpt-oss-120b:free | `process_refund`, `create_return_label`, `create_replacement_order` | Refund cap (output) | `ResolutionSummary` |
+| **BillingAgent** | `billing_agent.py` | Lead | gpt-oss-120b:free | `process_refund` | Refund cap (output) | `BillingDecision` |
+| **CommunicationAgent** | `communication_agent.py` | M4 | gpt-oss-120b:free | `send_notification` | Brand voice (output) | `CommunicationAgentOutput` |
+| **EscalationAgent** | `escalation_agent.py` | M4 | gpt-oss-120b:free | `create_human_ticket`, `log_resolution` | — | `EscalationSummary` |
+
+**Note:** The TriageOrchestrator agent is a **classifier only** — it does NOT execute tools. Tools are executed deterministically in `handle_customer_message()` via `_dispatch_tool()`.
 
 ---
 
 ## Tools
 
 All tools live in `tools/` and use `@function_tool` (openai-agents), `async def`, return dict with `"success": bool, "error": str | None`.
+
+**Raw functions** (for direct calls) are exported as `RAW_<TOOL_NAME>` from each tool module.
 
 | Tool | File | Owner | Signature | Returns |
 |------|------|-------|-----------|---------|
@@ -86,9 +115,21 @@ All guardrails live in `guardrails/` and use `@input_guardrail` or `@output_guar
 | Guardrail | File | Owner | Type | Wired To | Behaviour |
 |-----------|------|-------|------|----------|-----------|
 | **PII Scrubber** | `pii_scrubber.py` | M2 | Input | TriageOrchestrator | Replaces credit cards, SSNs, bank accounts with `[REDACTED]` |
-| **Sentiment Monitor** | `sentiment_monitor.py` | M2 | Input | TriageOrchestrator | Scores 0.0–1.0; triggers escalation if > 0.8 |
+| **Sentiment Monitor** | `sentiment_monitor.py` | M2 | Input | TriageOrchestrator | Scores 0.0–1.0; legal keywords (0.4) + ALL CAPS (0.3) → triggers at >= 0.8 |
 | **Refund Cap** | `refund_cap.py` | Lead | Output | ResolutionAgent, BillingAgent | Blocks refunds > $500; requires human approval |
 | **Brand Voice** | `brand_voice.py` | M4 | Output | CommunicationAgent | Replaces prohibited language; enforces 150-word limit |
+
+### Sentiment Scoring Weights
+
+| Signal | Weight | Example |
+|--------|--------|---------|
+| ALL CAPS (>10 chars) | +0.3 | "I WILL SUE YOU" |
+| Legal keywords | +0.4 | sue, lawyer, attorney, court, legal, litigation |
+| Distress keywords | +0.2 | crying, desperate, ruined, outrageous, unacceptable, furious |
+| Profanity | +0.2 | fuck, shit, crap, damn, bastard, asshole |
+| Multiple exclamations | +0.1–0.2 | "!!!" → +0.1, "!!??" → +0.2 |
+
+**Threshold:** `>= 0.8` triggers escalation. Float precision handled via `round(score, 10)`.
 
 ---
 
@@ -117,21 +158,39 @@ All guardrails live in `guardrails/` and use `@input_guardrail` or `@output_guar
 
 ---
 
+## Frontend
+
+| File | Purpose |
+|------|---------|
+| `frontend/index.html` | State-of-the-art presentation frontend — single HTML file, zero dependencies |
+
+**Features:**
+- Dark glassmorphism theme with animated gradient background
+- Live chat interface wired to backend API (`POST /webhook/message`)
+- Interactive architecture visualization with agent flow diagram
+- 6 pre-built scenario runner cards
+- 4 interactive guardrail demos (PII, sentiment, refund cap, brand voice)
+- Routing pipeline panel with real-time step visualization
+
+**Run:** `python -m http.server 3000` from `frontend/` directory. Backend must be running on port 8000.
+
+---
+
 ## Tests
 
 | File | Owner | Tests | Coverage |
 |------|-------|-------|----------|
 | `test_policy_agent.py` | M2 | 106 | Policy tool, guardrails, agent config, contracts |
-| `test_resolution_agent.py` | M3 | ~12 | Resolution agent, tool invocation, E2E with mocks |
-| `test_billing_agent.py` | Lead | ~15 | Billing agent, schema, refund cap enforcement |
-| `test_comm_escalation.py` | M4 | ~12 | Notifications, brand voice, escalation, helpdesk |
-| `test_database.py` | Lead | ~30 | DTOs, MemoryBackend, FileBackend, factory |
-| `test_infra_observability.py` | M5 | ~30 | Kafka, Datadog, monitors, CSAT pipeline |
-| `test_tools.py` | M3 | ~30 | CRM, payment, shipping tools with respx mocks |
+| `test_resolution_agent.py` | M3 | 21 | Resolution agent, tool invocation, E2E with mocks |
+| `test_billing_agent.py` | Lead | 18 | Billing agent, schema, refund cap enforcement |
+| `test_comm_escalation.py` | M4 | 14 | Notifications, brand voice, escalation, helpdesk |
+| `test_database.py` | Lead | 37 | DTOs, MemoryBackend, FileBackend, factory |
+| `test_infra_observability.py` | M5 | 41 | Kafka, Datadog, monitors, CSAT pipeline |
+| `test_tools.py` | M3 | 44 | CRM, payment, shipping tools with respx mocks |
 | `test_integration.py` | Lead | 40 | Fixture integrity, policy tool, tracking, FAQ, session, intent mapping, pipeline skeletons |
-| `test_tracking_tools.py` | Lead | ~30 | Tracking lookup, FAQ lookup, contracts, edge cases |
+| `test_tracking_tools.py` | Lead | 32 | Tracking lookup, FAQ lookup, contracts, edge cases |
 
-**Run all:** `pytest tests/ -v` (312+ passed, 0 skipped)
+**Run all:** `pytest tests/ -v` (353 passed, 0 skipped)
 
 ---
 

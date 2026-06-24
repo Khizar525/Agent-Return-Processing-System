@@ -12,50 +12,50 @@ A production-grade multi-agent system that autonomously handles the full lifecyc
 ## Architecture
 
 ```
-                  Customer Message
-                         │
-                         ▼
-        ┌────────────────────────────────┐
-        │     Triage Orchestrator        │ ◄── Sentiment Monitor
-        │  (intent classification,       │     (passive guardrail)
-        │   deepseek-v4-flash-free)      │
-        └────────┬───────────────┬───────┘
-                 │               │
-   tool call     │    handoff    │         handoff
-   (stays in     │               │         (full context)
-    triage)      ▼               ▼
-            ┌────────┐    ┌────────────┐    ┌──────────────┐
-            │tracking│    │Policy Agent│    │Billing Agent │
-            │  /faq  │    │(deepseek-  │    │  (handoff)   │
-            │ (tools)│    │ v4-flash)   │    │              │
-            └────────┘    └─────┬──────┘    └──────────────┘
-                                │ handoff
-                                ▼
-                       ┌────────────────┐
-                       │ Resolution     │
-                       │ Agent          │ ◄── refund_cap guardrail
-                       │ (deepseek-v4-  │
-                       │  flash-free)   │
-                       └────────┬───────┘
-                                │ handoff
-                                ▼
-                       ┌────────────────┐
-                       │ Communication  │ ──► Email / SMS / Chat
-                       │ Agent          │     (brand_voice guardrail)
-                       └────────┬───────┘
-                                │
-                  (edge case)   │
-                                ▼
-                       ┌────────────────┐
-                       │ Escalation     │ ──► Human Queue
-                       │ Agent          │     + Context Bundle
-                       │ (deepseek-v4-  │
-                       │  flash-free)   │
-                       └────────────────┘
+                   Customer Message
+                          │
+                          ▼
+         ┌────────────────────────────────┐
+         │     Triage Orchestrator        │ ◄── Sentiment Monitor
+         │  (keyword-first classification,│     (passive guardrail)
+         │   gpt-oss-120b:free)           │
+         └────────┬───────────────┬───────┘
+                  │               │
+    tool call     │    handoff    │         handoff
+    (deterministic│               │         (full context)
+     dispatch)    ▼               ▼
+             ┌────────┐    ┌────────────┐    ┌──────────────┐
+             │tracking│    │Policy Agent│    │Billing Agent │
+             │  /faq  │    │(gpt-oss-   │    │  (handoff)   │
+             │ /return│    │ 120b:free) │    │              │
+             │(tools) │    └─────┬──────┘    └──────────────┘
+             └────────┘          │ handoff
+                                 ▼
+                        ┌────────────────┐
+                        │ Resolution     │
+                        │ Agent          │ ◄── refund_cap guardrail
+                        │ (gpt-oss-120b: │
+                        │  free)         │
+                        └────────┬───────┘
+                                 │ handoff
+                                 ▼
+                        ┌────────────────┐
+                        │ Communication  │ ──► Email / SMS / Chat
+                        │ Agent          │     (brand_voice guardrail)
+                        └────────┬───────┘
+                                 │
+                   (edge case)   │
+                                 ▼
+                        ┌────────────────┐
+                        │ Escalation     │ ──► Human Queue
+                        │ Agent          │     + Context Bundle
+                        │ (gpt-oss-120b: │
+                        │  free)         │
+                        └────────────────┘
 ```
 
 **Pattern:** Manager + Handoff hybrid (see `docs/ADR-001.md`).
-- *Tool calls* (tracking, FAQ) keep context with the Triage Orchestrator.
+- *Tool calls* (tracking, FAQ, return eligibility) are dispatched deterministically by code.
 - *Handoffs* (Policy, Billing, Escalation) give full specialist ownership.
 
 ## Team
@@ -72,10 +72,10 @@ A production-grade multi-agent system that autonomously handles the full lifecyc
 
 | Metric | Count |
 |--------|-------|
-| Tests Passed | 312 |
-| Tests Skipped | 4 (tracking/faq lookup — not yet implemented) |
-| Test Files | 8 |
-| Coverage Scope | Policy, Resolution, Billing, Communication, Escalation, Database, Infra, Integration |
+| Tests Passed | 353 |
+| Tests Skipped | 0 |
+| Test Files | 9 |
+| Coverage Scope | Policy, Resolution, Billing, Communication, Escalation, Database, Infra, Integration, Tracking Tools |
 
 ## Quick Start
 
@@ -96,7 +96,23 @@ cp .env.example .env
 
 # 5. Run the entry point
 uvicorn main:app --reload
+
+# 6. Run the presentation frontend (optional)
+cd frontend && python -m http.server 3000
 ```
+
+## LLM Provider
+
+The system uses **OpenRouter** free tier for all agents:
+
+- **Model:** `openai/gpt-oss-120b:free`
+- **Rate limits:** 30 RPM, 1K RPD
+- **Cost:** $0.00 (free tier)
+- **No credit card required**
+
+Provider compatibility patches are applied at startup in `main.py`:
+- MultiProvider `unknown_prefix_mode="model_id"` for model names with `/`
+- `response_format` stripped when tools/handoffs are present
 
 ## Environment Variables
 
@@ -130,7 +146,7 @@ See `.env.example` for all required keys. Never commit a populated `.env` to Git
 | Automation Rate           | > 80%            |
 | Fraud Detection Rate      | > 95%            |
 | CSAT Score                | > 4.5 / 5.0      |
-| Cost per Ticket           | < $0.30          |
+| Cost per Ticket           | $0.00 (free tier) |
 
 ---
 
