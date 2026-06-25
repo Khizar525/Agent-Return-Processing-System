@@ -154,6 +154,7 @@ All guardrails live in `guardrails/` and use `@input_guardrail` or `@output_guar
 | `datadog_setup.py` | M5 | APM instrumentation: `configure_datadog()`, `agent_span()`, `tool_span()`, `record_resolution()` |
 | `datadog_monitors.py` | M5 | 3 PagerDuty-bound monitors: queue depth, error rate, P95 latency |
 | `csat_pipeline.py` | M5 | Rolling CSAT score computation with Datadog metric emission |
+| `ab_test.py` | M5 | A/B test framework: variant assignment via hash partitioning, result recording, Datadog metric emission, experiment summaries |
 | `k8s/` | M5 | Kubernetes manifests: deployment, service, HPA, configmap, secret |
 
 ---

@@ -4,6 +4,7 @@ FastAPI webhook receiver — entry point for all inbound channels.
 """
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -111,8 +112,8 @@ class ResolutionResponse(BaseModel):
     tool_results: dict | None = None
 
 
-@app.get("/")
-async def root() -> str:
+@app.get("/", response_class=HTMLResponse)
+async def root():
     import os
     from dotenv import load_dotenv
 
