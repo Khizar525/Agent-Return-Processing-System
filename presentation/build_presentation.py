@@ -324,7 +324,7 @@ add_text_box(
     Inches(4.6),
     Inches(5),
     Inches(0.35),
-    "Team:  Lead  •  M2  •  M3  •  M4  •  M5",
+    "Team:  Khizar  •  Mustafa  •  Hammad  •  Ammar  •  Anas",
     font_size=16,
     color=WHITE,
 )
@@ -549,7 +549,7 @@ add_footer(slide)
 slide = prs.slides.add_slide(blank_layout)
 add_shape_bg(slide)
 add_gradient_bar(slide)
-add_section_title(slide, 2, "Our Solution")
+add_section_title(slide, 3, "Our Solution")
 
 # Center tagline
 add_text_box(
@@ -637,12 +637,12 @@ add_footer(slide)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SLIDE 4 — ARCHITECTURE OVERVIEW
+# SLIDE 6 — ARCHITECTURE OVERVIEW
 # ══════════════════════════════════════════════════════════════════════════════
 slide = prs.slides.add_slide(blank_layout)
 add_shape_bg(slide)
 add_gradient_bar(slide)
-add_section_title(slide, 3, "Architecture — Manager + Handoff Hybrid")
+add_section_title(slide, 4, "Architecture — Manager + Handoff Hybrid")
 
 # Architecture flow boxes
 # Row 1: Entry
@@ -915,12 +915,12 @@ add_footer(slide)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SLIDE 7 — KEYWORD-FIRST CLASSIFICATION (ADR HIGHLIGHT)
+# SLIDE 8 — KEYWORD-FIRST CLASSIFICATION (ADR HIGHLIGHT)
 # ══════════════════════════════════════════════════════════════════════════════
 slide = prs.slides.add_slide(blank_layout)
 add_shape_bg(slide)
 add_gradient_bar(slide)
-add_section_title(slide, 4, "Key Decision: Keyword-First Classification")
+add_section_title(slide, 6, "Key Decision: Keyword-First Classification")
 
 # Left: Explanation
 add_card(slide, Inches(0.6), Inches(1.4), Inches(6.0), Inches(5.0), MID_NAVY, TEAL)
@@ -1000,16 +1000,16 @@ add_footer(slide)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SLIDE 6 — THE TEAM
+# SLIDE 7 — THE TEAM
 # ══════════════════════════════════════════════════════════════════════════════
 slide = prs.slides.add_slide(blank_layout)
 add_shape_bg(slide)
 add_gradient_bar(slide)
-add_section_title(slide, 5, "The Team")
+add_section_title(slide, 7, "The Team")
 
 team_data = [
     (
-        "Lead",
+        "Khizar",
         "Lead Developer &\nArchitect",
         TEAL,
         [
@@ -1022,7 +1022,7 @@ team_data = [
         ],
     ),
     (
-        "M2",
+        "Mustafa",
         "Policy & Guardrails\nSpecialist",
         GREEN,
         [
@@ -1035,7 +1035,7 @@ team_data = [
         ],
     ),
     (
-        "M3",
+        "Hammad",
         "Resolution &\nTool Integrations",
         AMBER,
         [
@@ -1048,7 +1048,7 @@ team_data = [
         ],
     ),
     (
-        "M4",
+        "Ammar",
         "Communication &\nEscalation",
         PURPLE,
         [
@@ -1061,7 +1061,7 @@ team_data = [
         ],
     ),
     (
-        "M5",
+        "Anas",
         "Infrastructure &\nObservability",
         PINK,
         [
@@ -1112,36 +1112,36 @@ add_section_title(slide, 8, "Agents & Tools")
 agents_info = [
     (
         "Triage\nOrchestrator",
-        "Lead",
+        "Khizar",
         "Intent classification,\nrouting, guardrails",
         "get_customer_profile",
         "PII Scrubber\nSentiment Monitor",
     ),
     (
         "Policy\nAgent",
-        "M2",
+        "Mustafa",
         "Return policy\neligibility checks",
         "check_return_policy,\nget_customer_profile",
         "—",
     ),
     (
         "Resolution\nAgent",
-        "M3",
+        "Hammad",
         "Refund, label,\nreplacement orders",
         "process_refund,\ncreate_return_label,\ncreate_replacement_order",
         "Refund Cap",
     ),
-    ("Billing\nAgent", "Lead", "Billing dispute\nresolution", "process_refund", "Refund Cap"),
+    ("Billing\nAgent", "Khizar", "Billing dispute\nresolution", "process_refund", "Refund Cap"),
     (
         "Communication\nAgent",
-        "M4",
+        "Ammar",
         "Multi-channel\nnotifications",
         "send_notification",
         "Brand Voice",
     ),
     (
         "Escalation\nAgent",
-        "M4",
+        "Ammar",
         "Human handoff\nwith context bundle",
         "create_human_ticket,\nlog_resolution",
         "—",
@@ -1243,7 +1243,7 @@ guardrails = [
         "PII Scrubber",
         "Input",
         "Triage",
-        "M2",
+        "Mustafa",
         TEAL,
         "Automatically detects and redacts sensitive data before any agent sees it.",
         "Credit cards • SSNs • Bank account numbers\n→ Replaced with [REDACTED]",
@@ -1253,7 +1253,7 @@ guardrails = [
         "Sentiment Monitor",
         "Input",
         "Triage",
-        "M2",
+        "Mustafa",
         GREEN,
         "Scores customer sentiment 0.0–1.0; escalates to human at >= 0.8.",
         "ALL CAPS (+0.3) • Legal keywords (+0.4) • Distress (+0.2)\nProfanity (+0.2) • !!! (+0.1–0.2)",
@@ -1263,7 +1263,7 @@ guardrails = [
         "Refund Cap",
         "Output",
         "Resolution,\nBilling",
-        "Lead",
+        "Khizar",
         AMBER,
         "Blocks refunds > $500; requires human approval for large amounts.",
         "Any refund > $500 USD → blocked with escalation\nProtects against abuse and financial risk",
@@ -1273,7 +1273,7 @@ guardrails = [
         "Brand Voice",
         "Output",
         "Communication",
-        "M4",
+        "Ammar",
         PURPLE,
         "Enforces consistent brand tone across all customer communications.",
         "Replaces prohibited language • Enforces 150-word limit\nEnsures professional, on-brand responses",
@@ -1283,7 +1283,7 @@ guardrails = [
         "Fraud Signal",
         "Tool",
         "Policy Agent",
-        "M2",
+        "Mustafa",
         RED,
         "Cross-references return request against fraud DB before approval.",
         "get_fraud_db_match() checks customer history\nFraud flag or DB match → escalate to human",
@@ -1396,14 +1396,14 @@ add_footer(slide)
 slide = prs.slides.add_slide(blank_layout)
 add_shape_bg(slide)
 add_gradient_bar(slide)
-add_section_title(slide, 8, "Infrastructure & Observability")
+add_section_title(slide, 10, "Infrastructure & Observability")
 
 # 4 Infrastructure cards
 infra_cards = [
     (
         "☁️",
         "Kubernetes",
-        "M5",
+        "Anas",
         [
             "Deployment manifests (replicas, probes)",
             "Horizontal Pod Autoscaler (HPA)",
@@ -1415,7 +1415,7 @@ infra_cards = [
     (
         "📨",
         "Kafka Event Streaming",
-        "M5",
+        "Anas",
         [
             "4 consumer channels: web_chat, email,",
             "whatsapp, sms",
@@ -1428,7 +1428,7 @@ infra_cards = [
     (
         "📊",
         "Datadog APM",
-        "M5",
+        "Anas",
         [
             "configure_datadog() auto-instrumentation",
             "Agent spans + tool spans per request",
@@ -1441,7 +1441,7 @@ infra_cards = [
     (
         "📈",
         "CSAT Pipeline",
-        "M5",
+        "Anas",
         [
             "Rolling CSAT score computation",
             "Datadog metric emission",
@@ -1539,7 +1539,7 @@ add_text_box(
 slide = prs.slides.add_slide(blank_layout)
 add_shape_bg(slide)
 add_gradient_bar(slide)
-add_section_title(slide, 9, "Test Suite & Quality")
+add_section_title(slide, 11, "Test Suite & Quality")
 
 # Big number: 353
 add_text_box(
@@ -1567,11 +1567,11 @@ add_text_box(
 
 # Test breakdown by owner
 test_data = [
-    ("M2", 106, "Policy Agent", TEAL),
-    ("M3", 65, "Resolution + Tools", GREEN),
-    ("Lead", 127, "Billing + Database + Integration + Tracking", AMBER),
-    ("M4", 14, "Comm & Escalation", PURPLE),
-    ("M5", 41, "Infra & Observability", PINK),
+    ("Mustafa", 106, "Policy Agent", TEAL),
+    ("Hammad", 65, "Resolution + Tools", GREEN),
+    ("Khizar", 127, "Billing + Database + Integration + Tracking", AMBER),
+    ("Ammar", 14, "Comm & Escalation", PURPLE),
+    ("Anas", 41, "Infra & Observability", PINK),
 ]
 
 # Left chart area (simplified horizontal bars)
@@ -1710,7 +1710,7 @@ add_footer(slide)
 slide = prs.slides.add_slide(blank_layout)
 add_shape_bg(slide)
 add_gradient_bar(slide)
-add_section_title(slide, 10, "Presentation Frontend")
+add_section_title(slide, 12, "Presentation Frontend")
 
 # Main card
 add_card(slide, Inches(0.6), Inches(1.3), Inches(12), Inches(5.3), MID_NAVY, TEAL)
@@ -1909,7 +1909,7 @@ add_footer(slide)
 slide = prs.slides.add_slide(blank_layout)
 add_shape_bg(slide)
 add_gradient_bar(slide)
-add_section_title(slide, 12, "Project Timeline")
+add_section_title(slide, 14, "Project Timeline")
 
 phases = [
     (
@@ -2048,7 +2048,7 @@ add_footer(slide)
 slide = prs.slides.add_slide(blank_layout)
 add_shape_bg(slide)
 add_gradient_bar(slide)
-add_section_title(slide, 13, "Technology Stack")
+add_section_title(slide, 15, "Technology Stack")
 
 # Left: Stack
 stack_items = [
@@ -2131,7 +2131,7 @@ add_footer(slide)
 slide = prs.slides.add_slide(blank_layout)
 add_shape_bg(slide)
 add_gradient_bar(slide)
-add_section_title(slide, 15, "The API Provider Journey — Smart Fixes")
+add_section_title(slide, 16, "The API Provider Journey — Smart Fixes")
 
 # Top: The journey timeline
 add_card(slide, Inches(0.6), Inches(1.3), Inches(12), Inches(2.0), MID_NAVY, AMBER)
@@ -2306,7 +2306,7 @@ add_footer(slide)
 slide = prs.slides.add_slide(blank_layout)
 add_shape_bg(slide)
 add_gradient_bar(slide)
-add_section_title(slide, 14, "Requirements Compliance — 100% Achieved")
+add_section_title(slide, 17, "Requirements Compliance — 100% Achieved")
 
 # Big compliance number
 add_text_box(
@@ -2455,7 +2455,7 @@ add_footer(slide)
 slide = prs.slides.add_slide(blank_layout)
 add_shape_bg(slide)
 add_gradient_bar(slide)
-add_section_title(slide, 15, "Beyond the Spec — What We Added")
+add_section_title(slide, 18, "Beyond the Spec — What We Added")
 
 # Left: Unplanned additions
 add_card(slide, Inches(0.6), Inches(1.3), Inches(6.0), Inches(5.3), MID_NAVY, TEAL)
@@ -2638,11 +2638,11 @@ add_text_box(
 
 # Team row
 team_final = [
-    ("Lead", TEAL),
-    ("M2", GREEN),
-    ("M3", AMBER),
-    ("M4", PURPLE),
-    ("M5", PINK),
+    ("Khizar", TEAL),
+    ("Mustafa", GREEN),
+    ("Hammad", AMBER),
+    ("Ammar", PURPLE),
+    ("Anas", PINK),
 ]
 for i, (name, color) in enumerate(team_final):
     left = Inches(3.2 + i * 1.5)
