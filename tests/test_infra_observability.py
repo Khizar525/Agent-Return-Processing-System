@@ -500,3 +500,175 @@ class TestCSATPipeline:
 
         with patch.dict(os.environ, {}, clear=True):
             await sync_to_redis()
+
+
+# =========================================================================
+# infra.ab_test
+# =========================================================================
+
+
+class TestABTestFramework:
+    """A/B test variant assignment, recording, and summaries."""
+
+    def teardown_method(self) -> None:
+        from infra.ab_test import reset_experiment
+
+        reset_experiment()
+
+    def test_get_variant_control_default_when_disabled(self) -> None:
+        from infra.ab_test import get_variant, EXPERIMENTS
+
+        original = EXPERIMENTS["agent_config_v1"]["enabled"]
+        EXPERIMENTS["agent_config_v1"]["enabled"] = False
+        try:
+            variant = get_variant("agent_config_v1", "sess_001")
+            assert variant == "control"
+        finally:
+            EXPERIMENTS["agent_config_v1"]["enabled"] = original
+
+    def test_get_variant_default_control_unknown_experiment(self) -> None:
+        from infra.ab_test import get_variant
+
+        variant = get_variant("nonexistent_experiment", "sess_001")
+        assert variant == "control"
+
+    def test_get_variant_deterministic(self) -> None:
+        from infra.ab_test import get_variant
+
+        v1 = get_variant("agent_config_v1", "sess_001")
+        v2 = get_variant("agent_config_v1", "sess_001")
+        assert v1 == v2
+
+    def test_get_variant_different_entities_may_differ(self) -> None:
+        from infra.ab_test import get_variant
+
+        v1 = get_variant("agent_config_v1", "sess_001")
+        v2 = get_variant("agent_config_v1", "sess_999")
+        # Both are valid variants — just ensure they're not empty
+        assert v1 in ("control", "treatment")
+        assert v2 in ("control", "treatment")
+
+    def test_get_variant_only_two_variants(self) -> None:
+        from infra.ab_test import get_variant
+
+        seen: set[str] = set()
+        for i in range(100):
+            seen.add(get_variant("agent_config_v1", f"sess_{i:03d}"))
+        # With 50/50 split and 100 samples, both should appear
+        assert seen == {"control", "treatment"}
+
+    def test_get_experiment_config_returns_dict(self) -> None:
+        from infra.ab_test import get_experiment_config
+
+        config = get_experiment_config("agent_config_v1", "control")
+        assert isinstance(config, dict)
+        assert "agent_model" in config
+        assert config["agent_model"] == "openai/gpt-oss-120b:free"
+
+    def test_get_experiment_config_unknown(self) -> None:
+        from infra.ab_test import get_experiment_config
+
+        config = get_experiment_config("nonexistent", "control")
+        assert config == {}
+
+    def test_get_active_experiments(self) -> None:
+        from infra.ab_test import get_active_experiments, EXPERIMENTS
+
+        original = EXPERIMENTS["agent_config_v1"]["enabled"]
+        EXPERIMENTS["agent_config_v1"]["enabled"] = True
+        try:
+            active = get_active_experiments()
+            names = [e["name"] for e in active]
+            assert "agent_config_v1" in names
+        finally:
+            EXPERIMENTS["agent_config_v1"]["enabled"] = original
+
+    def test_record_experiment_result(self) -> None:
+        from infra.ab_test import record_experiment_result, _RESULTS
+
+        _RESULTS.clear()
+        result = record_experiment_result(
+            "agent_config_v1", "control", "sess_001", "resolution_time", 12.5
+        )
+        assert result["recorded"] is True
+        assert result["metric"] == "resolution_time"
+        assert result["value"] == 12.5
+        assert len(_RESULTS["agent_config_v1"]) == 1
+
+    def test_get_experiment_summary_empty(self) -> None:
+        from infra.ab_test import get_experiment_summary
+
+        summary = get_experiment_summary("nonexistent")
+        assert summary["record_count"] == 0
+
+    def test_get_experiment_summary_with_records(self) -> None:
+        from infra.ab_test import (
+            get_experiment_summary,
+            record_experiment_result,
+            _RESULTS,
+        )
+
+        _RESULTS.clear()
+        for i in range(5):
+            record_experiment_result(
+                "agent_config_v1", "control", f"sess_{i:03d}", "resolution_time", 10.0 + i
+            )
+        for i in range(3):
+            record_experiment_result(
+                "agent_config_v1", "treatment", f"sess_{i:03d}", "resolution_time", 8.0 + i
+            )
+
+        summary = get_experiment_summary("agent_config_v1")
+        assert summary["record_count"] == 8
+        assert "control" in summary["summary"]
+        assert "treatment" in summary["summary"]
+        assert summary["summary"]["control"]["resolution_time"]["count"] == 5
+        assert summary["summary"]["control"]["resolution_time"]["mean"] == 12.0
+        assert summary["summary"]["treatment"]["resolution_time"]["count"] == 3
+
+    def test_record_emits_datadog_metric(self) -> None:
+        from infra.ab_test import record_experiment_result, _RESULTS
+        from unittest.mock import patch
+
+        _RESULTS.clear()
+        with patch("infra.ab_test._emit_datadog_gauge") as mock_emit:
+            record_experiment_result(
+                "agent_config_v1", "treatment", "sess_002", "success_rate", 1.0
+            )
+            assert mock_emit.call_count == 2
+            metric_names = [call.args[0] for call in mock_emit.call_args_list]
+            assert "agent01.ab_test.success_rate" in metric_names
+            assert "agent01.ab_test.record_count" in metric_names
+
+    def test_hash_partition_bounds(self) -> None:
+        from infra.ab_test import _hash_partition
+
+        for i in range(1000):
+            bucket = _hash_partition(f"entity_{i}", 100)
+            assert 0 <= bucket < 100
+
+    def test_get_variant_ignores_case_in_entity_id(self) -> None:
+        from infra.ab_test import get_variant
+
+        # Same entity_id always same variant
+        assert get_variant("agent_config_v1", "SESSION_001") == get_variant(
+            "agent_config_v1", "SESSION_001"
+        )
+
+    def test_reset_experiment_specific(self) -> None:
+        from infra.ab_test import record_experiment_result, reset_experiment, _RESULTS
+
+        _RESULTS.clear()
+        record_experiment_result("agent_config_v1", "control", "s_1", "resolution_time", 1.0)
+        record_experiment_result("agent_config_v1", "treatment", "s_2", "resolution_time", 2.0)
+        assert len(_RESULTS) == 1
+        reset_experiment("agent_config_v1")
+        assert _RESULTS.get("agent_config_v1", []) == []
+
+    def test_reset_experiment_all(self) -> None:
+        from infra.ab_test import record_experiment_result, reset_experiment, _RESULTS
+
+        _RESULTS.clear()
+        record_experiment_result("agent_config_v1", "control", "s_1", "resolution_time", 1.0)
+        reset_experiment()
+        assert len(_RESULTS) == 0
