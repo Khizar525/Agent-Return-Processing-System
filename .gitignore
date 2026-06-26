@@ -44,3 +44,33 @@ credentials/
 # ── Logs ─────────────────────────────────────────────────────────────────────
 *.log
 logs/
+
+# ── Temp / generated files ────────────────────────────────────────────────────
+msg.json
+history/
+
+# ── Confidential / internal docs (do not commit — see CONTRIBUTING.md) ────────
+*.docx
+document/
+
+# ── Lead's working notes (personal tracking, never commit) ───────────────────
+LEAD_TODO.md
+LEAD_NOTES.md
+*_TODO.md
+*_NOTES.md
+
+# ── Project context brief (shareable, but kept out of repo until promoted) ───
+PROJECT_BRIEF.md
+*_BRIEF.md
+
+# ── Duplicate SDD tooling accidentally committed by M3 ───────────────────────
+here/
+
+# ── Test suite report (generated, not for repo) ─────────────────────────────
+TEST_SUITE_REPORT.md
+
+# ── K8s secrets (real values never committed) ───────────────────────────────
+infra/k8s/secret.yaml
+
+# ── OpenWork workspace config (local, not for repo) ──────────────────────────
+.opencode/openwork.json

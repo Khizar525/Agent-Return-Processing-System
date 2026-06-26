@@ -7,15 +7,31 @@ kind: ConfigMap
 metadata:
   name: agent01-config
 data:
+  # ── Datadog ─────────────────────────────────────────────────────────────
   DD_SERVICE: "agent01-customer-support"
   DD_ENV: "production"
+  DD_VERSION: "0.1.0"
+  DD_LOGS_INJECTION: "true"
+  DD_PROFILING_ENABLED: "true"
+
+  # ── Kafka Topics ────────────────────────────────────────────────────────
   KAFKA_TOPIC_WEB_CHAT: "agent01.webchat"
   KAFKA_TOPIC_EMAIL: "agent01.email"
   KAFKA_TOPIC_WHATSAPP: "agent01.whatsapp"
   KAFKA_TOPIC_SMS: "agent01.sms"
+
+  # ── Webhook Target ──────────────────────────────────────────────────────
+  WEBHOOK_URL: "http://agent01-webhook/webhook/message"
+
+  # ── Redis ───────────────────────────────────────────────────────────────
   REDIS_SESSION_TTL_SECONDS: "86400"
   REDIS_ARCHIVE_TTL_SECONDS: "7776000"
+
+  # ── Business Rules ──────────────────────────────────────────────────────
   RETURN_WINDOW_DAYS: "30"
   REFUND_CAP_USD: "500"
   SENTIMENT_ESCALATION_THRESHOLD: "0.8"
+
+  # ── Communication ───────────────────────────────────────────────────────
   SENDGRID_FROM_NAME: "Your Store Support"
+  SENDGRID_FROM_EMAIL: "support@agent01.example.com"

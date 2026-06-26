@@ -1,0 +1,128 @@
+[
+  {
+    "customer_id": "cust_001",
+    "name": "Sarah Mitchell",
+    "email": "sarah.mitchell@email.com",
+    "phone": "+1-555-0101",
+    "loyalty_tier": "gold",
+    "fraud_flag": false,
+    "fraud_reason": null,
+    "order_history": [
+      { "order_id": "ord_1001", "date": "2026-04-20", "total_usd": 89.99, "status": "delivered" },
+      { "order_id": "ord_1002", "date": "2026-05-01", "total_usd": 149.50, "status": "delivered" },
+      { "order_id": "ord_1003", "date": "2026-05-10", "total_usd": 34.00, "status": "delivered" },
+      { "order_id": "ord_7001", "date": "2026-05-29", "total_usd": 12.99, "status": "delivered" },
+      { "order_id": "ord_7006", "date": "2026-05-06", "total_usd": 34.99, "status": "delivered" }
+    ],
+    "past_returns": []
+  },
+  {
+    "customer_id": "cust_002",
+    "name": "James Okafor",
+    "email": "j.okafor@gmail.com",
+    "phone": "+1-555-0202",
+    "loyalty_tier": "silver",
+    "fraud_flag": false,
+    "fraud_reason": null,
+    "order_history": [
+      { "order_id": "ord_2001", "date": "2026-03-15", "total_usd": 210.00, "status": "delivered" },
+      { "order_id": "ord_2002", "date": "2026-05-12", "total_usd": 67.49, "status": "in_transit" },
+      { "order_id": "ord_7005", "date": "2026-05-23", "total_usd": 45.00, "status": "delivered" }
+    ],
+    "past_returns": [
+      { "order_id": "ord_2001", "date": "2026-03-28", "amount_usd": 210.00, "reason": "wrong_item", "outcome": "refunded" }
+    ]
+  },
+  {
+    "customer_id": "cust_003",
+    "name": "Priya Nair",
+    "email": "priya.nair@outlook.com",
+    "phone": "+1-555-0303",
+    "loyalty_tier": "platinum",
+    "fraud_flag": false,
+    "fraud_reason": null,
+    "order_history": [
+      { "order_id": "ord_3001", "date": "2026-01-10", "total_usd": 599.00, "status": "delivered" },
+      { "order_id": "ord_3002", "date": "2026-02-22", "total_usd": 349.00, "status": "delivered" },
+      { "order_id": "ord_3003", "date": "2026-04-05", "total_usd": 89.00, "status": "delivered" },
+      { "order_id": "ord_3004", "date": "2026-05-15", "total_usd": 1200.00, "status": "delivered" },
+      { "order_id": "ord_7002", "date": "2026-05-31", "total_usd": 549.00, "status": "just_purchased" },
+      { "order_id": "ord_7003", "date": "2026-05-01", "total_usd": 29.99, "status": "delivered" }
+    ],
+    "past_returns": []
+  },
+  {
+    "customer_id": "cust_004",
+    "name": "Derek Walsh",
+    "email": "derek.walsh@yahoo.com",
+    "phone": "+1-555-0404",
+    "loyalty_tier": "bronze",
+    "fraud_flag": true,
+    "fraud_reason": "3 returns in 30 days with no item shipped back",
+    "order_history": [
+      { "order_id": "ord_4001", "date": "2026-04-01", "total_usd": 55.00, "status": "delivered" },
+      { "order_id": "ord_4002", "date": "2026-04-08", "total_usd": 75.00, "status": "delivered" },
+      { "order_id": "ord_4003", "date": "2026-04-15", "total_usd": 95.00, "status": "delivered" }
+    ],
+    "past_returns": [
+      { "order_id": "ord_4001", "date": "2026-04-05", "amount_usd": 55.00, "reason": "not_received", "outcome": "refunded" },
+      { "order_id": "ord_4002", "date": "2026-04-12", "amount_usd": 75.00, "reason": "not_received", "outcome": "refunded" },
+      { "order_id": "ord_4003", "date": "2026-04-19", "amount_usd": 95.00, "reason": "not_received", "outcome": "pending" }
+    ]
+  },
+  {
+    "customer_id": "cust_005",
+    "name": "Linda Tran",
+    "email": "linda.tran@email.com",
+    "phone": "+1-555-0505",
+    "loyalty_tier": "silver",
+    "fraud_flag": false,
+    "fraud_reason": null,
+    "order_history": [
+      { "order_id": "ord_5001", "date": "2026-02-14", "total_usd": 130.00, "status": "delivered" },
+      { "order_id": "ord_5002", "date": "2026-05-18", "total_usd": 260.00, "status": "delivered" }
+    ],
+    "past_returns": []
+  },
+  {
+    "customer_id": "cust_006",
+    "name": "Marcus Bell",
+    "email": "m.bell@protonmail.com",
+    "phone": "+1-555-0606",
+    "loyalty_tier": "bronze",
+    "fraud_flag": false,
+    "fraud_reason": null,
+    "order_history": [
+      { "order_id": "ord_6001", "date": "2026-05-19", "total_usd": 45.00, "status": "delivered" },
+      { "order_id": "ord_7004", "date": "2026-05-19", "total_usd": 89.99, "status": "delivered" },
+      { "order_id": "ord_7008", "date": "2026-05-30", "total_usd": 199.00, "status": "delivered" }
+    ],
+    "past_returns": []
+  },
+  {
+    "customer_id": "cust_007",
+    "name": "Vladimir Petrov",
+    "email": "v.petrov@email.com",
+    "phone": "+1-555-0707",
+    "loyalty_tier": "bronze",
+    "fraud_flag": true,
+    "fraud_reason": "multiple chargebacks on 3 different credit cards",
+    "order_history": [
+      { "order_id": "ord_7007", "date": "2026-05-26", "total_usd": 999.99, "status": "delivered" }
+    ],
+    "past_returns": []
+  },
+  {
+    "customer_id": "cust_008",
+    "name": "Yuki Tanaka",
+    "email": "yuki.tanaka@email.com",
+    "phone": "+1-555-0808",
+    "loyalty_tier": "silver",
+    "fraud_flag": false,
+    "fraud_reason": null,
+    "order_history": [
+      { "order_id": "ord_7009", "date": "2026-05-24", "total_usd": 250.00, "status": "delivered" }
+    ],
+    "past_returns": []
+  }
+]
