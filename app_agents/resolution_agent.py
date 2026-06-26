@@ -76,7 +76,7 @@ resolution_agent = Agent(
         "4. Graceful Failure Handling: If a tool returns an error (success=False), do not crash. Catch it and return a human-readable failure reason in the 'error' and 'reason' fields of your structured output summary.\n"
         "5. Output Format: Always produce a structured output summary conforming to the ResolutionSummary schema."
     ),
-    model="deepseek-v4-flash-free",
+    model="openai/gpt-oss-120b:free",
     tools=[process_refund, create_return_label, create_replacement_order],
     output_guardrails=[refund_cap_guardrail],
     output_type=ResolutionSummary,

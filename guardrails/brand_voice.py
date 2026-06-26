@@ -52,9 +52,9 @@ PROHIBITED_LANGUAGE = {
     "terrible": "unsatisfactory",
 }
 
-# Compile regex patterns for prohibited language (case-insensitive)
+# Compile regex patterns for prohibited language (case-insensitive, with word boundaries)
 PROHIBITED_PATTERNS = [
-    (re.compile(re.escape(word), re.IGNORECASE), replacement)
+    (re.compile(r"\b" + re.escape(word) + r"\b", re.IGNORECASE), replacement)
     for word, replacement in PROHIBITED_LANGUAGE.items()
 ]
 
@@ -82,14 +82,15 @@ async def brand_voice_guardrail(ctx, agent, output) -> GuardrailFunctionOutput:
         modified_text = " ".join(words[:150]) + "..."
         modifications_made.append(f"Truncated to 150 words (was {len(words)} words)")
 
-    # 3. Fix ALL CAPS words (except acronyms - assume acronyms are 2+ chars and all uppercase)
+    # 3. Fix ALL CAPS words (preserve short acronyms like USA, API, FAQ — 2-4 chars)
     def fix_all_caps(match):
         word = match.group(0)
-        # If it's all uppercase and longer than 1 character, convert to title case
-        if len(word) > 1 and word.isupper():
-            modifications_made.append(f"Fixed ALL CAPS word: '{word}'")
-            return word.title()  # Converts to Title Case
-        return word
+        # Preserve short acronyms (2-4 chars) — they're likely intentional
+        if len(word) <= 4:
+            return word
+        # Longer ALL CAPS words get converted to Title Case
+        modifications_made.append(f"Fixed ALL CAPS word: '{word}'")
+        return word.title()
 
     # Match words (sequences of alphabetic characters)
     modified_text = re.sub(r"\b[A-Z]+\b", fix_all_caps, modified_text)

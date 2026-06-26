@@ -307,8 +307,14 @@ async def test_tracking_lookup_output_contract() -> None:
 
     result = await tracking_lookup("ORD-002")
     expected_keys = {
-        "success", "found", "status", "carrier",
-        "tracking_number", "estimated_delivery", "last_update", "error",
+        "success",
+        "found",
+        "status",
+        "carrier",
+        "tracking_number",
+        "estimated_delivery",
+        "last_update",
+        "error",
     }
     assert set(result.keys()) == expected_keys
 

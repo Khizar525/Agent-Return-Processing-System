@@ -52,7 +52,7 @@ communication_agent = Agent(
         "7. The brand voice guardrail will automatically check and refine your output\n\n"
         "You will receive customer information and resolution data to include in your message."
     ),
-    model="deepseek-v4-flash-free",  # Per ADR-001
+    model="openai/gpt-oss-120b:free",
     tools=[send_notification_tool],
     output_guardrails=[brand_voice_guardrail],
     output_type=CommunicationAgentOutput,

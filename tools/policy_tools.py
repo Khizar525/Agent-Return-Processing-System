@@ -71,71 +71,74 @@ def _build_error(error: str, days: int = 0, category: str = "") -> dict[str, Any
 
 
 async def _check_return_policy_impl(order_id: str, customer_id: str) -> dict[str, Any]:
-    repo = _get_repo()
+    try:
+        repo = _get_repo()
 
-    order = await repo.get_order(order_id)
-    if order is None:
-        return _build_error(f"Order {order_id} not found")
+        order = await repo.get_order(order_id)
+        if order is None:
+            return _build_error(f"Order {order_id} not found")
 
-    customer = await repo.get_customer(customer_id)
-    if customer is None:
-        return _build_error(
-            f"Customer {customer_id} not found",
-            days=order.days_since_purchase,
-            category=order.item_category,
-        )
+        customer = await repo.get_customer(customer_id)
+        if customer is None:
+            return _build_error(
+                f"Customer {customer_id} not found",
+                days=order.days_since_purchase,
+                category=order.item_category,
+            )
 
-    if order.customer_id != customer_id:
-        return _build_error(
-            "Order does not belong to this customer",
-            days=order.days_since_purchase,
-            category=order.item_category,
-        )
+        if order.customer_id != customer_id:
+            return _build_error(
+                "Order does not belong to this customer",
+                days=order.days_since_purchase,
+                category=order.item_category,
+            )
 
-    window_ok = order.days_since_purchase <= RETURN_WINDOW_DAYS
-    not_excluded = order.item_category not in EXCLUDED_CATEGORIES
-    fraud_flag = customer.fraud_flag
-    fraud_db_match = await repo.get_fraud_db_match(customer_id)
-    fraud_signal = fraud_flag or fraud_db_match is not None
+        window_ok = order.days_since_purchase <= RETURN_WINDOW_DAYS
+        not_excluded = order.item_category not in EXCLUDED_CATEGORIES
+        fraud_flag = customer.fraud_flag
+        fraud_db_match = await repo.get_fraud_db_match(customer_id)
+        fraud_signal = fraud_flag or fraud_db_match is not None
 
-    reasons: list[str] = []
-    exclusion_reason: str | None = None
-    if not window_ok:
-        reasons.append(
-            f"Return window of {RETURN_WINDOW_DAYS} days exceeded ({order.days_since_purchase} days since purchase)"
-        )
-    if not not_excluded:
-        exclusion_reason = f"Item category '{order.item_category}' is excluded"
-        reasons.append(exclusion_reason)
-    if fraud_flag:
-        reasons.append(f"Fraud flag on account: {customer.fraud_reason}")
-    if fraud_db_match:
-        reasons.append(f"Fraud DB match: {fraud_db_match.match_reason}")
+        reasons: list[str] = []
+        exclusion_reason: str | None = None
+        if not window_ok:
+            reasons.append(
+                f"Return window of {RETURN_WINDOW_DAYS} days exceeded ({order.days_since_purchase} days since purchase)"
+            )
+        if not not_excluded:
+            exclusion_reason = f"Item category '{order.item_category}' is excluded"
+            reasons.append(exclusion_reason)
+        if fraud_flag:
+            reasons.append(f"Fraud flag on account: {customer.fraud_reason}")
+        if fraud_db_match:
+            reasons.append(f"Fraud DB match: {fraud_db_match.match_reason}")
 
-    eligible = window_ok and not_excluded and not fraud_flag and fraud_db_match is None
-    reason = "; ".join(reasons) if reasons else "Return eligible"
+        eligible = window_ok and not_excluded and not fraud_flag and fraud_db_match is None
+        reason = "; ".join(reasons) if reasons else "Return eligible"
 
-    if fraud_flag or fraud_db_match:
-        recommended_action = "escalate"
-    elif not eligible:
-        recommended_action = "reject"
-    elif order.damaged:
-        recommended_action = "replacement"
-    else:
-        recommended_action = "refund"
+        if fraud_flag or fraud_db_match:
+            recommended_action = "escalate"
+        elif not eligible:
+            recommended_action = "reject"
+        elif order.damaged:
+            recommended_action = "replacement"
+        else:
+            recommended_action = "refund"
 
-    return {
-        "success": True,
-        "eligible": eligible,
-        "reason": reason,
-        "recommended_action": recommended_action,
-        "return_window_days": RETURN_WINDOW_DAYS,
-        "days_since_purchase": order.days_since_purchase,
-        "item_category": order.item_category,
-        "exclusion_reason": exclusion_reason,
-        "fraud_signal": fraud_signal,
-        "error": None,
-    }
+        return {
+            "success": True,
+            "eligible": eligible,
+            "reason": reason,
+            "recommended_action": recommended_action,
+            "return_window_days": RETURN_WINDOW_DAYS,
+            "days_since_purchase": order.days_since_purchase,
+            "item_category": order.item_category,
+            "exclusion_reason": exclusion_reason,
+            "fraud_signal": fraud_signal,
+            "error": None,
+        }
+    except Exception as exc:
+        return _build_error(f"Unexpected error: {exc}")
 
 
 RAW_CHECK_RETURN_POLICY = _check_return_policy_impl

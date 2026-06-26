@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Agent 01 — Customer Support & Returns Orchestrator</title>
 <style>
 /* ── Reset & Base ─────────────────────────────────────────────── */
@@ -581,26 +584,46 @@ async function sendMessage() {
     // Show routing steps
     renderRouting(data);
 
-    // Build response message
+    // Build response message — show natural language reply as primary content
     let html = '';
     const intent = data.resolution?.intent || 'processed';
+
+    // Primary: natural language response from the agent
+    const reply = data.response || 'Thank you for your message. How can I help?';
+    html += `<div style="line-height:1.6;font-size:0.95rem">${escapeHtml(reply)}</div>`;
+
+    // Technical details: expandable section (collapsed by default)
+    const techId = 'tech-' + Date.now();
+    html += `<details style="margin-top:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden">`;
+    html += `<summary style="cursor:pointer;padding:10px 14px;font-size:0.75rem;color:var(--text3);font-weight:600;user-select:none">🔍 Technical Details</summary>`;
+    html += `<div style="padding:0 14px 12px">`;
+    html += `<div style="margin-bottom:6px;font-size:0.78rem"><strong>Intent:</strong> <span style="color:var(--accent)">${escapeHtml(intent)}</span></div>`;
     const action = data.suggested_action || data.resolution?.suggested_action || '';
-
-    // Show intent + action summary
-    html += `<div style="margin-bottom:8px"><strong>Intent:</strong> ${escapeHtml(intent)}</div>`;
-    if (action) html += `<div style="margin-bottom:12px;color:var(--text3)">${escapeHtml(action)}</div>`;
-
-    // Show tool results if present
+    if (action) html += `<div style="margin-bottom:10px;font-size:0.78rem;color:var(--text3)">${escapeHtml(action)}</div>`;
     if (data.tool_results && Object.keys(data.tool_results).length > 0) {
       for (const [tool, result] of Object.entries(data.tool_results)) {
-        html += `<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px">`;
-        html += `<div style="font-size:0.75rem;color:var(--accent);font-weight:600;margin-bottom:6px">🔧 ${escapeHtml(tool)}</div>`;
-        html += `<pre style="white-space:pre-wrap;margin:0;font-size:0.8rem;color:var(--text2)">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`;
+        html += `<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:6px">`;
+        html += `<div style="font-size:0.72rem;color:var(--accent);font-weight:600;margin-bottom:4px">🔧 ${escapeHtml(tool)}</div>`;
+        html += `<pre style="white-space:pre-wrap;margin:0;font-size:0.75rem;color:var(--text2)">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`;
         html += `</div>`;
       }
-    } else {
-      // Show raw resolution if no tool results
-      html += `<pre style="white-space:pre-wrap;margin:0;font-size:0.85rem">${escapeHtml(JSON.stringify(data.resolution, null, 2))}</pre>`;
+    }
+    html += `</div></div></details>`;
+
+    // Show guardrail activations (if any)
+    if (data.guardrails && data.guardrails.length > 0) {
+      for (const g of data.guardrails) {
+        const colorMap = {
+          'input': 'var(--accent4)',
+          'output': 'var(--accent3)',
+        };
+        const color = colorMap[g.type] || 'var(--accent)';
+        html += `<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,217,61,0.08);border:1px solid rgba(255,217,61,0.2);border-radius:8px;padding:8px 12px;margin-top:8px;margin-right:6px;font-size:0.82rem">`;
+        html += `<span>${g.icon || '🛡️'}</span>`;
+        html += `<span style="font-weight:600;color:${color}">${escapeHtml(g.name)}</span>`;
+        html += `<span style="color:var(--text3);font-size:0.75rem">(${escapeHtml(g.type)})</span>`;
+        html += `</div>`;
+      }
     }
 
     const intentBadge = `<span class="badge">${intent}</span>`;

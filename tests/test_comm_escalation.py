@@ -243,9 +243,9 @@ def test_brand_voice_enforces_150_word_limit():
 # Tests for User Story 4: Hybrid AI Model Usage with Fallback
 @pytest.mark.asyncio
 async def test_communication_agent_uses_correct_model():
-    """Test communication_agent uses the correct model (deepseek-v4-flash-free) per ADR-001."""
+    """Test communication_agent uses the correct model (openai/gpt-oss-120b:free) per ADR-001."""
     # Verify the agent is properly configured with the correct model
-    assert communication_agent.model == "deepseek-v4-flash-free"
+    assert communication_agent.model == "openai/gpt-oss-120b:free"
     assert communication_agent.name == "CommunicationAgent"
     assert len(communication_agent.tools) == 1
     assert communication_agent.tools[0].name == "send_notification"
@@ -270,7 +270,7 @@ async def test_draft_and_send_function():
             next_steps="Please check your email for confirmation. If you have any further questions, don't hesitate to reach out.",
             message_sent="Hello John,\n\nWe have processed a refund of USD 50.00 for you. We have processed your refund.\n\nPlease check your email for confirmation. If you have any further questions, don't hesitate to reach out.\n\nReference: REF-ST123\n\nThank you for choosing our service.",
             channel_used="email",
-            llm_used="deepseek-v4-flash-free",
+            llm_used="openai/gpt-oss-120b:free",
         )
         mock_runner_run.return_value = mock_result
 

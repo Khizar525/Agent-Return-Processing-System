@@ -64,16 +64,33 @@ try:
         _orig_fetch = _chat.OpenAIChatCompletionsModel._fetch_response
 
         async def _compat_fetch(  # type: ignore[no-untyped-def]
-            self, system_instructions, input, model_settings, tools,
-            output_schema, handoffs, span, tracing, stream=False,
+            self,
+            system_instructions,
+            input,
+            model_settings,
+            tools,
+            output_schema,
+            handoffs,
+            span,
+            tracing,
+            stream=False,
             prompt=None,
         ):
             has_tools = bool(tools) or bool(handoffs)
             if has_tools and output_schema and not output_schema.is_plain_text():
                 output_schema = None
             return await _orig_fetch(
-                self, system_instructions, input, model_settings, tools,
-                output_schema, handoffs, span, tracing, stream, prompt,
+                self,
+                system_instructions,
+                input,
+                model_settings,
+                tools,
+                output_schema,
+                handoffs,
+                span,
+                tracing,
+                stream,
+                prompt,
             )
 
         _chat.OpenAIChatCompletionsModel._fetch_response = _compat_fetch  # type: ignore[assignment]
@@ -106,8 +123,10 @@ class InboundMessage(BaseModel):
 
 class ResolutionResponse(BaseModel):
     session_id: str
+    response: str
     resolution: dict | str
     agent_chain: list[str]
+    guardrails: list[dict] | None = None
     tool_results: dict | None = None
 
 

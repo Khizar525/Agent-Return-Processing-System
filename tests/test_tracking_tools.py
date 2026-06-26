@@ -125,8 +125,14 @@ class TestTrackingLookupContract:
     async def test_success_output_keys(self) -> None:
         r = await tracking_lookup("ORD-001")
         expected_keys = {
-            "success", "found", "status", "carrier",
-            "tracking_number", "estimated_delivery", "last_update", "error",
+            "success",
+            "found",
+            "status",
+            "carrier",
+            "tracking_number",
+            "estimated_delivery",
+            "last_update",
+            "error",
         }
         assert set(r.keys()) == expected_keys
 
@@ -134,8 +140,14 @@ class TestTrackingLookupContract:
     async def test_error_output_keys(self) -> None:
         r = await tracking_lookup("ORD-NOPE")
         expected_keys = {
-            "success", "found", "status", "carrier",
-            "tracking_number", "estimated_delivery", "last_update", "error",
+            "success",
+            "found",
+            "status",
+            "carrier",
+            "tracking_number",
+            "estimated_delivery",
+            "last_update",
+            "error",
         }
         assert set(r.keys()) == expected_keys
 

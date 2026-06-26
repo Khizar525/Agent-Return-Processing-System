@@ -14,7 +14,7 @@ Responsibilities:
     2. Open ticket in Zendesk via create_human_ticket
     3. Log resolution outcome via log_resolution
 
-Model: deepseek-v4-flash-free (mandated by ADR-001 for all agents)
+Model: openai/gpt-oss-120b:free (OpenRouter free tier)
 
 Dependencies:
     - tools/helpdesk_tools.py  (create_human_ticket, log_resolution) — Member 4 (you)
@@ -85,7 +85,7 @@ escalation_agent = Agent(
         "- Legal threats or explicit escalation demands: legal_threats (priority: high)\n"
         "- Repeat fraud flags on account: repeat_fraud (priority: urgent)\n"
     ),
-    model="deepseek-v4-flash-free",
+    model="openai/gpt-oss-120b:free",
     tools=[create_human_ticket_tool, log_resolution_tool],
     output_type=EscalationSummary,
 )

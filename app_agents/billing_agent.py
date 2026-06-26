@@ -14,7 +14,7 @@ Dependencies:
     - tools/payment_tools.py   (process_refund)          — Member 3
     - guardrails/refund_cap.py (refund_cap_guardrail)    — Project Lead
 
-Model: deepseek-v4-flash-free
+Model: openai/gpt-oss-120b:free (OpenRouter free tier)
 """
 
 from typing import Literal
@@ -77,7 +77,7 @@ billing_agent = Agent(
         "- If process_refund returns an error, do not crash — report it gracefully.\n\n"
         "Output must be valid JSON matching the BillingDecision schema."
     ),
-    model="deepseek-v4-flash-free",
+    model="openai/gpt-oss-120b:free",
     tools=[process_refund],
     output_guardrails=[refund_cap_guardrail],
     output_type=BillingDecision,

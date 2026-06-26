@@ -192,8 +192,7 @@ _FAQ_DATABASE: list[dict[str, str]] = [
     {
         "keyword": "payment",
         "question": "What payment methods do you accept?",
-        "answer": "We accept Visa, Mastercard, American Express, Discover, "
-        "PayPal, and Apple Pay.",
+        "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
     },
     {
         "keyword": "account",
@@ -231,38 +230,62 @@ async def _tracking_lookup_impl(order_id: str) -> dict[str, Any]:
 
     Returns tracking status, carrier, tracking number, and estimated delivery.
     """
-    if not order_id or not order_id.strip():
-        return {
-            "success": False,
-            "found": False,
-            "status": None,
-            "carrier": None,
-            "tracking_number": None,
-            "estimated_delivery": None,
-            "last_update": None,
-            "error": "Order ID is required",
-        }
+    try:
+        if not order_id or not order_id.strip():
+            return {
+                "success": False,
+                "found": False,
+                "status": None,
+                "carrier": None,
+                "tracking_number": None,
+                "estimated_delivery": None,
+                "last_update": None,
+                "error": "Order ID is required",
+            }
 
-    order_id = order_id.strip()
+        order_id = order_id.strip()
 
-    # Check tracking data first
-    tracking = _TRACKING_DATA.get(order_id)
-    if tracking:
+        # Check tracking data first
+        tracking = _TRACKING_DATA.get(order_id)
+        if tracking:
+            return {
+                "success": True,
+                "found": True,
+                "status": tracking["status"],
+                "carrier": tracking["carrier"],
+                "tracking_number": tracking["tracking_number"],
+                "estimated_delivery": tracking["estimated_delivery"],
+                "last_update": tracking["last_update"],
+                "error": None,
+            }
+
+        # Fall back to repository — if order exists, generate a basic tracking response
+        repo = _get_repo()
+        order = await repo.get_order(order_id)
+        if order is None:
+            return {
+                "success": False,
+                "found": False,
+                "status": None,
+                "carrier": None,
+                "tracking_number": None,
+                "estimated_delivery": None,
+                "last_update": None,
+                "error": f"Order {order_id} not found",
+            }
+
+        # Order exists but no tracking data — assume processing
         return {
             "success": True,
             "found": True,
-            "status": tracking["status"],
-            "carrier": tracking["carrier"],
-            "tracking_number": tracking["tracking_number"],
-            "estimated_delivery": tracking["estimated_delivery"],
-            "last_update": tracking["last_update"],
+            "status": "processing",
+            "carrier": "fedex",
+            "tracking_number": f"FX-{order_id.upper().replace('-', '')}",
+            "estimated_delivery": None,
+            "last_update": None,
             "error": None,
         }
-
-    # Fall back to repository — if order exists, generate a basic tracking response
-    repo = _get_repo()
-    order = await repo.get_order(order_id)
-    if order is None:
+    except Exception as exc:
         return {
             "success": False,
             "found": False,
@@ -271,20 +294,8 @@ async def _tracking_lookup_impl(order_id: str) -> dict[str, Any]:
             "tracking_number": None,
             "estimated_delivery": None,
             "last_update": None,
-            "error": f"Order {order_id} not found",
+            "error": f"Unexpected error: {exc}",
         }
-
-    # Order exists but no tracking data — assume processing
-    return {
-        "success": True,
-        "found": True,
-        "status": "processing",
-        "carrier": "fedex",
-        "tracking_number": f"FX-{order_id.upper().replace('-', '')}",
-        "estimated_delivery": None,
-        "last_update": None,
-        "error": None,
-    }
 
 
 async def _faq_lookup_impl(query: str) -> dict[str, Any]:

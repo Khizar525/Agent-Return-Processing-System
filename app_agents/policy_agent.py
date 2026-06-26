@@ -51,7 +51,7 @@ policy_agent = Agent(
     Always include customer_id and session_id in context when handing off.
     Output must be valid JSON: {{"eligible": bool, "reason": str, "recommended_action": str}}
     """,
-    model="deepseek-v4-flash-free",
+    model="openai/gpt-oss-120b:free",
     tools=[check_return_policy, get_customer_profile],
     output_type=PolicyDecision,
 )

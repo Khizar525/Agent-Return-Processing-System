@@ -51,7 +51,7 @@ def test_agent_name():
 
 
 def test_agent_has_correct_model():
-    assert billing_agent.model == "deepseek-v4-flash-free"
+    assert billing_agent.model == "openai/gpt-oss-120b:free"
 
 
 def test_agent_has_process_refund_tool():

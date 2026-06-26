@@ -25,6 +25,26 @@ _FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
 
 
 # ---------------------------------------------------------------------------
+# Configure openai-agents MultiProvider for OpenRouter model names
+# (e.g. "meta-llama/llama-3.3-70b-instruct:free") — without this the
+# SDK interprets the "/" as a provider prefix and rejects the model name.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _configure_model_provider():
+    import agents.models.multi_provider as _mp
+
+    _orig_init = _mp.MultiProvider.__init__
+
+    def _patched_init(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        kwargs.setdefault("unknown_prefix_mode", "model_id")
+        _orig_init(self, *args, **kwargs)
+
+    _mp.MultiProvider.__init__ = _patched_init  # type: ignore[method-assign]
+
+
+# ---------------------------------------------------------------------------
 # Full-list fixtures  (session-scoped — loaded once per test run)
 # ---------------------------------------------------------------------------
 
