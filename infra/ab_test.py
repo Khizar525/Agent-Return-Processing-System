@@ -52,8 +52,8 @@ ABTestExperiment = dict[
         dict[
             str,
             Any,
-        ]
-    ]
+        ],
+    ],
 ]
 
 EXPERIMENTS: dict[str, dict[str, Any]] = {
@@ -165,13 +165,15 @@ def get_active_experiments() -> list[dict[str, Any]]:
     active: list[dict[str, Any]] = []
     for name, exp in EXPERIMENTS.items():
         if exp.get("enabled", False):
-            active.append({
-                "name": name,
-                "description": exp.get("description", ""),
-                "variant_count": len(exp.get("variants", {})),
-                "metrics": exp.get("metrics", []),
-                "started_at": exp.get("started_at", ""),
-            })
+            active.append(
+                {
+                    "name": name,
+                    "description": exp.get("description", ""),
+                    "variant_count": len(exp.get("variants", {})),
+                    "metrics": exp.get("metrics", []),
+                    "started_at": exp.get("started_at", ""),
+                }
+            )
     return active
 
 
