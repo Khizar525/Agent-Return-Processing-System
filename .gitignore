@@ -49,6 +49,9 @@ logs/
 msg.json
 history/
 
+# ── Local archive (removed from git, kept locally) ───────────────────────────
+_archive/
+
 # ── Confidential / internal docs (do not commit — see CONTRIBUTING.md) ────────
 *.docx
 document/
@@ -63,6 +66,10 @@ LEAD_NOTES.md
 PROJECT_BRIEF.md
 *_BRIEF.md
 
+# ── Claude settings (local, not for repo) ───────────────────────────────────
+CLAUDE.md
+.claude/
+
 # ── Duplicate SDD tooling accidentally committed by M3 ───────────────────────
 here/
 
@@ -74,3 +81,4 @@ infra/k8s/secret.yaml
 
 # ── OpenWork workspace config (local, not for repo) ──────────────────────────
 .opencode/openwork.json
+opencode.jsonc
