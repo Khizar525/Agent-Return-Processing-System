@@ -49,6 +49,9 @@ logs/
 msg.json
 history/
 
+# ── Local archive (removed from git, kept locally) ───────────────────────────
+_archive/
+
 # ── Confidential / internal docs (do not commit — see CONTRIBUTING.md) ────────
 *.docx
 document/
