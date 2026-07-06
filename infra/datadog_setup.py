@@ -23,7 +23,7 @@ Span tags applied:
 Environment variables required:
     DD_API_KEY
     DD_APP_KEY
-    DD_SERVICE   (default: "agent01-customer-support")
+    DD_SERVICE   (default: "agent-nemo-customer-support")
     DD_ENV       (default: "production")
 """
 
@@ -37,12 +37,12 @@ from typing import Any, Generator
 logger = logging.getLogger("datadog_setup")
 
 _AGENT_SERVICES: dict[str, str] = {
-    "triage_orchestrator": "agent01-triage",
-    "policy_agent": "agent01-policy",
-    "resolution_agent": "agent01-resolution",
-    "billing_agent": "agent01-billing",
-    "communication_agent": "agent01-communication",
-    "escalation_agent": "agent01-escalation",
+    "triage_orchestrator": "agent-nemo-triage",
+    "policy_agent": "agent-nemo-policy",
+    "resolution_agent": "agent-nemo-resolution",
+    "billing_agent": "agent-nemo-billing",
+    "communication_agent": "agent-nemo-communication",
+    "escalation_agent": "agent-nemo-escalation",
 }
 
 _TRACER_ENABLED = False
@@ -71,7 +71,7 @@ def configure_datadog() -> bool:
         from ddtrace import config as ddconfig
         from ddtrace import patch_all
 
-        service = os.environ.get("DD_SERVICE", "agent01-customer-support")
+        service = os.environ.get("DD_SERVICE", "agent-nemo-customer-support")
         env = os.environ.get("DD_ENV", "production")
         version = os.environ.get("DD_VERSION", "0.1.0")
 
@@ -123,7 +123,7 @@ def agent_span(
 
     from ddtrace.trace import tracer as _tracer
 
-    service = _AGENT_SERVICES.get(agent_name, "agent01-unknown")
+    service = _AGENT_SERVICES.get(agent_name, "agent-nemo-unknown")
     span_name = f"{span_type}.{agent_name}"
 
     with _tracer.trace(
@@ -155,7 +155,7 @@ def tool_span(tool_name: str, agent_name: str, **tags: Any) -> Generator[Any, No
 
     from ddtrace.trace import tracer as _tracer
 
-    service = _AGENT_SERVICES.get(agent_name, "agent01-unknown")
+    service = _AGENT_SERVICES.get(agent_name, "agent-nemo-unknown")
     span_name = f"tool_call.{tool_name}"
 
     with _tracer.trace(

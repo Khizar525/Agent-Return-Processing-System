@@ -6,12 +6,12 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: agent01-webhook-hpa
+  name: agent-nemo-webhook-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: agent01-webhook
+    name: agent-nemo-webhook
   minReplicas: 2
   maxReplicas: 10
   metrics:
@@ -25,12 +25,12 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: agent01-webchat-hpa
+  name: agent-nemo-webchat-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: agent01-webchat-consumer
+    name: agent-nemo-webchat-consumer
   minReplicas: 1
   maxReplicas: 10
   metrics:
@@ -40,7 +40,7 @@ spec:
           name: kafka_consumer_lag
           selector:
             matchLabels:
-              topic: agent01.webchat
+              topic: agent-nemo.webchat
         target:
           type: AverageValue
           averageValue: "100"
@@ -48,12 +48,12 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: agent01-email-hpa
+  name: agent-nemo-email-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: agent01-email-consumer
+    name: agent-nemo-email-consumer
   minReplicas: 1
   maxReplicas: 10
   metrics:
@@ -63,7 +63,7 @@ spec:
           name: kafka_consumer_lag
           selector:
             matchLabels:
-              topic: agent01.email
+              topic: agent-nemo.email
         target:
           type: AverageValue
           averageValue: "100"
@@ -71,12 +71,12 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: agent01-whatsapp-hpa
+  name: agent-nemo-whatsapp-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: agent01-whatsapp-consumer
+    name: agent-nemo-whatsapp-consumer
   minReplicas: 1
   maxReplicas: 10
   metrics:
@@ -86,7 +86,7 @@ spec:
           name: kafka_consumer_lag
           selector:
             matchLabels:
-              topic: agent01.whatsapp
+              topic: agent-nemo.whatsapp
         target:
           type: AverageValue
           averageValue: "100"
@@ -94,12 +94,12 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: agent01-sms-hpa
+  name: agent-nemo-sms-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: agent01-sms-consumer
+    name: agent-nemo-sms-consumer
   minReplicas: 1
   maxReplicas: 10
   metrics:
@@ -109,7 +109,7 @@ spec:
           name: kafka_consumer_lag
           selector:
             matchLabels:
-              topic: agent01.sms
+              topic: agent-nemo.sms
         target:
           type: AverageValue
           averageValue: "100"

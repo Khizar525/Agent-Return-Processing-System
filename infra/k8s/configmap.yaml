@@ -5,23 +5,23 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: agent01-config
+  name: agent-nemo-config
 data:
   # ── Datadog ─────────────────────────────────────────────────────────────
-  DD_SERVICE: "agent01-customer-support"
+  DD_SERVICE: "agent-nemo-customer-support"
   DD_ENV: "production"
   DD_VERSION: "0.1.0"
   DD_LOGS_INJECTION: "true"
   DD_PROFILING_ENABLED: "true"
 
   # ── Kafka Topics ────────────────────────────────────────────────────────
-  KAFKA_TOPIC_WEB_CHAT: "agent01.webchat"
-  KAFKA_TOPIC_EMAIL: "agent01.email"
-  KAFKA_TOPIC_WHATSAPP: "agent01.whatsapp"
-  KAFKA_TOPIC_SMS: "agent01.sms"
+  KAFKA_TOPIC_WEB_CHAT: "agent-nemo.webchat"
+  KAFKA_TOPIC_EMAIL: "agent-nemo.email"
+  KAFKA_TOPIC_WHATSAPP: "agent-nemo.whatsapp"
+  KAFKA_TOPIC_SMS: "agent-nemo.sms"
 
   # ── Webhook Target ──────────────────────────────────────────────────────
-  WEBHOOK_URL: "http://agent01-webhook/webhook/message"
+  WEBHOOK_URL: "http://agent-nemo-webhook/webhook/message"
 
   # ── Redis ───────────────────────────────────────────────────────────────
   REDIS_SESSION_TTL_SECONDS: "86400"
@@ -34,4 +34,4 @@ data:
 
   # ── Communication ───────────────────────────────────────────────────────
   SENDGRID_FROM_NAME: "Your Store Support"
-  SENDGRID_FROM_EMAIL: "support@agent01.example.com"
+  SENDGRID_FROM_EMAIL: "support@agent-nemo.example.com"

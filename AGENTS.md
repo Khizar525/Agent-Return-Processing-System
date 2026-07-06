@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**Project:** Agent 01 — Customer Support & Returns Orchestrator
+**Project:** Agent Nemo — Customer Support & Returns Orchestrator
 **Status:** Production-ready — all components implemented and tested
 **Branch:** `develop` (integration) | `main` (protected, production)
 **Last updated:** 2026-06-24

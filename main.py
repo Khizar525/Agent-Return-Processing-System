@@ -1,5 +1,5 @@
 """
-Agent 01 — Customer Support & Returns Orchestrator
+Agent Nemo — Customer Support & Returns Orchestrator
 FastAPI webhook receiver — entry point for all inbound channels.
 """
 
@@ -102,7 +102,7 @@ except ImportError:
 from app_agents.triage_orchestrator import handle_customer_message
 
 app = FastAPI(
-    title="Agent 01 — Customer Support & Returns Orchestrator",
+    title="Agent Nemo — Customer Support & Returns Orchestrator",
     version="0.1.0",
 )
 
@@ -139,7 +139,7 @@ async def root():
     load_dotenv()
     has_key = bool(os.environ.get("OPENAI_API_KEY"))
     return f"""<html><body style="font-family:sans-serif;max-width:700px;margin:40px">
-<h2>Agent 01 — Customer Support & Returns</h2>
+<h2>Agent Nemo — Customer Support & Returns</h2>
 <form method="post" action="/webhook/message" enctype="application/json">
   <p><b>Test the API:</b></p>
   <pre style="background:#f4f4f4;padding:12px;border-radius:6px">
@@ -156,7 +156,7 @@ curl -X POST http://localhost:8000/webhook/message \\
 
 @app.get("/health")
 async def health_check() -> dict[str, str]:
-    return {"status": "ok", "service": "agent01-customer-support"}
+    return {"status": "ok", "service": "agent-nemo-customer-support"}
 
 
 @app.post("/webhook/message", response_model=ResolutionResponse)

@@ -39,12 +39,12 @@ _RESOLUTION_EVENTS: deque[dict[str, Any]] = deque(maxlen=1000)
 _CSAT_RECORDS: deque[float] = deque(maxlen=1000)
 
 _AGENT_MAP: dict[str, str] = {
-    "triage_orchestrator": "agent01-triage",
-    "policy_agent": "agent01-policy",
-    "resolution_agent": "agent01-resolution",
-    "billing_agent": "agent01-billing",
-    "communication_agent": "agent01-communication",
-    "escalation_agent": "agent01-escalation",
+    "triage_orchestrator": "agent-nemo-triage",
+    "policy_agent": "agent-nemo-policy",
+    "resolution_agent": "agent-nemo-resolution",
+    "billing_agent": "agent-nemo-billing",
+    "communication_agent": "agent-nemo-communication",
+    "escalation_agent": "agent-nemo-escalation",
 }
 
 
@@ -175,12 +175,12 @@ def ingest_resolution_event(event: dict[str, Any]) -> dict[str, Any]:
     result["agent_chain"] = agent_chain
 
     tags = [
-        f"service:{_AGENT_MAP.get(resolved_by, 'agent01-unknown')}",
+        f"service:{_AGENT_MAP.get(resolved_by, 'agent-nemo-unknown')}",
         f"channel:{event.get('channel', 'unknown')}",
     ]
 
-    _emit_datadog_metric("agent01.csat.rolling_score", result["rolling_csat"], tags)
-    _emit_datadog_metric("agent01.csat.sample_count", float(result["sample_count"]), tags)
+    _emit_datadog_metric("agent-nemo.csat.rolling_score", result["rolling_csat"], tags)
+    _emit_datadog_metric("agent-nemo.csat.sample_count", float(result["sample_count"]), tags)
 
     elapsed = time.perf_counter() - start
     if elapsed > 5.0:

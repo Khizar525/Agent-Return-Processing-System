@@ -5,13 +5,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: agent01-webhook
+  name: agent-nemo-webhook
   labels:
-    app: agent01
+    app: agent-nemo
     component: webhook
 spec:
   selector:
-    app: agent01
+    app: agent-nemo
     component: webhook
   ports:
     - protocol: TCP
@@ -22,14 +22,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: agent01-webchat-consumer
+  name: agent-nemo-webchat-consumer
   labels:
-    app: agent01
+    app: agent-nemo
     channel: web_chat
     component: consumer
 spec:
   selector:
-    app: agent01
+    app: agent-nemo
     channel: web_chat
   ports:
     - protocol: TCP
@@ -40,14 +40,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: agent01-email-consumer
+  name: agent-nemo-email-consumer
   labels:
-    app: agent01
+    app: agent-nemo
     channel: email
     component: consumer
 spec:
   selector:
-    app: agent01
+    app: agent-nemo
     channel: email
   ports:
     - protocol: TCP
@@ -58,14 +58,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: agent01-whatsapp-consumer
+  name: agent-nemo-whatsapp-consumer
   labels:
-    app: agent01
+    app: agent-nemo
     channel: whatsapp
     component: consumer
 spec:
   selector:
-    app: agent01
+    app: agent-nemo
     channel: whatsapp
   ports:
     - protocol: TCP
@@ -76,14 +76,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: agent01-sms-consumer
+  name: agent-nemo-sms-consumer
   labels:
-    app: agent01
+    app: agent-nemo
     channel: sms
     component: consumer
 spec:
   selector:
-    app: agent01
+    app: agent-nemo
     channel: sms
   ports:
     - protocol: TCP

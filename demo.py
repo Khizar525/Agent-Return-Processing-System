@@ -1,5 +1,5 @@
 """
-Demo -- Real customer scenarios using the Agent 01 system.
+Demo -- Real customer scenarios using the Agent Nemo system.
 Run: python demo.py
 """
 
@@ -229,7 +229,7 @@ async def demo_guardrails():
 
 async def main():
     print("=" * 60)
-    print("  Agent 01 - Customer Support System Demo")
+    print("  Agent Nemo - Customer Support System Demo")
     print("=" * 60)
     await demo_policy()
     await demo_guardrails()

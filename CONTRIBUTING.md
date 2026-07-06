@@ -73,7 +73,7 @@ Do not wait for the next standup. Delays on your branch block other members.
 
 ```bash
 git clone <repo-url>
-cd agent-01-customer-support
+cd agent-nemo-customer-support
 python -m venv venv
 source venv/bin/activate       # Windows: venv\Scripts\activate
 pip install -r requirements.txt

@@ -106,9 +106,9 @@ class TestKafkaConfig:
     def test_resolve_topic(self) -> None:
         from infra.kafka_config import _resolve_topic
 
-        with patch.dict(os.environ, {"KAFKA_TOPIC_WEB_CHAT": "agent01.webchat"}):
+        with patch.dict(os.environ, {"KAFKA_TOPIC_WEB_CHAT": "agent-nemo.webchat"}):
             topic = _resolve_topic("web_chat")
-            assert topic == "agent01.webchat"
+            assert topic == "agent-nemo.webchat"
 
     def test_resolve_topic_missing_env(self) -> None:
         from infra.kafka_config import _resolve_topic
@@ -182,7 +182,7 @@ class TestDatadogSetup:
 
         with patch.dict(
             os.environ,
-            {"DD_API_KEY": "test-key-123", "DD_SERVICE": "agent01-test"},
+            {"DD_API_KEY": "test-key-123", "DD_SERVICE": "agent-nemo-test"},
         ):
             with patch("ddtrace.patch_all") as mock_patch:
                 result = configure_datadog()
@@ -492,8 +492,8 @@ class TestCSATPipeline:
             ingest_resolution_event(event)
             assert mock_emit.call_count == 2
             metric_names = [call.args[0] for call in mock_emit.call_args_list]
-            assert "agent01.csat.rolling_score" in metric_names
-            assert "agent01.csat.sample_count" in metric_names
+            assert "agent-nemo.csat.rolling_score" in metric_names
+            assert "agent-nemo.csat.sample_count" in metric_names
 
     async def test_sync_to_redis_no_url(self) -> None:
         from infra.csat_pipeline import sync_to_redis
@@ -637,8 +637,8 @@ class TestABTestFramework:
             )
             assert mock_emit.call_count == 2
             metric_names = [call.args[0] for call in mock_emit.call_args_list]
-            assert "agent01.ab_test.success_rate" in metric_names
-            assert "agent01.ab_test.record_count" in metric_names
+            assert "agent-nemo.ab_test.success_rate" in metric_names
+            assert "agent-nemo.ab_test.record_count" in metric_names
 
     def test_hash_partition_bounds(self) -> None:
         from infra.ab_test import _hash_partition
