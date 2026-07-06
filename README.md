@@ -145,7 +145,7 @@ ruff format --check .               # format check
 
 | Metric | Count |
 |--------|-------|
-| Tests Passed | 353 |
+| Tests Passed | 369 |
 | Tests Skipped | 0 |
 | Test Files | 9 |
 
@@ -186,7 +186,7 @@ ruff format --check .               # format check
 │   ├── repository.py          # Abstract Repository + 3 backends
 │   ├── models.py              # SQLAlchemy 2.0 ORM
 │   └── config.py              # Database configuration
-├── tests/                     # 353 tests across 9 files
+├── tests/                     # 369 tests across 9 files
 └── docs/                      # Architecture decision records
 ```
 
@@ -198,13 +198,13 @@ ruff format --check .               # format check
 
 ## Team
 
-| Member     | Role                                  | Status |
-|------------|---------------------------------------|--------|
-| Lead       | Architect, Triage Orchestrator, Infra | Done   |
-| Member 2   | Policy Agent & Guardrails             | Done   |
-| Member 3   | Resolution Agent & Tool Integrations  | Done   |
-| Member 4   | Communication & Escalation Agents     | Done   |
-| Member 5   | Infrastructure & Observability        | Done   |
+| Member | Role | GitHub |
+|--------|------|--------|
+| Khizar | Lead Developer & Architect | [@Khizar525](https://github.com/Khizar525) |
+| Mustafa | Policy & Guardrails Specialist | — |
+| Hammad | Resolution & Tool Integrations | — |
+| Ammar | Communication & Escalation | — |
+| Anas | Infrastructure & Observability | — |
 
 ---
 
