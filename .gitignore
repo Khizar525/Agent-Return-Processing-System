@@ -52,17 +52,17 @@ history/
 # ── Local archive (removed from git, kept locally) ───────────────────────────
 _archive/
 
-# ── Confidential / internal docs (do not commit — see CONTRIBUTING.md) ────────
+# ── Confidential / internal docs (do not commit) ─────────────────────────────
 *.docx
 document/
 
-# ── Lead's working notes (personal tracking, never commit) ───────────────────
+# ── Working notes (personal tracking, never commit) ──────────────────────────
 LEAD_TODO.md
 LEAD_NOTES.md
 *_TODO.md
 *_NOTES.md
 
-# ── Project context brief (shareable, but kept out of repo until promoted) ───
+# ── Project context brief ────────────────────────────────────────────────────
 PROJECT_BRIEF.md
 *_BRIEF.md
 
@@ -70,7 +70,7 @@ PROJECT_BRIEF.md
 CLAUDE.md
 .claude/
 
-# ── Duplicate SDD tooling accidentally committed by M3 ───────────────────────
+# ── Duplicate SDD tooling ────────────────────────────────────────────────────
 here/
 
 # ── Test suite report (generated, not for repo) ─────────────────────────────
@@ -82,3 +82,9 @@ infra/k8s/secret.yaml
 # ── OpenWork workspace config (local, not for repo) ──────────────────────────
 .opencode/openwork.json
 opencode.jsonc
+
+# ── Presentation binary (too large for git) ──────────────────────────────────
+presentation/*.pptx
+
+# ── SDD tooling (templates, not needed in production repo) ───────────────────
+.specify/
