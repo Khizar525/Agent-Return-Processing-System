@@ -129,11 +129,11 @@ async def _create_human_ticket_tool(
                         f"Order History: {json.dumps(order_history, indent=2) if order_history else 'None'}\n"
                         f"Timestamps: {json.dumps(timestamps, indent=2) if timestamps else 'None'}\n"
                         f"Raw Conversation: {json.dumps(raw_conversation, indent=2) if raw_conversation else 'None'}\n"
-                        "---\nAuto-created by Agent01 Customer Support System."
+                        "---\nAuto-created by agent-nemo Customer Support System."
                     ),
                 },
                 "priority": priority,
-                "tags": ["automated", "escalation", "agent01"],
+                "tags": ["automated", "escalation", "agent-nemo"],
             }
         }
 

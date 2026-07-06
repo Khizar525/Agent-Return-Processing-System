@@ -1,4 +1,4 @@
-# Tracing Dashboard — Agent 01 Customer Support & Returns Orchestrator
+# Tracing Dashboard — Agent Nemo Customer Support & Returns Orchestrator
 
 **Member 5 — Infrastructure & Observability**  
 **Branch:** `feature/infra-observability`  
@@ -8,7 +8,7 @@
 
 ## Overview
 
-The Agent 01 tracing dashboard provides end-to-end visibility into every customer ticket as it flows through the multi-agent pipeline. Built on **Datadog APM** with **OpenAI Agents SDK** built-in tracing, the dashboard surfaces agent chains, handoff counts, tool call latency, and CSAT scores in real time.
+The Agent Nemo tracing dashboard provides end-to-end visibility into every customer ticket as it flows through the multi-agent pipeline. Built on **Datadog APM** with **OpenAI Agents SDK** built-in tracing, the dashboard surfaces agent chains, handoff counts, tool call latency, and CSAT scores in real time.
 
 ---
 
@@ -17,8 +17,8 @@ The Agent 01 tracing dashboard provides end-to-end visibility into every custome
 ### Panel 1 — Agent Chain per Ticket
 
 **Widget type:** Trace Flame Graph  
-**Service:** `agent01-customer-support`  
-**Query:** `service:agent01-customer-support resource_name:handle_customer_message`
+**Service:** `agent-nemo-customer-support`  
+**Query:** `service:agent-nemo-customer-support resource_name:handle_customer_message`
 
 **What it shows:**
 - Full trace of every inbound ticket from webhook receipt to final resolution
@@ -45,7 +45,7 @@ The Agent 01 tracing dashboard provides end-to-end visibility into every custome
 ### Panel 2 — Handoff Count per Ticket
 
 **Widget type:** Distribution Histogram  
-**Metric:** `trace.agent01.handoff.count`  
+**Metric:** `trace.agent-nemo.handoff.count`  
 **Group by:** `ticket_id`, `channel`
 
 **What it shows:**
@@ -68,7 +68,7 @@ The Agent 01 tracing dashboard provides end-to-end visibility into every custome
 ### Panel 3 — Tool Call Latency
 
 **Widget type:** Timeseries Line Chart  
-**Metric:** `trace.agent01.tool.duration`  
+**Metric:** `trace.agent-nemo.tool.duration`  
 **Percentiles:** P50, P95, P99  
 **Group by:** `tool_name`
 
@@ -89,7 +89,7 @@ The Agent 01 tracing dashboard provides end-to-end visibility into every custome
 ### Panel 4 — End-to-End Resolution Time
 
 **Widget type:** Timeseries + SLA Burn Rate  
-**Metric:** `trace.agent01.ticket.duration`  
+**Metric:** `trace.agent-nemo.ticket.duration`  
 **SLA target:** P95 < 30 seconds
 
 **Breakdown by channel:**
@@ -114,7 +114,7 @@ The Agent 01 tracing dashboard provides end-to-end visibility into every custome
 Ticket resolved → log_resolution event fired → 
 csat_pipeline.py consumes event → 
 rolling score computed within 5 seconds → 
-score published to Datadog metric: agent01.csat.score
+score published to Datadog metric: agent-nemo.csat.score
 ```
 
 **Score bands:**
@@ -131,8 +131,8 @@ score published to Datadog metric: agent01.csat.score
 
 **Widget type:** Dual-axis Timeseries  
 **Metrics:**
-- `trace.agent01.errors` (error rate %)
-- `trace.agent01.requests` (requests/minute)
+- `trace.agent-nemo.errors` (error rate %)
+- `trace.agent-nemo.requests` (requests/minute)
 
 **Alert thresholds (PagerDuty):**
 
@@ -148,26 +148,26 @@ score published to Datadog metric: agent01.csat.score
 
 ```json
 {
-  "title": "Agent 01 — Observability Dashboard",
+  "title": "Agent Nemo — Observability Dashboard",
   "description": "End-to-end tracing for the Customer Support & Returns Orchestrator",
   "widgets": [
     {
       "id": "agent_chain",
       "type": "trace_service_map",
-      "query": "service:agent01-customer-support",
+      "query": "service:agent-nemo-customer-support",
       "title": "Agent Chain per Ticket"
     },
     {
       "id": "handoff_count",
       "type": "distribution",
-      "metric": "trace.agent01.handoff.count",
+      "metric": "trace.agent-nemo.handoff.count",
       "group_by": ["ticket_id", "channel"],
       "title": "Handoff Count per Ticket"
     },
     {
       "id": "tool_latency",
       "type": "timeseries",
-      "metric": "trace.agent01.tool.duration",
+      "metric": "trace.agent-nemo.tool.duration",
       "percentiles": ["p50", "p95", "p99"],
       "group_by": ["tool_name"],
       "title": "Tool Call Latency"
@@ -175,14 +175,14 @@ score published to Datadog metric: agent01.csat.score
     {
       "id": "resolution_time",
       "type": "timeseries",
-      "metric": "trace.agent01.ticket.duration",
+      "metric": "trace.agent-nemo.ticket.duration",
       "sla_threshold": 30000,
       "title": "End-to-End Resolution Time"
     },
     {
       "id": "csat_score",
       "type": "gauge",
-      "metric": "agent01.csat.score",
+      "metric": "agent-nemo.csat.score",
       "min": 0,
       "max": 5,
       "target": 4.5,
@@ -191,14 +191,14 @@ score published to Datadog metric: agent01.csat.score
     {
       "id": "error_rate",
       "type": "timeseries",
-      "metric": "trace.agent01.errors",
+      "metric": "trace.agent-nemo.errors",
       "alert_threshold": 0.05,
       "title": "Error Rate & Throughput"
     }
   ],
   "time_range": "last_1h",
   "refresh_interval": "30s",
-  "tags": ["service:agent01", "env:production", "team:smit-agent01"]
+  "tags": ["service:agent-nemo", "env:production", "team:smit-agent-nemo"]
 }
 ```
 
@@ -244,9 +244,9 @@ ddtrace-run uvicorn main:app --reload
 
 ### 3. Open the dashboard
 ```
-https://app.datadoghq.com/apm/services/agent01-customer-support
+https://app.datadoghq.com/apm/services/agent-nemo-customer-support
 ```
 
 ---
 
-*Confidential — Team Internal | Agent 01 | 2026*
+*Confidential — Team Internal | Agent Nemo | 2026*

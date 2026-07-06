@@ -2,7 +2,7 @@
 Datadog Monitors Configuration
 Owner: Member 5
 
-Defines 3 PagerDuty-bound alert monitors for the Agent 01 system.
+Defines 3 PagerDuty-bound alert monitors for the Agent Nemo system.
 Each monitor fires within 60 seconds of threshold breach.
 
 Monitors:
@@ -45,24 +45,24 @@ def build_queue_depth_monitor() -> dict[str, Any]:
     Fires to PagerDuty within 60 seconds (1 evaluation window).
     """
     return {
-        "name": "Agent 01 — Queue Depth > 500",
+        "name": "Agent Nemo — Queue Depth > 500",
         "type": "query alert",
         "query": (
-            "max(last_1m):max:kafka.consumer_lag{topic:agent01.{webchat,email,whatsapp,sms}} > 500"
+            "max(last_1m):max:kafka.consumer_lag{topic:agent-nemo.{webchat,email,whatsapp,sms}} > 500"
         ),
         "message": (
             "{{#is_alert}}"
             "Kafka queue depth is {{value}} — threshold is 500.\n"
             "Topic: {{topic.name}}\n"
-            "@pagerduty-agent01"
+            "@pagerduty-agent-nemo"
             "{{/is_alert}}"
             "{{#is_recovery}}"
             "Queue depth recovered to {{value}}.\n"
-            "@pagerduty-agent01"
+            "@pagerduty-agent-nemo"
             "{{/is_recovery}}"
         ),
         "tags": [
-            "service:agent01-customer-support",
+            "service:agent-nemo-customer-support",
             "alert:queue_depth",
             "severity:critical",
             "team:infra-observability",
@@ -88,28 +88,28 @@ def build_error_rate_monitor() -> dict[str, Any]:
     Fires to PagerDuty within 60 seconds.
     """
     return {
-        "name": "Agent 01 — Error Rate > 5%",
+        "name": "Agent Nemo — Error Rate > 5%",
         "type": "query alert",
         "query": (
             "sum(last_1m):"
-            "trace.fastapi.request.errors{service:agent01-customer-support}.as_count()"
+            "trace.fastapi.request.errors{service:agent-nemo-customer-support}.as_count()"
             " / "
-            "trace.fastapi.request.hits{service:agent01-customer-support}.as_count()"
+            "trace.fastapi.request.hits{service:agent-nemo-customer-support}.as_count()"
             " * 100 > 5"
         ),
         "message": (
             "{{#is_alert}}"
             "Error rate is {{value}}% — threshold is 5%.\n"
             "{{error_count}} errors in the last minute.\n"
-            "@pagerduty-agent01"
+            "@pagerduty-agent-nemo"
             "{{/is_alert}}"
             "{{#is_recovery}}"
             "Error rate recovered to {{value}}%.\n"
-            "@pagerduty-agent01"
+            "@pagerduty-agent-nemo"
             "{{/is_recovery}}"
         ),
         "tags": [
-            "service:agent01-customer-support",
+            "service:agent-nemo-customer-support",
             "alert:error_rate",
             "severity:critical",
             "team:infra-observability",
@@ -135,25 +135,25 @@ def build_latency_p95_monitor() -> dict[str, Any]:
     Fires to PagerDuty within 60 seconds.
     """
     return {
-        "name": "Agent 01 — P95 Resolution Latency > 30s",
+        "name": "Agent Nemo — P95 Resolution Latency > 30s",
         "type": "query alert",
         "query": (
-            "p95(last_1m):avg:trace.agent.resolution.duration_seconds{service:agent01-customer-support}"
+            "p95(last_1m):avg:trace.agent.resolution.duration_seconds{service:agent-nemo-customer-support}"
             " > 30"
         ),
         "message": (
             "{{#is_alert}}"
             "P95 resolution latency is {{value}}s — threshold is 30s.\n"
             "Agent chain: {{agent_chain.services}}\n"
-            "@pagerduty-agent01"
+            "@pagerduty-agent-nemo"
             "{{/is_alert}}"
             "{{#is_recovery}}"
             "P95 latency recovered to {{value}}s.\n"
-            "@pagerduty-agent01"
+            "@pagerduty-agent-nemo"
             "{{/is_recovery}}"
         ),
         "tags": [
-            "service:agent01-customer-support",
+            "service:agent-nemo-customer-support",
             "alert:latency_p95",
             "severity:high",
             "team:infra-observability",

@@ -1,5 +1,5 @@
 """
-Shared pytest fixtures for all Agent 01 test modules.
+Shared pytest fixtures for all Agent Nemo test modules.
 Owner: Project Lead
 
 Loads the 5 JSON fixture files and provides lookup helpers.

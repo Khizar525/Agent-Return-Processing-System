@@ -6,34 +6,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent01-webhook
+  name: agent-nemo-webhook
   labels:
-    app: agent01
+    app: agent-nemo
     component: webhook
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: agent01
+      app: agent-nemo
       component: webhook
   template:
     metadata:
       labels:
-        app: agent01
+        app: agent-nemo
         component: webhook
     spec:
       containers:
         - name: webhook
-          image: agent01-customer-support:latest
+          image: agent-nemo-customer-support:latest
           command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
           ports:
             - containerPort: 8000
               protocol: TCP
           envFrom:
             - configMapRef:
-                name: agent01-config
+                name: agent-nemo-config
             - secretRef:
-                name: agent01-secrets
+                name: agent-nemo-secrets
           livenessProbe:
             httpGet:
               path: /health
@@ -57,34 +57,34 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent01-webchat-consumer
+  name: agent-nemo-webchat-consumer
   labels:
-    app: agent01
+    app: agent-nemo
     channel: web_chat
     component: consumer
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: agent01
+      app: agent-nemo
       channel: web_chat
       component: consumer
   template:
     metadata:
       labels:
-        app: agent01
+        app: agent-nemo
         channel: web_chat
         component: consumer
     spec:
       containers:
         - name: consumer
-          image: agent01-customer-support:latest
+          image: agent-nemo-customer-support:latest
           command: ["python", "-m", "infra.kafka_config", "--channel", "web_chat"]
           envFrom:
             - configMapRef:
-                name: agent01-config
+                name: agent-nemo-config
             - secretRef:
-                name: agent01-secrets
+                name: agent-nemo-secrets
           livenessProbe:
             exec:
               command: ["python", "-c", "import os; assert os.environ.get('KAFKA_BOOTSTRAP_SERVERS')"]
@@ -101,34 +101,34 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent01-email-consumer
+  name: agent-nemo-email-consumer
   labels:
-    app: agent01
+    app: agent-nemo
     channel: email
     component: consumer
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: agent01
+      app: agent-nemo
       channel: email
       component: consumer
   template:
     metadata:
       labels:
-        app: agent01
+        app: agent-nemo
         channel: email
         component: consumer
     spec:
       containers:
         - name: consumer
-          image: agent01-customer-support:latest
+          image: agent-nemo-customer-support:latest
           command: ["python", "-m", "infra.kafka_config", "--channel", "email"]
           envFrom:
             - configMapRef:
-                name: agent01-config
+                name: agent-nemo-config
             - secretRef:
-                name: agent01-secrets
+                name: agent-nemo-secrets
           livenessProbe:
             exec:
               command: ["python", "-c", "import os; assert os.environ.get('KAFKA_BOOTSTRAP_SERVERS')"]
@@ -145,34 +145,34 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent01-whatsapp-consumer
+  name: agent-nemo-whatsapp-consumer
   labels:
-    app: agent01
+    app: agent-nemo
     channel: whatsapp
     component: consumer
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: agent01
+      app: agent-nemo
       channel: whatsapp
       component: consumer
   template:
     metadata:
       labels:
-        app: agent01
+        app: agent-nemo
         channel: whatsapp
         component: consumer
     spec:
       containers:
         - name: consumer
-          image: agent01-customer-support:latest
+          image: agent-nemo-customer-support:latest
           command: ["python", "-m", "infra.kafka_config", "--channel", "whatsapp"]
           envFrom:
             - configMapRef:
-                name: agent01-config
+                name: agent-nemo-config
             - secretRef:
-                name: agent01-secrets
+                name: agent-nemo-secrets
           livenessProbe:
             exec:
               command: ["python", "-c", "import os; assert os.environ.get('KAFKA_BOOTSTRAP_SERVERS')"]
@@ -189,34 +189,34 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent01-sms-consumer
+  name: agent-nemo-sms-consumer
   labels:
-    app: agent01
+    app: agent-nemo
     channel: sms
     component: consumer
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: agent01
+      app: agent-nemo
       channel: sms
       component: consumer
   template:
     metadata:
       labels:
-        app: agent01
+        app: agent-nemo
         channel: sms
         component: consumer
     spec:
       containers:
         - name: consumer
-          image: agent01-customer-support:latest
+          image: agent-nemo-customer-support:latest
           command: ["python", "-m", "infra.kafka_config", "--channel", "sms"]
           envFrom:
             - configMapRef:
-                name: agent01-config
+                name: agent-nemo-config
             - secretRef:
-                name: agent01-secrets
+                name: agent-nemo-secrets
           livenessProbe:
             exec:
               command: ["python", "-c", "import os; assert os.environ.get('KAFKA_BOOTSTRAP_SERVERS')"]

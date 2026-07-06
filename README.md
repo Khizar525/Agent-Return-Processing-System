@@ -1,4 +1,4 @@
-# Agent 01 — Customer Support & Returns Orchestrator
+# Agent Nemo — Customer Support & Returns Orchestrator
 
 > Autonomous Resolution from Triage to Refund
 > E-Commerce Multi-Agent System | Built on OpenAI Agents SDK | 2026
@@ -69,7 +69,7 @@ A production-grade multi-agent system that autonomously handles the full lifecyc
 ```bash
 # 1. Clone
 git clone <repo-url>
-cd agent-01-customer-support
+cd agent-nemo-customer-support
 
 # 2. Create virtual environment
 python -m venv venv

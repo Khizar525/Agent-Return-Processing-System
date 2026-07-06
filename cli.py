@@ -1,5 +1,5 @@
 """
-CLI — Agent 01 Customer Support System
+CLI — Agent Nemo Customer Support System
 Usage:
     python cli.py shell                       Interactive shell — test everything
     python cli.py server                      Start the backend API server
@@ -173,7 +173,7 @@ async def cmd_shell() -> None:
     from chat import respond as chat_respond
 
     print("\n" + "=" * 56)
-    print("  Agent 01 — Interactive Shell")
+    print("  Agent Nemo — Interactive Shell")
     print("=" * 56)
     print("  Just type naturally, or use prefix commands:")
     print("    check <order> <cust>      Check return policy")

@@ -1,4 +1,4 @@
-# CI Pipeline — Agent-01-Customer-Support-Returns-Orchestrator
+# CI Pipeline — agent-nemo-Customer-Support-Returns-Orchestrator
 # Runs on every push/PR to develop and main.
 
 name: CI

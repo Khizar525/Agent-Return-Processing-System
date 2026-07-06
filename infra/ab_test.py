@@ -1,5 +1,5 @@
 """
-A/B Test Framework — Agent 01 Experimentation Engine
+A/B Test Framework — Agent Nemo Experimentation Engine
 Owner: Member 5
 
 Routes a configurable percentage of tickets to variant agent configurations
@@ -22,8 +22,8 @@ Experiments are configured via a dict (hardcoded for simplicity; can be
 moved to Redis/env for dynamic updates in production).
 
 Output:
-    - Datadog metrics: agent01.ab_test.variant_distribution,
-      agent01.ab_test.resolution_time, agent01.ab_test.success_rate
+    - Datadog metrics: agent-nemo.ab_test.variant_distribution,
+      agent-nemo.ab_test.resolution_time, agent-nemo.ab_test.success_rate
     - Logged experiment metadata for dashboard consumption
 """
 
@@ -277,8 +277,8 @@ def record_experiment_result(
         f"metric:{metric_name}",
     ]
 
-    _emit_datadog_gauge(f"agent01.ab_test.{metric_name}", value, tags)
-    _emit_datadog_gauge("agent01.ab_test.record_count", 1.0, tags)
+    _emit_datadog_gauge(f"agent-nemo.ab_test.{metric_name}", value, tags)
+    _emit_datadog_gauge("agent-nemo.ab_test.record_count", 1.0, tags)
 
     logger.info(
         "AB test result — experiment=%s, variant=%s, metric=%s, value=%.4f, session=%s",

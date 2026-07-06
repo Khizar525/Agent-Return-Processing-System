@@ -7,10 +7,10 @@ FastAPI webhook receiver. Runs as a standalone CLI process per pod
 (matching k8s deployment.yaml).
 
 Topics (set in .env):
-    KAFKA_TOPIC_WEB_CHAT   — agent01.webchat
-    KAFKA_TOPIC_EMAIL      — agent01.email
-    KAFKA_TOPIC_WHATSAPP   — agent01.whatsapp
-    KAFKA_TOPIC_SMS        — agent01.sms
+    KAFKA_TOPIC_WEB_CHAT   — agent-nemo.webchat
+    KAFKA_TOPIC_EMAIL      — agent-nemo.email
+    KAFKA_TOPIC_WHATSAPP   — agent-nemo.whatsapp
+    KAFKA_TOPIC_SMS        — agent-nemo.sms
 
 Message schema (all topics):
     {
@@ -133,7 +133,7 @@ def create_consumer(channel: str) -> Any:
     from kafka import KafkaConsumer
 
     topic = _resolve_topic(channel)
-    group_id = f"agent01-{channel}-consumer"
+    group_id = f"agent-nemo-{channel}-consumer"
     bootstrap = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 
     logger.info(

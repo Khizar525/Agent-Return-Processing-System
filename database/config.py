@@ -7,7 +7,7 @@ import os
 
 DATABASE_URL: str = os.environ.get(
     "DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/agent01_returns",
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/agent-nemo_returns",
 )
 
 DB_ECHO: bool = os.environ.get("DB_ECHO", "0") == "1"

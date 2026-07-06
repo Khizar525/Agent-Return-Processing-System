@@ -1,5 +1,5 @@
 """
-Chat - Natural language interface for Agent 01
+Chat - Natural language interface for Agent Nemo
 Run:  python chat.py
 """
 
@@ -254,7 +254,7 @@ async def respond(text: str) -> str:
 
     kind = is_generic_message(text_lower)
     if kind == "greeting":
-        return "Hello! I am Agent 01, your return processing assistant. Try saying: 'Can I return my order ORD-001?' or 'My credit card is 4111-1111-1111-1111'."
+        return "Hello! I am Agent Nemo, your return processing assistant. Try saying: 'Can I return my order ORD-001?' or 'My credit card is 4111-1111-1111-1111'."
     if kind == "help":
         return "I can help with:\n  - Return eligibility (e.g. 'Can I return ORD-001?')\n  - PII redaction (e.g. 'My card is 4111-1111-1111-1111')\n  - Sentiment monitoring (e.g. 'I will sue you!')\n  - Refund capping (e.g. 'Process a refund of $600')\n  - Policy lookups via LLM (e.g. 'What is the return policy?')\n  - Full demo scenarios with 'demo'"
     if kind == "unrelated":
@@ -288,7 +288,7 @@ async def respond(text: str) -> str:
 
 async def main():
     print("=" * 58)
-    print("  Agent 01 - Chat Interface")
+    print("  Agent Nemo - Chat Interface")
     print("  Just type naturally. No commands needed.")
     print("=" * 58)
     print()
