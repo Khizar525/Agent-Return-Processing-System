@@ -17,9 +17,7 @@ Agent Nemo is a multi-agent customer support system built on the OpenAI Agents S
 
 ## Demo
 
-![Agent Nemo Chat Demo](docs/images/demo-chat.gif)
-
-> Watch Agent Nemo classify a return request, check eligibility, and deliver a natural language response — with guardrails visible in real-time.
+> **To try Agent Nemo:** Start the backend and frontend (see Quick Start below), then open http://localhost:3000 and send a message like "I want to return order ORD-001" or "Where is my order?".
 
 ---
 
