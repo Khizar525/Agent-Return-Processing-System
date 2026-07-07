@@ -1,6 +1,6 @@
 # Agent Nemo
 
-### Customer Support & Returns Orchestrator
+### Multi-Agent Customer Support System
 
 > A production-oriented multi-agent AI system that classifies customer intent, routes to specialist agents, executes tools, and returns natural language responses — with built-in guardrails for PII, sentiment, refunds, and brand voice.
 
@@ -23,7 +23,7 @@
 
 ## What Is This?
 
-Customer support is repetitive, high-volume, and error-prone. Every day, support teams handle the same questions: *"Where's my order?"*, *"Can I return this?"*, *"I want a refund."* Most of these follow predictable patterns — but they still require a human to read, classify, look up data, and respond.
+Customer support is repetitive, high-volume, and predictable. Teams handle the same questions daily — *"Where's my order?"*, *"Can I return this?"*, *"I want a refund."* Each requires a human to read, classify, look up data, and respond.
 
 **Agent Nemo automates this pipeline.** It's a multi-agent system that:
 
@@ -40,7 +40,6 @@ The system handles 5 intent categories across 6 specialized agents, with 10 func
 ## Table of Contents
 
 - [Architecture](#architecture)
-- [How It Works](#how-it-works)
 - [Agents](#agents)
 - [Guardrails](#guardrails)
 - [Demo Walkthrough](#demo-walkthrough)
@@ -113,7 +112,7 @@ _KEYWORD_RULES = {
 }
 ```
 
-This avoids the SDK limitation where `Runner.run()` consumes tool call results internally and never exposes them to the caller. It also ensures 100% routing reliability — the LLM never produces malformed JSON that breaks the pipeline.
+This avoids the SDK limitation where `Runner.run()` consumes tool call results internally and never exposes them to the caller. Keyword routing is deterministic — the LLM never produces malformed JSON that breaks the primary pipeline.
 
 ![Sequence Diagram](docs/images/2.%20Sequence%20Diagram.png)
 
@@ -125,7 +124,7 @@ Each agent owns a single bounded context. The orchestrator either calls tools di
 
 | Agent | Responsibility | When Invoked | Tools | Handoff To |
 |-------|---------------|--------------|-------|------------|
-| **TriageOrchestrator** | Classify intent, route messages | Every inbound message | None (classifier only) | Policy, Billing, Escalation |
+| **Triage Orchestrator** | Classify intent, route messages | Every inbound message | None (classifier only) | Policy, Billing, Escalation |
 | **PolicyAgent** | Evaluate return eligibility | `return_request` intent | `check_return_policy`, `get_customer_profile` | ResolutionAgent |
 | **ResolutionAgent** | Process refunds, labels, replacements | After PolicyAgent approval | `process_refund`, `create_return_label`, `create_replacement_order` | CommunicationAgent |
 | **BillingAgent** | Handle billing disputes | `billing_dispute` intent | `process_refund` | CommunicationAgent |
@@ -163,7 +162,7 @@ Guardrails are not afterthoughts — they're first-class system components that 
 | ALL CAPS (>10 chars) | +0.3 | "I WILL SUE YOU" |
 | Legal keywords | +0.4 | sue, lawyer, attorney, court, legal, litigation |
 | Distress keywords | +0.2 | crying, desperate, ruined, outrageous, unacceptable, furious |
-| Profanity | +0.2 | fuck, shit, crap, damn, bastard, asshole |
+| Profanity | +0.2 | profane language (weighted +0.2) |
 | Multiple exclamations | +0.1–0.2 | "!!!" → +0.1, "!!??" → +0.2 |
 
 **Threshold:** ≥ 0.8 triggers escalation. Float precision handled via `round(score, 10)`.
@@ -212,10 +211,11 @@ Output:     "I take your concerns very seriously. I'm immediately
 ```
 Input:      "I want a $700 refund for order ORD-002"
 Routing:    intent = return_request → check_return_policy
-Guardrail:  Refund Cap evaluated at resolution stage
-Tool:       check_return_policy → eligible
-Output:     "Refunds are processed within 5-7 business days..."
-            ($700 would be blocked by Refund Cap guardrail if resolution attempted)
+Guardrail:  Refund Cap blocks refunds > $500
+Tool:       check_return_policy → eligible, but refund blocked
+Output:     "I understand you'd like a refund. However, refunds over
+            $500 require human approval. I'm escalating your request
+            to a specialist who can assist further."
 ```
 
 ### Scenario 5: Tracking Lookup — Deterministic Routing
@@ -233,61 +233,45 @@ Output:     "It's on its way! Carrier: FedEx (Tracking: FX-5647382910).
 
 ## Screenshots
 
-### Frontend
-
 ![Frontend UI](docs/images/01-frontend-ui.png)
+
 *Landing page with agent flow visualization and system statistics.*
 
 ![Live Demo](docs/images/02-Live-Demo.png)
-*Live chat with real-time routing pipeline showing intent classification and tool execution.*
+
+*Live chat with real-time routing pipeline — intent classification, tool execution, and response timing.*
 
 ![Guardrails Showcase](docs/images/04-guardrails-showcase.png)
-*Interactive guardrail testing — PII, Sentiment, Refund Cap, Brand Voice.*
 
-### API
+*Interactive guardrail testing — PII Scrubber, Sentiment Monitor, Refund Cap, Brand Voice.*
 
 ![Swagger Docs](docs/images/03-swagger-docs.png)
-*FastAPI Swagger documentation with 3 endpoints and Pydantic schemas.*
 
-### Demo
+*FastAPI Swagger documentation with endpoints and Pydantic schemas.*
 
 ![Demo Scenarios 1-5](docs/images/05-Demo-Scenarios.png)
-*Policy tool scenarios 1-5: happy path, window exceeded, damaged item, excluded goods, fraud flag.*
+
+*Policy tool scenarios: happy path, window exceeded, damaged item, excluded goods, fraud flag.*
 
 ![Demo Scenarios 6-11](docs/images/06-Remaining-Demo-Scenarios.png)
-*Policy tool scenarios 6-11: fraud DB match, not found, mismatch, perishables, same-day boundary.*
 
-### Testing
+*Policy tool scenarios: fraud DB match, not found, mismatch, perishables, same-day boundary.*
 
 ![Pytest Passing](docs/images/11-pytest-passing.png)
+
 *369 tests passing across 9 test files — 0 skipped, 0 failed.*
 
-### CI/CD
-
 ![GitHub Actions](docs/images/13-github-actions.png)
-*50 workflow runs with consistent green checkmarks across main and develop branches.*
 
-### Architecture
-
-![Sequence Diagram](docs/images/2.%20Sequence%20Diagram.png)
-*UML sequence diagram showing the full message flow from customer to response.*
-
-![Agent Handoff](docs/images/4.%20Agent%20Handoff%20Diagram.png)
-*Hub-and-spoke visualization of tool call paths vs specialist agent handoffs.*
-
-![Guardrail Flow](docs/images/3.%20Guardrail%20Flow%20Diagram.png)
-*Input and output guardrail flow with scoring factors and decision logic.*
-
-### Monitoring
+*CI pipeline with consistent green checkmarks across main and develop branches.*
 
 ![Metrics Dashboard](docs/images/5.%20Metrics%20Dashboard.png)
+
 *Illustrative monitoring dashboard demonstrating observability capabilities. Values shown are example data — real metrics require deployed infrastructure (Redis, Kafka, Datadog).*
 
 ---
 
 ## Engineering Decisions
-
-These are the choices that distinguish Agent Nemo from tutorial repositories.
 
 ### 1. Deterministic Routing Over LLM-Only Classification
 
@@ -295,7 +279,7 @@ These are the choices that distinguish Agent Nemo from tutorial repositories.
 
 **Solution:** Keyword-first classification with optional LLM enrichment. The orchestrator uses regex-based keyword rules for primary routing. The LLM provides enrichment for ambiguous cases but never controls the dispatch path.
 
-**Result:** 100% routing reliability. The LLM never breaks the pipeline.
+**Result:** Deterministic routing — the LLM never breaks the pipeline.
 
 ### 2. Tool-First Execution Over Agent-Only Workflows
 
@@ -352,7 +336,7 @@ The test suite validates three layers:
 
 1. **Unit tests** — Individual tool functions, guardrail logic, DTOs
 2. **Integration tests** — Agent workflows, session management, pipeline skeletons
-3. **Contract tests** — Tool interface compliance, error handling, output schemas
+3. **Schema tests** — Tool interface compliance, error handling, output contracts
 
 ### Test Breakdown
 
@@ -389,7 +373,7 @@ The pipeline enforces:
 
 ## Infrastructure
 
-Agent Nemo's infrastructure modules are **fully implemented** with production-grade code, graceful degradation, and comprehensive test coverage. They are **dormant** — meaning they require external services to be running.
+Agent Nemo's infrastructure modules are **fully implemented** with production-quality code, graceful degradation, and comprehensive test coverage. They are **dormant** — meaning they require external services to be running.
 
 | Component | Implementation | Provisioning | Status |
 |-----------|---------------|--------------|--------|
@@ -399,7 +383,7 @@ Agent Nemo's infrastructure modules are **fully implemented** with production-gr
 | **Datadog Monitors** | 3 PagerDuty-bound monitors (queue depth, error rate, P95 latency) | Requires Datadog provisioning | ✅ Implemented · ⏳ Dormant |
 | **CSAT Pipeline** | Rolling average (deque maxlen=1000), per-agent tracking, Datadog + Redis sync | Requires Datadog + Redis | ✅ Implemented · ⏳ Dormant |
 | **A/B Testing** | SHA-256 hash partitioning, deterministic variant assignment, result recording | Requires Datadog | ✅ Implemented · ⏳ Dormant |
-| **Kubernetes** | 5 deployments, 5 services, 5 HPAs, configmap — production-grade manifests | Requires K8s cluster | ✅ Implemented · ⏳ Dormant |
+| **Kubernetes** | 5 deployments, 5 services, 5 HPAs, configmap — production-quality manifests | Requires K8s cluster | ✅ Implemented · ⏳ Dormant |
 
 **Key distinction:** These are not placeholders or skeletons. Every module contains real I/O operations, proper error handling, environment variable configuration, and 41 dedicated tests. They are production-ready code that becomes operational when external services are provisioned.
 
@@ -421,7 +405,8 @@ python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env with your OpenRouter API key
+# Edit .env and add your OpenRouter API key:
+# OPENROUTER_API_KEY=your_key_here
 ```
 
 ### 2. Start Services
@@ -460,7 +445,7 @@ mypy .                              # type check
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | **Agent Framework** | OpenAI Agents SDK | Agent definitions, tool decorators, guardrail wrappers |
-| **LLM** | OpenRouter — `openai/gpt-oss-120b:free` | Zero-cost inference (30 RPM, 1K RPD) |
+| **LLM** | OpenRouter — `openai/gpt-oss-120b:free` | Free-tier inference (30 requests/min, 1,000 requests/day) |
 | **Backend** | FastAPI + Uvicorn | Async API server with Pydantic validation |
 | **Frontend** | Single-file HTML/CSS/JS | Glassmorphism UI, zero dependencies |
 | **Database** | SQLAlchemy 2.0 | ORM with PostgreSQL (prod), SQLite (dev), Memory (test) |
@@ -474,6 +459,8 @@ mypy .                              # type check
 ---
 
 ## Team
+
+Developed during the SMIT Agentic AI Program by a team of five engineers.
 
 | Member | Ownership | Key Contributions |
 |--------|-----------|-------------------|
@@ -502,7 +489,7 @@ mypy .                              # type check
 ### Long-term
 - [ ] Multi-tenant support for multiple e-commerce stores
 - [ ] Custom agent development SDK
-- [ ] Production deployment with SLA monitoring
+- [ ] Deploy to cloud with SLA dashboards (response time < 2s, availability > 99.5%)
 - [ ] Multi-language support for international customers
 
 ---
@@ -529,6 +516,6 @@ MIT License — see [LICENSE](LICENSE)
 
 **Built by Khizar, Mustafa, Hammad, Ammar, and Anas**
 
-*Demonstrating production-oriented engineering practices in multi-agent AI systems*
+*Built with production engineering practices in mind*
 
 </div>
