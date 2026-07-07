@@ -15,7 +15,7 @@
 ![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 
-**6 AI Agents** · **10 Function Tools** · **4 Guardrails** · **369 Tests** · **Zero LLM Cost**
+**6 AI Agents** · **10 Function Tools** · **4 Guardrails** · **369 Tests** · **Free-Tier Inference**
 
 </div>
 
@@ -34,6 +34,18 @@ Customer support is repetitive, high-volume, and predictable. Teams handle the s
 5. **Responds** in natural language — not raw JSON
 
 The system handles 5 intent categories across 6 specialized agents, with 10 function tools and 4 guardrails — all running at zero cost using free-tier LLM inference.
+
+---
+
+## Key Engineering Highlights
+
+- Multi-agent orchestration using the OpenAI Agents SDK
+- Deterministic keyword-first routing with optional LLM enrichment
+- 6 specialized AI agents collaborating through tool calls and handoffs
+- 10 function tools with standardized contracts
+- 4 layered guardrails for safety and compliance
+- 369 automated tests with GitHub Actions CI
+- Production-oriented infrastructure modules with graceful degradation
 
 ---
 
@@ -267,7 +279,7 @@ Output:     "It's on its way! Carrier: FedEx (Tracking: FX-5647382910).
 
 ![Metrics Dashboard](docs/images/5.%20Metrics%20Dashboard.png)
 
-*Illustrative monitoring dashboard demonstrating observability capabilities. Values shown are example data — real metrics require deployed infrastructure (Redis, Kafka, Datadog).*
+*Illustrative dashboard demonstrating how production metrics would be visualized. Example values are shown; live metrics require deployed Redis, Kafka, and Datadog infrastructure.*
 
 ---
 
